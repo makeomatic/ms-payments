@@ -1,0 +1,188 @@
+{
+	"id": "common",
+	"definitions": {
+		"currency": {
+			"type": "object",
+			"required": ["currency", "value"],
+			"properties": {
+				"currency": { "type": "string", "minLength": 3, "maxLength": 3 },
+				"value": { "type": "string", "minLength": 1 }
+			}
+		},
+		"links": {
+			"type": "object",
+			"properties": {
+				"href": { "type": "string", "minLength": 1 },
+				"rel": { "type": "string", "minLength": 1 },
+				"method": { "type": "string", "minLength": 1 }
+			}
+		},
+		"term": {
+			"type": "object",
+			"required": ["type", "max_billing_amount", "occurences", "amount_range", "buyer_editable"],
+			"properties": {
+				"id": { "type": "string", "minLength": 1 },
+				"type": { "type": "string", "minLength": 1 },
+				"max_billing_amount": { "$ref": "common#/definitions/currency" },
+				"occurences": { "type": "string", "minLength": 1 },
+				"amount_range": { "$ref": "common#/definitions/currency" },
+				"buyer_editable": { "type": "string", "minLength": 1 }
+			}
+		},
+		"payment_definition": {
+			"type": "object",
+			"required": ["name", "type", "frequency_interval", "frequency", "cycles", "amount"],
+			"properties": {
+				"id": { "type": "string", "minLength": 1 },
+				"name": { "type": "string", "minLength": 1 },
+				"type": { "type": "string", "minLength": 1 },
+				"frequency_interval": { "type": "string", "minLength": 1 },
+				"frequency": { "type": "string", "minLength": 1 },
+				"cycles": { "type": "string", "minLength": 1 },
+				"amount": { "$ref": "common#/definitions/currency" },
+				"charge_models": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"required": ["id", "type", "amount"],
+						"properties": {
+							"id": { "type": "string", "minLength": 1 },
+							"type": { "type": "string", "minLength": 1 },
+							"amount": { "$ref": "common#/definitions/currency" }
+						}
+					}
+				}
+			}
+		},
+		"merchant_preferences": {
+			"type": "object",
+			"required": ["cancel_url", "return_url"],
+			"properties": {
+				"id": { "type": "string", "minLength": 1 },
+				"setup_fee": { "$ref": "common#/definitions/currency" },
+				"cancel_url": { "type": "string", "minLength": 1 },
+				"return_url": { "type": "string", "minLength": 1 },
+				"notify_url": { "type": "string", "minLength": 1 },
+				"max_fail_attempts": { "type": "string", "minLength": 1 },
+				"auto_bull_amount": { "type": "string", "minLength": 1 },
+				"initial_fail_amount_action": { "type": "string", "minLength": 1 },
+				"accepted_payment_type": { "type": "string", "minLength": 1 },
+				"char_set": { "type": "string", "minLength": 1 }
+			}
+		},
+		"agreement_details": {
+			"type": "object",
+			"properties": {
+				"outstanding_balance": { "$ref": "common#/definitions/currency" },
+				"cycles_remaining": { "type": "string", "minLength": 1 },
+				"cycles_completed": { "type": "string", "minLength": 1 },
+				"next_billing_date": { "type": "string", "minLength": 1 },
+				"last_payment_date": { "type": "string", "minLength": 1 },
+				"last_payment_amount": { "$ref": "common#/definitions/currency" },
+				"final_payment_date": { "type": "string", "minLength": 1 },
+				"failed_payment_count": { "type": "string", "minLength": 1 }
+			}
+		},
+		"payer": {
+			"type": "object",
+			"required": ["payment_method"],
+			"properties": {
+				"payment_method": { "type": "string", "minLength": 1 },
+				"funding_instruments": { "type": "array", "items": { "$ref": "common#/definitions/funding_instrument" } },
+				"payer_info": { "$ref": "common#/definitions/payer_info" },
+				"status": { "type": "string", "minLength": 1 }
+			}
+		},
+		"funding_instrument": {
+			"type": "object",
+			"properties": {
+				"credit_card": { "$ref": "common#/definitions/credit_card" },
+				"credit_card_token": { "$ref": "common#/definitions/credit_card_token" }
+			}
+		},
+		"credit_card": {
+			"type": "object",
+			"required": ["number", "type", "expire_month", "expire_year"],
+			"properties": {
+				"id": { "type": "string", "minLength": 1 },
+				"payer_id": { "type": "string", "minLength": 1 },
+				"number": { "type": "string", "minLength": 1 },
+				"type": { "type": "string", "minLength": 1 },
+				"expire_month": { "type": "integer" },
+				"expire_year": { "type": "integer" },
+				"cvv2": { "type": "string", "minLength": 3, "maxLength": 4 },
+				"first_name": { "type": "string", "minLength": 1 },
+				"last_name": { "type": "string", "minLength": 1 },
+				"billing_address": { "$ref": "common#/definitions/address" },
+				"external_customer_id": { "type": "string", "minLength": 1 },
+				"merchant_id": { "type": "string", "minLength": 1 },
+				"external_card_id": { "type": "string", "minLength": 1 },
+				"create_time": { "type": "string", "format": "datetime" },
+				"update_time": { "type": "string", "format": "datetime" },
+				"state": { "type": "string", "minLength": 1 },
+				"valid_until": { "type": "string", "minLength": 1 }
+			}
+		},
+		"credit_card_token": {
+			"type": "object",
+			"required": ["credit_card_id"],
+			"properties": {
+				"credit_card_id": { "type": "string", "minLength": 1 },
+				"payer_id": { "type": "string", "minLength": 1 },
+				"last4": { "type": "string", "minLength": 4, "maxLength": 4 },
+				"type": { "type": "string", "minLength": 1 },
+				"expire_year": { "type": "integer" },
+				"expire_month": { "type": "integer" }
+			}
+		},
+		"payer_info": {
+			"type": "object",
+			"properties": {
+				"email": { "type": "string", "minLength": 1, "maxLength": 127 },
+				"salutation": { "type": "string", "minLength": 1 },
+				"first_name": { "type": "string", "minLength": 1 },
+				"middle_name": { "type": "string", "minLength": 1 },
+				"last_name": { "type": "string", "minLength": 1 },
+				"suffix": { "type": "string", "minLength": 1 },
+				"payer_id": { "type": "string", "minLength": 1 },
+				"phone": { "type": "string", "minLength": 1 },
+				"country_code": { "type": "string", "minLength": 1 },
+				"shipping_address": { "$ref": "common#/definitions/shipping_address" },
+				"tax_id_type": { "type": "string", "minLength": 1 },
+				"tax_id": { "type": "string", "minLength": 1 }
+			}
+		},
+		"address": {
+			"type": "object",
+			"required": ["line1", "city", "country_code"],
+			"properties": {
+				"line1": { "type": "string", "minLength": 1, "maxLength": 100 },
+				"line2": { "type": "string", "minLength": 1, "maxLength": 100 },
+				"city": { "type": "string", "minLength": 1, "maxLength": 50 },
+				"country_code": { "type": "string", "minLength": 1, "maxLength": 2 },
+				"postal_code": { "type": "string", "minLength": 1, "maxLength": 20 },
+				"state": { "type": "string", "minLength": 1, "maxLength": 100},
+				"phone": { "type": "string", "minLength": 1, "maxLength": 50 }
+			}
+		},
+		"shipping_address": {
+			"allOf": [
+				{ "$ref": "common#/definitions/address" },
+				{
+					"properties": {
+						"recipient_name": { "type": "string", "minLength": 1 },
+						"type": { "type": "string", "minLength": 1 }
+					}
+				}
+			]
+		},
+		"override_charge_model": {
+			"type": "object",
+			"required": ["charge_id", "amount"],
+			"properties": {
+				"charge_id": { "type": "string", "minLength": 1 },
+				"amount": { "$ref": "common#/definitions/currency" }
+			}
+		}
+	}
+}

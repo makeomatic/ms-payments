@@ -1,0 +1,18 @@
+{
+	"id": "plan",
+	"type": "object",
+	"required": ["name", "description", "type"],
+	"properties": {
+		"id":                   { "type": "string", "minLength": 1 },
+		"name":                 { "type": "string", "minLength": 1 },
+		"description":          { "type": "string", "minLength": 1 },
+		"type":                 { "type": "string", "minLength": 1 },
+		"state":                { "type": "string", "minLength": 1 },
+		"create_time":          { "type": "string", "minLength": 1 },
+		"update_time":          { "type": "string", "minLength": 1 },
+		"payment_definitions":  { "type": "array", "items": { "$ref": "common#/definitions/payment_definition" } },
+		"terms":                { "type": "array", "items": { "$ref": "common#/definitions/term" } },
+		"merchant_preferences": { "$ref": "common#/definitions/merchant_preferences"},
+		"links":                { "type": "array", "items": { "$ref": "common#/definitions/links" } }
+	}
+}
