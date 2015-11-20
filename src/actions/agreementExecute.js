@@ -3,7 +3,7 @@ const Errors = require('common-errors')
 
 const paypal = require('paypal-rest-sdk')
 
-function agreementExecute(planId) {
+function agreementExecute(token) {
 	const {
 		_redis: redis,
 		_config: config
@@ -11,7 +11,19 @@ function agreementExecute(planId) {
 
 	let promise = Promise.bind(this)
 
-	return promise
+	function sendRequest() {
+		return Promise.create((resolve, reject) => {
+			paypal.billingAgreement.execute(token, {}, _config.paypal, (error, executedInfo) => {
+				if (error) {
+					reject(error)
+				} else {
+					resolve(executedInfo)
+				}
+			})
+		})
+	}
+
+	return promise.then(sendRequest)
 }
 
 module.exports = agreementExecute

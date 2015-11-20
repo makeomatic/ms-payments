@@ -167,7 +167,7 @@ class Payments extends EventEmitter {
    * @return {Promise}
    */
   _validate(schema, message) {
-    return validate(route, message)
+    return validate(schema, message)
       .bind(this)
       .return(message)
       .catch((error) => {
