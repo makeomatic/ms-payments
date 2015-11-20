@@ -1,0 +1,11 @@
+{
+	"id": "planUpdate",
+	"type": "object",
+	"required": ["op"],
+	"properties": {
+		"op": { "type": "string", "minLength": 1 },
+		"path": { "type": "string", "minLength": 1 },
+		"value": { "type": "object" },
+		"from": { "type": "string", "minLength": 1 }
+	}
+}

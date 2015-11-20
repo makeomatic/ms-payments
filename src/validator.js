@@ -1,7 +1,8 @@
 const Ajv = require('ajv')
+const Promise = require('bluebird')
 const fs = require('fs')
 const p = require('path')
-const Promise = require('bluebird')
+const errors = require('common-errors')
 
 class Validator {
 	constructor(ajvInstance) {
@@ -42,7 +43,7 @@ class Validator {
 
 function createValidator(path) {
 	if (!fs.existsSync(path)) {
-		throw new TypeError(`Provided path ${path} does not exist`)
+		throw new errors.ArgumentError('path', new errors.Error(`Provided path ${path} does not exist`))
 	}
 
 	const ajv = Ajv({ allErrors: true })
