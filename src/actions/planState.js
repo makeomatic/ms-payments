@@ -28,7 +28,7 @@ function planState(planId, state) {
 		}
 
 		return Promise.create((resolve, reject) => {
-			const { isValid, errors } = _ajv.validate(request)
+			const { isValid, errors } = _ajv.validate("planUpdate", request)
 			if (!isValid) {
 				reject(errors)
 				return
