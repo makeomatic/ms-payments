@@ -36,7 +36,7 @@ const config = {
 };
 
 describe('Payments suite', function UserClassSuite() {
-  const Payment = require('../src/payments.js');
+  const Payments = require('../src/payments.js');
 
   // inits redis mock cluster
   function redisMock() {
@@ -64,73 +64,127 @@ describe('Payments suite', function UserClassSuite() {
     this.server_3.disconnect();
   }
 
-  describe('configuration suite', function ConfigurationSuite() {
-    beforeEach(redisMock);
-
-    it('must throw on invalid configuration', function test() {
-      expect(function throwOnInvalidConfiguration() {
-        return new Payments();
-      }).to.throw(Errors.ValidationError);
-    });
-
-    it('must be able to connect to and disconnect from amqp', function test() {
-      const payments = new Payments(config);
-      return payments._connectAMQP().tap(() => {
-        return payments._closeAMQP();
-      });
-    });
-
-    it('must be able to connect to and disconnect from redis', function test() {
-      const payments = new Payments(config);
-      return payments._connectRedis().tap(() => {
-        return payments._closeRedis();
-      });
-    });
-
-    it('must be able to initialize and close service', function test() {
-      const payments = new Payments(config);
-      return payments.connect().tap(() => {
-        return payments.close();
-      });
-    });
-
-    afterEach(tearDownRedisMock);
-  });
-
   describe('unit tests', function UnitSuite() {
+    this.timeout(10000) // paypal is slow
+
+    let payments
+
     beforeEach(redisMock);
 
     beforeEach(function startService() {
       function emptyStub() {}
 
-      this.payments = new Payments(config);
-      this.payments._mailer = {
+      payments = new Payments(config);
+      payments._mailer = {
         send: emptyStub,
       };
-      this.payments._redis = {};
+      payments._redis = {};
       [
         'hexists', 'hsetnx', 'pipeline', 'expire', 'zadd', 'hgetallBuffer', 'get',
         'set', 'hget', 'hdel', 'del', 'hmgetBuffer', 'incrby', 'zrem', 'zscoreBuffer', 'hmget',
         'hset',
       ].forEach(prop => {
-        this.payments._redis[prop] = emptyStub;
+        payments._redis[prop] = emptyStub;
       });
     });
 
     describe('plans#', function plansSuite() {
 
-      it('Should fail to create on invalid plan schema')
-      it('Should create a plan')
-      it('Should fail to activate on an unknown plan id')
-      it('Should activate the plan')
+      const createPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.create };
+      const deletePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.delete };
+      const listPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.list };
+      const updatePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.update };
+      const statePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.state };
+
+      let plan_id
+
+      it('Should fail to create on invalid plan schema', () => {
+        const data = {
+          something: "useless"
+        }
+
+        return payments.router(data, createPlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should create a plan', () => {
+        const data = {
+          name: "test plan",
+          description: "test plan",
+          type: "fixed",
+          payment_definitions: [{
+            name: "test definition",
+            type: "regular",
+            frequency_interval: "1",
+            frequency: "month",
+            cycles: "3",
+            amount: {
+              currency: "USD",
+              value: "1.99"
+            },
+            charge_models: [{
+              type: "shipping",
+              amount: {
+                "currency": "USD",
+                "value": "0"
+              }
+            }]
+          }],
+          merchant_preferences: {
+            "cancel_url": "http://cancel.com",
+            "return_url": "http://return.com"
+          }
+        }
+
+        return payments.router(data, createPlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isFulfilled()).to.be.eq(true)
+            expect(result.value()).to.have.ownProperty("id")
+            plan_id = result.value().id
+          })
+      })
+      it('Should fail to activate on an unknown plan id', () => {
+        return payments.router({"id": "random", "state": "active"}, statePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+          })
+      })
+      it('Should fail to activate on an invalid state', () => {
+        return payments.router({"id": "random", "state": "invalid"}, statePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should activate the plan', () => {
+        return payments.router({"id": plan_id, "state": "active"}, statePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isFulfilled()).to.be.eq(true)
+          })
+      })
       it('Should fail to update on an unknown plan id')
       it('Should fail to update on invalid plan schema')
       it('Should update plan info')
       it('Should fail to list on invalid query schema')
       it('Should list all plans')
       it('Should fail to delete on an unknown plan id')
-      it('Should delete plan')
-
+      it('Should delete plan', () => {
+        return payments.router(plan_id, deletePlanHeaders)
+          .reflect()
+          .then((result) => {
+            if (result.isRejected()) {
+              console.log(require("util").inspect(result.reason(), { depth: 5 }))
+            }
+            expect(result.isFulfilled()).to.be.eq(true)
+          })
+      })
     })
 
     describe('agreements#', function agreementsSuite() {

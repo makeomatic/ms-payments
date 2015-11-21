@@ -3,42 +3,29 @@ const Errors = require('common-errors')
 
 const paypal = require('paypal-rest-sdk')
 
-const validStates = ["created", "active", "inactive", "deleted"]
-
-function planState(planId, state) {
-	if (validStates.indexOf(state) < 0) {
-		throw new Errors.ArgumentError(state, new Errors.Error(`State must be one of ${validStates.join(", ")}`))
-	}
-
+function planState(message) {
 	const {
-		_redis: redis,
-		_config: config,
-		_ajv: ajv
+		//_redis: redis,
+		_config
 	} = this
 
 	let promise = Promise.bind(this)
 
 	function sendRequest() {
-		const request = {
+		const request = [{
 			"op": "replace",
 			"path": "/",
 			"value": {
-				"state": state
+				"state": message.state
 			}
-		}
+		}]
 
-		return Promise.create((resolve, reject) => {
-			const { isValid, errors } = _ajv.validate("planUpdate", request)
-			if (!isValid) {
-				reject(errors)
-				return
-			}
-
-			paypal.billingPlan.update(planId, request, _config.paypal, (error) => {
+		return new Promise((resolve, reject) => {
+			paypal.billingPlan.update(message.id, request, _config.paypal, (error) => {
 				if (error) {
           reject(error)
         } else {
-          resolve(state)
+          resolve(message.state)
         }
 			})
 		})

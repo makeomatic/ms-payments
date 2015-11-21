@@ -12,7 +12,7 @@ function agreementCreate(agreement) {
 	let promise = Promise.bind(this)
 
 	function sendRequest() {
-		return Promise.create((resolve, reject) => {
+		return new Promise((resolve, reject) => {
 			paypal.billingAgreement.create(agreement, _config.paypal, (error, newAgreement) => {
 				if (error) {
 					reject(error)

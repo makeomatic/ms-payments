@@ -3,7 +3,6 @@ const Validation = require('ms-amqp-validation')
 const Mailer = require('ms-mailer-client')
 const Promise = require('bluebird')
 const Errors = require('common-errors')
-const EventEmitter = require('eventemitter3')
 const ld = require('lodash')
 const redis = require('ioredis')
 const paypal = require('paypal-rest-sdk')
@@ -19,28 +18,40 @@ const planCreate = require('./actions/planCreate.js')
 const planList   = require('./actions/planList.js')
 const planDelete = require('./actions/planDelete.js')
 const planUpdate = require('./actions/planUpdate.js')
+const planState  = require('./actions/planState.js')
 
 const agreementCreate = require('./actions/agreementCreate.js')
 const agreementExecute = require('./actions/agreementExecute.js')
 
+const MService = require('mservice')
+
 /**
  * Class representing payments handling
- * @extends EventEmitter
+ * @extends MService
  */
-class Payments extends EventEmitter {
+class Payments extends MService {
 
   /**
    * Configuration options for the service
    * @type {Object}
    */
-  static defaultOpts() {
-    return {
+  static defaultOpts = {
       debug: process.env.NODE_ENV === 'development',
+      plugins: [ 'logger', 'amqp', 'redisCluster', 'validator' ],
       prefix: 'payments',
       // postfixes for routes that we support
       postfix: {
-        // ban, supports both unban/ban actions
-        ban: 'ban',
+        plan: {
+          create: "create",
+          update: "update",
+          list: "list",
+          delete: "delete",
+          state: "state"
+        },
+        agreement: {
+          create: "create",
+          execute: "execute"
+        }
       },
       amqp: {
         queue: 'ms-payments',
@@ -54,8 +65,8 @@ class Payments extends EventEmitter {
         mode: "sandbox",
         client_id: "ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx",
         client_secret: "EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv"
-      }
-    }
+      },
+      validator: [ __dirname + '/../schemas' ]
   }
 
   /**
@@ -64,65 +75,9 @@ class Payments extends EventEmitter {
    * @return {Payments}
    */
   constructor(opts = {}) {
-    super()
-    const config = this._config = ld.merge({}, Payments.defaultOpts(), opts)
-
-    // map routes we listen to
-    const { prefix } = config
-    config.amqp.listen = ld.map(config.postfix, function assignPostfix(postfix) {
-      return `${prefix}.${postfix}`
-    })
-
-    // define logger
-    this.setLogger()
-
+    super(ld.merge({}, Payments.defaultOpts, opts))
     // load validation schemas
-    this.ajv = createValidator(__dirname + "../schemas")
-
-    // test if config is valid
-    const { isValid, errors } = this.ajv.validateSync('config', config)
-    if (!isValid) {
-      this.log.fatal('Invalid configuration:', errors)
-      throw new Error(this.ajv.readable(errors))
-    }
-  }
-
-  /**
-   * Set logger
-   */
-  setLogger() {
-    const config = this._config
-    let {
-      logger
-    } = config
-    if (!config.hasOwnProperty('logger')) {
-      logger = config.debug
-    }
-
-    // define logger
-    if (logger && logger instanceof bunyan) {
-      this.log = logger
-    } else {
-      let stream
-      if (logger) {
-        stream = {
-          stream: process.stdout,
-          level: config.debug ? 'debug' : 'info',
-        }
-      } else {
-        stream = {
-          level: 'trace',
-          type: 'raw',
-          stream: new bunyan.RingBuffer({
-            limit: 100
-          }),
-        }
-      }
-      this.log = bunyan.createLogger({
-        name: 'ms-payments',
-        streams: [stream],
-      })
-    }
+    //this.validator = createValidator(this._config.validator)
   }
 
   /**
@@ -135,13 +90,31 @@ class Payments extends EventEmitter {
    */
   router(message, headers, actions, next) {
     const route = headers.routingKey.split('.').pop()
-    const defaultRoutes = Payments.defaultOpts().postfix
+    const defaultRoutes = Payments.defaultOpts.postfix
     const { postfix } = this._config
 
     let promise
     switch (route) {
-      case postfix.createPlan:
+      case postfix.plan.create:
         promise = this._validate("plan", message).then(this._createPlan)
+        break
+      case postfix.plan.delete:
+        promise = this._validate("plan-delete", message).then(this._deletePlan)
+        break
+      case postfix.plan.list:
+        promise = this._validate("plan-get", message).then(this._listPlans)
+        break
+      case postfix.plan.update:
+        promise = this._validate("plan-update", message).then(this._updatePlans)
+        break
+      case postfix.plan.state:
+        promise = this._validate("plan-state", message).then(this._statePlan)
+        break
+      case postfix.agreement.create:
+        promise = this._validate("agreement-create", message).then(this._createAgreement)
+        break
+      case postfix.agreement.execute:
+        promise = this._validate("agreement-execute", message).then(this._executeAgreement)
         break
       default:
         promise = Promise.reject(new Errors.NotImplementedError(fmt('method "%s"', route)))
@@ -167,12 +140,14 @@ class Payments extends EventEmitter {
    * @return {Promise}
    */
   _validate(schema, message) {
-    return validate(schema, message)
+    return this.validator.validate(schema, message)
       .bind(this)
       .return(message)
       .catch((error) => {
-        this.log.warn('Validation error:', error.errors)
-        throw new Error(this.ajv.readable(error.errors))
+        //this.log.warn('Validation error:', error.toJSON());
+        throw error;
+        //this.log.warn('Validation error:', error.errors)
+        //throw new Errors.ValidationError(this.validator.readable(error.errors))
       })
   }
 
@@ -182,116 +157,23 @@ class Payments extends EventEmitter {
    * @return {Promise}
    */
   _createPlan(message) {
-    return createPlan.call(this, message)
+    return planCreate.call(this, message)
   }
 
-  /**
-   * @private
-   * @return {Promise}
-   */
-  _connectRedis() {
-    if (this._redis) {
-      return Promise.reject(new Errors.NotPermittedError('redis was already started'))
-    }
-
-    const config = this._config.redis
-    return new Promise(function redisClusterConnected(resolve, reject) {
-        let onReady
-        let onError
-
-        const instance = new redis.Cluster(config.hosts, config.options || {})
-
-        onReady = function redisConnect() {
-          instance.removeListener('error', onError)
-          resolve(instance)
-        }
-
-        onError = function redisError(err) {
-          instance.removeListener('ready', onReady)
-          reject(err)
-        }
-
-        instance.once('ready', onReady)
-        instance.once('error', onError)
-      })
-      .tap((instance) => {
-        this._redis = instance
-      })
+  _deletePlan(message) {
+    return planDelete.call(this, message)
   }
 
-  /**
-   * @private
-   * @return {Promise}
-   */
-  _closeRedis() {
-    if (!this._redis) {
-      return Promise.reject(new Errors.NotPermittedError('redis was not started'))
-    }
-
-    return this._redis
-      .quit()
-      .tap(() => {
-        this._redis = null
-      })
+  _listPlans(message) {
+    return planList.call(this, message)
   }
 
-  /**
-   * @private
-   * @return {Promise}
-   */
-  _connectAMQP() {
-    if (this._amqp) {
-      return Promise.reject(new Errors.NotPermittedError('amqp was already started'))
-    }
-
-    return AMQPTransport
-      .connect(this._config.amqp, this.router)
-      .tap((amqp) => {
-        this._amqp = amqp
-        this._mailer = new Mailer(amqp, this._config.mailer)
-      })
-      .catch((err) => {
-        this.log.fatal('Error connecting to AMQP', err.toJSON())
-        throw err
-      })
+  _updatePlans(message) {
+    return planUpdate.call(this, message)
   }
 
-  /**
-   * @private
-   * @return {Promise}
-   */
-  _closeAMQP() {
-    if (!this._amqp) {
-      return Promise.reject(new Errors.NotPermittedError('amqp was not started'))
-    }
-
-    return this._amqp
-      .close()
-      .tap(() => {
-        this._amqp = null
-        this._mailer = null
-      })
-  }
-
-  /**
-   * @return {Promise}
-   */
-  connect() {
-    return Promise.all([
-        this._connectAMQP(),
-        this._connectRedis(),
-      ])
-      .return(this)
-  }
-
-  /**
-   * @return {Promise}
-   */
-  close() {
-    return Promise.all([
-      this._closeAMQP(),
-      this._closeRedis(),
-    ])
+  _statePlan(message) {
+    return planState.call(this, message)
   }
 
 }

@@ -1,5 +1,5 @@
 {
-	"id": "planGet",
+	"id": "plan-get",
 	"type": "object",
 	"properties": {
 		"page": { "type": "string", "minLength": 1 },

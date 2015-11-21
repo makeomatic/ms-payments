@@ -42,16 +42,19 @@ class Validator {
 }
 
 function createValidator(path) {
-	if (!fs.existsSync(path)) {
-		throw new errors.ArgumentError('path', new errors.Error(`Provided path ${path} does not exist`))
+	if (!Array.isArray(path)) {
+		path = [path]
 	}
 
 	const ajv = Ajv({ allErrors: true })
 
-	const schemaList = fs.readdirSync(path).filter((item) => item.indexOf(".json") > 0)
-	schemaList.forEach((schema) => {
-		const schemaDefinition = require(p.join(path, schema))
-		ajv.addSchema(schemaDefinition)
+	path.forEach((element) => {
+		if (!fs.existsSync(element)) { return }
+		const schemaList = fs.readdirSync(element).filter((item) => item.indexOf(".json") > 0)
+		schemaList.forEach((schema) => {
+			const schemaDefinition = require(p.join(element, schema))
+			ajv.addSchema(schemaDefinition)
+		})
 	})
 
 	return new Validator(ajv)

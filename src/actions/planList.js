@@ -10,22 +10,14 @@ const paypal = require('paypal-rest-sdk')
  */
 function planList(query) {
 	const {
-		_redis: redis,
-		_config: config,
-		_ajv: ajv
+		_config
 	} = this
 
 	let promise = Promise.bind(this)
 
 	function sendRequest() {
-		return Promise.create((resolve, reject) => {
-			const { isValid, errors } = _ajv.validate("planGet", query)
-			if (!isValid) {
-				reject(errors)
-				return
-			}
-
-			paypal.billingPlan.get(query, _config.paypal, (error, list) => {
+		return new Promise((resolve, reject) => {
+			paypal.billingPlan.list(query, _config.paypal, (error, list) => {
 				if (error) {
 					reject(error)
 				} else {

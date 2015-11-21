@@ -35,7 +35,7 @@
 			"properties": {
 				"id": { "type": "string", "minLength": 1 },
 				"name": { "type": "string", "minLength": 1 },
-				"type": { "type": "string", "minLength": 1 },
+				"type": { "type": "string", "minLength": 1, "enum": ["trial", "regular"] },
 				"frequency_interval": { "type": "string", "minLength": 1 },
 				"frequency": { "type": "string", "minLength": 1 },
 				"cycles": { "type": "string", "minLength": 1 },

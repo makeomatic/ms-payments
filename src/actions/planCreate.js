@@ -7,16 +7,16 @@ const paypal = require('paypal-rest-sdk')
  * Create a plan with supplied parameters according to schema
  * @param {Object} Plan object
  */
-function createPlan(newPlan) {
+function planCreate(newPlan) {
   const {
     _redis: redis,
-    _config: config
+    _config
   } = this
 
   let promise = Promise.bind(this)
 
   function sendRequest() {
-    return Promise.create((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       paypal.billingPlan.create(newPlan, _config.paypal, function(error, plan) {
         if (error) {
           reject(error)
@@ -34,3 +34,5 @@ function createPlan(newPlan) {
 
   return promise.then(sendRequest).then(saveToRedis)
 }
+
+module.exports = planCreate
