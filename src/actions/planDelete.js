@@ -1,7 +1,7 @@
 const state = require('./planState.js')
 
 function planDelete(message) {
-	return state.call(this, message, "deleted")
+	return state.call(this, { id: message, state: "deleted" })
 }
 
 module.exports = planDelete

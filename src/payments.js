@@ -111,7 +111,7 @@ class Payments extends MService {
         promise = this._validate("plan-state", message).then(this._statePlan)
         break
       case postfix.agreement.create:
-        promise = this._validate("agreement-create", message).then(this._createAgreement)
+        promise = this._validate("agreement", message).then(this._createAgreement)
         break
       case postfix.agreement.execute:
         promise = this._validate("agreement-execute", message).then(this._executeAgreement)
@@ -174,6 +174,14 @@ class Payments extends MService {
 
   _statePlan(message) {
     return planState.call(this, message)
+  }
+
+  _createAgreement(message) {
+    return agreementCreate(this, message)
+  }
+
+  _executeAgreement(message) {
+    return agreementExecute(this, message)
   }
 
 }

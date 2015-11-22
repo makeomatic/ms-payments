@@ -3,24 +3,16 @@ const Errors = require('common-errors')
 
 const paypal = require('paypal-rest-sdk')
 
-function planUpdate(planId, query) {
+function planUpdate(message) {
 	const {
-		_redis: redis,
-		_config: config,
-		_ajv: ajv
+		_config
 	} = this
 
 	let promise = Promise.bind(this)
 
 	function sendRequest() {
 		return new Promise((resolve, reject) => {
-			const { isValid, errors } = _ajv.validate("planUpdate", query)
-			if (!isValid) {
-				reject(errors)
-				return
-			}
-
-			paypal.billingPlan.update(planId, query, _config.paypal, (error) => {
+			paypal.billingPlan.update(message.id, message.query, _config.paypal, (error) => {
 				if (error) {
 					reject(error)
 				} else {

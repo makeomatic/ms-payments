@@ -10,6 +10,12 @@ const ld = require('lodash');
 // make sure we have stack
 chai.config.includeStack = true;
 
+function debug(result) {
+  if (result.isRejected()) {
+    console.log(require("util").inspect(result, { depth: 5 }))
+  }
+}
+
 const config = {
   amqp: {
     connection: {
@@ -67,11 +73,63 @@ describe('Payments suite', function UserClassSuite() {
   describe('unit tests', function UnitSuite() {
     this.timeout(10000) // paypal is slow
 
+    const createPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.create };
+    const deletePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.delete };
+    const listPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.list };
+    const updatePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.update };
+    const statePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.state };
+
+    const createAgreementHeaders = { routingKey: Payments.defaultOpts.postfix.agreement.create };
+    const executeAgreementHeaders = { routingKey: Payments.defaultOpts.postfix.agreement.execute };
+
+    let plan_id
     let payments
+    let agreement_id
+    let agreement_token
 
-    beforeEach(redisMock);
+    const testPlan = {
+      name: "test plan",
+      description: "test plan",
+      type: "fixed",
+      payment_definitions: [{
+        name: "test definition",
+        type: "regular",
+        frequency_interval: "1",
+        frequency: "month",
+        cycles: "3",
+        amount: {
+          currency: "USD",
+          value: "1.99"
+        },
+        charge_models: [{
+          type: "shipping",
+          amount: {
+            "currency": "USD",
+            "value": "0"
+          }
+        }]
+      }],
+      merchant_preferences: {
+        "cancel_url": "http://cancel.com",
+        "return_url": "http://return.com"
+      }
+    }
 
-    beforeEach(function startService() {
+    const testAgreement = {
+      name: "test agreement",
+      description: "test agreement",
+      start_date: "2017-12-01T00:00:00Z",
+      payer: {
+        payment_method: "paypal"
+      },
+      plan: {
+        id: plan_id
+      }
+    }
+
+    before(redisMock);
+
+    before(function startService() {
       function emptyStub() {}
 
       payments = new Payments(config);
@@ -88,16 +146,7 @@ describe('Payments suite', function UserClassSuite() {
       });
     });
 
-    describe('plans#', function plansSuite() {
-
-      const createPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.create };
-      const deletePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.delete };
-      const listPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.list };
-      const updatePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.update };
-      const statePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.state };
-
-      let plan_id
-
+    /*describe('plans#', function plansSuite() {
       it('Should fail to create on invalid plan schema', () => {
         const data = {
           something: "useless"
@@ -111,35 +160,7 @@ describe('Payments suite', function UserClassSuite() {
           })
       })
       it('Should create a plan', () => {
-        const data = {
-          name: "test plan",
-          description: "test plan",
-          type: "fixed",
-          payment_definitions: [{
-            name: "test definition",
-            type: "regular",
-            frequency_interval: "1",
-            frequency: "month",
-            cycles: "3",
-            amount: {
-              currency: "USD",
-              value: "1.99"
-            },
-            charge_models: [{
-              type: "shipping",
-              amount: {
-                "currency": "USD",
-                "value": "0"
-              }
-            }]
-          }],
-          merchant_preferences: {
-            "cancel_url": "http://cancel.com",
-            "return_url": "http://return.com"
-          }
-        }
-
-        return payments.router(data, createPlanHeaders)
+        return payments.router(testPlan, createPlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isFulfilled()).to.be.eq(true)
@@ -169,34 +190,129 @@ describe('Payments suite', function UserClassSuite() {
             expect(result.isFulfilled()).to.be.eq(true)
           })
       })
-      it('Should fail to update on an unknown plan id')
-      it('Should fail to update on invalid plan schema')
-      it('Should update plan info')
-      it('Should fail to list on invalid query schema')
-      it('Should list all plans')
-      it('Should fail to delete on an unknown plan id')
+      it('Should fail to update on an unknown plan id', () => {
+        return payments.router({"id": "random", "plan": {}}, updatePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should fail to update on invalid plan schema', () => {
+        return payments.router({"id": plan_id, "plan": { "invalid": true }}, updatePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should update plan info', () => {
+        return payments.router({"id": plan_id, "query": [{
+          "path": "/",
+          "op": "replace",
+          "value": {
+            "state": "inactive"
+          }
+        }]}, updatePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isFulfilled()).to.be.eq(true)
+          })
+      })
+      it('Should fail to list on invalid query schema', () => {
+        return payments.router({
+          "status": "invalid"
+        }, listPlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should list all plans', () => {
+        return payments.router({}, listPlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isFulfilled()).to.be.eq(true)
+          })
+      })
+      it('Should fail to delete on an unknown plan id', () => {
+        return payments.router("random_id", deletePlanHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+          })
+      })
       it('Should delete plan', () => {
         return payments.router(plan_id, deletePlanHeaders)
           .reflect()
           .then((result) => {
-            if (result.isRejected()) {
-              console.log(require("util").inspect(result.reason(), { depth: 5 }))
-            }
+            debug(result)
             expect(result.isFulfilled()).to.be.eq(true)
           })
       })
-    })
+    })*/
 
     describe('agreements#', function agreementsSuite() {
 
-      it('Should fail to create agreement on invalid schema')
-      it('Should create an agreement')
-      it('Should fail to execute on an unknown token')
-      it('Should reject unapproved agreement')
-      it('Should execute an approved agreement')
+      before(() => {
+        return payments.router(testPlan, createPlanHeaders).then((plan) => {
+          plan_id = plan.id
+        })
+      })
+
+      it('Should fail to create agreement on invalid schema', () => {
+        return payments.router({ "random": true }, createAgreementHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+            expect(result.reason().name).to.be.eq("ValidationError")
+          })
+      })
+      it('Should create an agreement', () => {
+        testAgreement.plan.id = plan_id
+        console.log(testAgreement)
+        return payments.router(testAgreement, createAgreementHeaders)
+          .reflect()
+          .then((result) => {
+            debug(result)
+            expect(result.isFulfilled()).to.be.eq(true)
+            agreement_token = result.value().token
+            console.log("Approve URL: ", result.value().url)
+            var spawn = require('child_process').spawn
+            spawn('open', [result.value().url]);
+          })
+      })
+      it('Should fail to execute on an unknown token', () => {
+        return payments.router("random token", executeAgreementHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+          })
+      })
+      it('Should reject unapproved agreement', () => {
+        return payments.router(agreement_token, executeAgreementHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isRejected()).to.be.eq(true)
+          })
+      })
+      it('Should execute an approved agreement', () => {
+        this.timeout(100000)
+
+        return Promise.delay(10000).then(() => { return payments.router(agreement_token, executeAgreementHeaders)
+          .reflect()
+          .then((result) => {
+            expect(result.isFulfilled()).to.be.eq(true)
+          })})
+      })
+
+      after(() => {
+        return payments.router(plan_id, deletePlanHeaders)
+      })
 
     })
 
-    afterEach(tearDownRedisMock);
+    after(tearDownRedisMock);
   });
 });

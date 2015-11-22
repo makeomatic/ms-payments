@@ -1,10 +1,10 @@
 {
 	"id": "plan-update",
 	"type": "object",
-	"required": ["id", "params"],
+	"required": ["id", "query"],
 	"properties": {
 		"id": { "type": "string", "minLength": 1 },
-		"params": {
+		"query": {
 			"type": "array",
 			"items": {
 				"type": "object",

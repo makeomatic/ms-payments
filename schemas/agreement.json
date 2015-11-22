@@ -13,7 +13,20 @@
 		"shipping_address": { "$ref": "common#/definitions/address" },
 		"override_merchant_preferences": { "$ref": "common#/definitions/merchant_preferences" },
 		"override_charge_models": { "type": "array", "items": { "$ref": "common#/definitions/override_charge_model"} },
-		"plan": { "$ref": "plan#" },
+		"plan": {
+			"anyOf": [
+				{
+					"$ref": "plan#"
+				},
+				{
+					"type": "object",
+					"required": ["id"],
+					"properties": {
+						"id": { "type": "string", "minLength": 1 }
+					}
+				}
+			]
+		},
 		"create_time": { "type": "string", "minLength": 1 },
 		"update_time": { "type": "string", "minLength": 1 },
 		"links": { "type": "array", "items": { "$ref": "common#/definitions/links" } }

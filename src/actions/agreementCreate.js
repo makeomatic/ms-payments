@@ -2,11 +2,11 @@ const Promise = require('bluebird')
 const Errors = require('common-errors')
 
 const paypal = require('paypal-rest-sdk')
+const url = require('url')
 
 function agreementCreate(agreement) {
 	const {
-		_redis: redis,
-		_config: config
+		_config
 	} = this
 
 	let promise = Promise.bind(this)
@@ -17,7 +17,14 @@ function agreementCreate(agreement) {
 				if (error) {
 					reject(error)
 				} else {
-					resolve(newAgreement)
+					for (link of newAgreement.links) {
+						if (link.rel == "approval_url") {
+							const token = url.parse(link.href, true).query.token
+							const approval_url = link.href
+
+							resolve({ token: token, url: approval_url })
+						}
+					}
 				}
 			})
 		})
