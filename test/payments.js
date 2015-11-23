@@ -146,7 +146,7 @@ describe('Payments suite', function UserClassSuite() {
       });
     });
 
-    /*describe('plans#', function plansSuite() {
+    describe('plans#', function plansSuite() {
       it('Should fail to create on invalid plan schema', () => {
         const data = {
           something: "useless"
@@ -251,7 +251,7 @@ describe('Payments suite', function UserClassSuite() {
             expect(result.isFulfilled()).to.be.eq(true)
           })
       })
-    })*/
+    })
 
     describe('agreements#', function agreementsSuite() {
 
@@ -295,14 +295,14 @@ describe('Payments suite', function UserClassSuite() {
             expect(result.isRejected()).to.be.eq(true)
           })
       })
-      it('Should execute an approved agreement', () => {
+      /*it('Should execute an approved agreement', () => {
         return payments.router(agreement_token, executeAgreementHeaders)
           .reflect()
           .then((result) => {
             debug(result)
             expect(result.isFulfilled()).to.be.eq(true)
           })
-      })
+      })*/
 
       after(() => {
         return payments.router(plan_id, deletePlanHeaders)
