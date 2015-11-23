@@ -1,6 +1,6 @@
 const Promise = require('bluebird')
 const Errors = require('common-errors')
-
+const ld = require('lodash')
 const paypal = require('paypal-rest-sdk')
 const url = require('url')
 
@@ -17,13 +17,12 @@ function agreementCreate(agreement) {
 				if (error) {
 					reject(error)
 				} else {
-					for (link of newAgreement.links) {
-						if (link.rel == "approval_url") {
-							const token = url.parse(link.href, true).query.token
-							const approval_url = link.href
-
-							resolve({ token: token, url: approval_url })
-						}
+					const approval = ld.findWhere(newAgreement.links, { rel: 'approval_url' })
+					if (approval === null) {
+						reject(new Errors.NotSupportedError("Unexpected PayPal response!"))
+					} else {
+						const token = url.parse(approval.href, true).query.token
+						resolve({ token, url: approval.href })
 					}
 				}
 			})

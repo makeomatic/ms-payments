@@ -5,8 +5,7 @@ const paypal = require('paypal-rest-sdk')
 
 function agreementExecute(token) {
 	const {
-		_redis: redis,
-		_config: config
+		_config
 	} = this
 
 	let promise = Promise.bind(this)

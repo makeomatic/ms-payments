@@ -71,7 +71,7 @@ describe('Payments suite', function UserClassSuite() {
   }
 
   describe('unit tests', function UnitSuite() {
-    this.timeout(10000) // paypal is slow
+    this.timeout(100000) // paypal is slow
 
     const createPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.create };
     const deletePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.delete };
@@ -98,13 +98,13 @@ describe('Payments suite', function UserClassSuite() {
         frequency: "month",
         cycles: "3",
         amount: {
-          currency: "USD",
-          value: "1.99"
+          currency: "RUB",
+          value: "50"
         },
         charge_models: [{
           type: "shipping",
           amount: {
-            "currency": "USD",
+            "currency": "RUB",
             "value": "0"
           }
         }]
@@ -258,6 +258,7 @@ describe('Payments suite', function UserClassSuite() {
       before(() => {
         return payments.router(testPlan, createPlanHeaders).then((plan) => {
           plan_id = plan.id
+          return payments.router({"id": plan_id, "state": "active"}, statePlanHeaders)
         })
       })
 
@@ -278,9 +279,6 @@ describe('Payments suite', function UserClassSuite() {
             debug(result)
             expect(result.isFulfilled()).to.be.eq(true)
             agreement_token = result.value().token
-            console.log("Approve URL: ", result.value().url)
-            var spawn = require('child_process').spawn
-            spawn('open', [result.value().url]);
           })
       })
       it('Should fail to execute on an unknown token', () => {
@@ -298,13 +296,12 @@ describe('Payments suite', function UserClassSuite() {
           })
       })
       it('Should execute an approved agreement', () => {
-        this.timeout(100000)
-
-        return Promise.delay(10000).then(() => { return payments.router(agreement_token, executeAgreementHeaders)
+        return payments.router(agreement_token, executeAgreementHeaders)
           .reflect()
           .then((result) => {
+            debug(result)
             expect(result.isFulfilled()).to.be.eq(true)
-          })})
+          })
       })
 
       after(() => {

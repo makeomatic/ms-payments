@@ -14,7 +14,7 @@
 		"override_merchant_preferences": { "$ref": "common#/definitions/merchant_preferences" },
 		"override_charge_models": { "type": "array", "items": { "$ref": "common#/definitions/override_charge_model"} },
 		"plan": {
-			"anyOf": [
+			"oneOf": [
 				{
 					"$ref": "plan#"
 				},

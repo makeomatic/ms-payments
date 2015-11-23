@@ -42,15 +42,15 @@ class Payments extends MService {
       // postfixes for routes that we support
       postfix: {
         plan: {
-          create: "create",
-          update: "update",
-          list: "list",
-          delete: "delete",
-          state: "state"
+          create: "plan_create",
+          update: "plan_update",
+          list: "plan_list",
+          delete: "plan_delete",
+          state: "plan_state"
         },
         agreement: {
-          create: "create",
-          execute: "execute"
+          create: "agreement_create",
+          execute: "agreement_execute"
         }
       },
       amqp: {
@@ -117,7 +117,7 @@ class Payments extends MService {
         promise = this._validate("agreement-execute", message).then(this._executeAgreement)
         break
       default:
-        promise = Promise.reject(new Errors.NotImplementedError(fmt('method "%s"', route)))
+        promise = Promise.reject(new Errors.NotImplementedError(fmt('method "%s"', route))).bind(this)
         break
     }
 
@@ -177,11 +177,11 @@ class Payments extends MService {
   }
 
   _createAgreement(message) {
-    return agreementCreate(this, message)
+    return agreementCreate.call(this, message)
   }
 
   _executeAgreement(message) {
-    return agreementExecute(this, message)
+    return agreementExecute.call(this, message)
   }
 
 }
