@@ -21,8 +21,6 @@
   },
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
-    "ajv": "^1.4.10",
-    "ajv-i18n": "^0.1.1",
     "bluebird": "^3.0.5",
     "bunyan": "^1.5.1",
     "bytes": "^2.1.0",
@@ -40,7 +38,6 @@
     "node-uuid": "^1.4.6",
     "paypal-rest-sdk": "^1.6.4",
     "request-promise": "^1.0.2",
-    "scrypt": "^5.4.1",
     "urlsafe-base64": "^1.0.0"
   },
   "devDependencies": {

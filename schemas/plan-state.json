@@ -1,5 +1,5 @@
 {
-	"id": "plan-state",
+	"id": "plan.state",
 	"type": "object",
 	"required": ["id", "state"],
 	"properties": {

@@ -1,5 +1,5 @@
 {
-	"id": "agreement",
+	"id": "agreement.create",
 	"type": "object",
 	"required": ["name", "description", "start_date", "payer", "plan"],
 	"properties": {
@@ -16,7 +16,7 @@
 		"plan": {
 			"oneOf": [
 				{
-					"$ref": "plan#"
+					"$ref": "plan.create#"
 				},
 				{
 					"type": "object",

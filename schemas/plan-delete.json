@@ -1,5 +1,5 @@
 {
-	"id": "plan-delete",
+	"id": "plan.delete",
 	"type": "string",
 	"minLength": 1
 }

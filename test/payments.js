@@ -73,14 +73,14 @@ describe('Payments suite', function UserClassSuite() {
   describe('unit tests', function UnitSuite() {
     this.timeout(100000) // paypal is slow
 
-    const createPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.create };
-    const deletePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.delete };
-    const listPlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.list };
-    const updatePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.update };
-    const statePlanHeaders = { routingKey: Payments.defaultOpts.postfix.plan.state };
+    const createPlanHeaders = { routingKey: 'payments.plan.create' };
+    const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
+    const listPlanHeaders = { routingKey: 'payments.plan.list' };
+    const updatePlanHeaders = { routingKey: 'payments.plan.update' };
+    const statePlanHeaders = { routingKey: 'payments.plan.state' };
 
-    const createAgreementHeaders = { routingKey: Payments.defaultOpts.postfix.agreement.create };
-    const executeAgreementHeaders = { routingKey: Payments.defaultOpts.postfix.agreement.execute };
+    const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
+    const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
 
     let plan_id
     let payments
@@ -276,7 +276,6 @@ describe('Payments suite', function UserClassSuite() {
         return payments.router(testAgreement, createAgreementHeaders)
           .reflect()
           .then((result) => {
-            debug(result)
             expect(result.isFulfilled()).to.be.eq(true)
             agreement_token = result.value().token
           })

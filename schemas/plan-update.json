@@ -1,5 +1,5 @@
 {
-	"id": "plan-update",
+	"id": "plan.update",
 	"type": "object",
 	"required": ["id", "query"],
 	"properties": {

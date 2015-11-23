@@ -1,5 +1,5 @@
 {
-	"id": "agreement-execute",
+	"id": "agreement.execute",
 	"type": "string",
 	"minLength": 1
 }
