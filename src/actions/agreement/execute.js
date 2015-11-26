@@ -1,14 +1,12 @@
-const Promise = require('bluebird')
-const Errors = require('common-errors')
-
-const paypal = require('paypal-rest-sdk')
+const Promise = require('bluebird');
+const paypal = require('paypal-rest-sdk');
 
 function agreementExecute(token) {
 	const {
 		_config
-	} = this
+	} = this;
 
-	let promise = Promise.bind(this)
+	let promise = Promise.bind(this);
 
 	function sendRequest() {
 		return new Promise((resolve, reject) => {
@@ -25,4 +23,4 @@ function agreementExecute(token) {
 	return promise.then(sendRequest)
 }
 
-module.exports = agreementExecute
+module.exports = agreementExecute;

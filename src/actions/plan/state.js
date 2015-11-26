@@ -1,15 +1,13 @@
-const Promise = require('bluebird')
-const Errors = require('common-errors')
-
-const paypal = require('paypal-rest-sdk')
+const Promise = require('bluebird');
+const paypal = require('paypal-rest-sdk');
 
 function planState(message) {
 	const {
 		//_redis: redis,
 		_config
-	} = this
+	} = this;
 
-	let promise = Promise.bind(this)
+	let promise = Promise.bind(this);
 
 	function sendRequest() {
 		const request = [{
@@ -18,7 +16,7 @@ function planState(message) {
 			"value": {
 				"state": message.state
 			}
-		}]
+		}];
 
 		return new Promise((resolve, reject) => {
 			paypal.billingPlan.update(message.id, request, _config.paypal, (error) => {
@@ -34,4 +32,4 @@ function planState(message) {
 	return promise.then(sendRequest)
 }
 
-module.exports = planState
+module.exports = planState;

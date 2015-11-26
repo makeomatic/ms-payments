@@ -1,27 +1,24 @@
-const Promise = require('bluebird')
-const Errors = require('common-errors')
-
-const paypal = require('paypal-rest-sdk')
+const Promise = require('bluebird');
+const paypal = require('paypal-rest-sdk');
 
 /**
  * Create a plan with supplied parameters according to schema
- * @param {Object} Plan object
+ * @param plan A Plan object to create
  */
-function planCreate(newPlan) {
+function planCreate(plan) {
   const {
-    _redis: redis,
     _config
-  } = this
+  } = this;
 
-  let promise = Promise.bind(this)
+  let promise = Promise.bind(this);
 
   function sendRequest() {
     return new Promise((resolve, reject) => {
-      paypal.billingPlan.create(newPlan, _config.paypal, function(error, plan) {
+      paypal.billingPlan.create(plan, _config.paypal, function(error, newPlan) {
         if (error) {
           reject(error)
         } else {
-          resolve(plan)
+          resolve(newPlan)
         }
       })
     })
@@ -35,4 +32,4 @@ function planCreate(newPlan) {
   return promise.then(sendRequest).then(saveToRedis)
 }
 
-module.exports = planCreate
+module.exports = planCreate;

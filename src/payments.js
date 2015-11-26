@@ -1,14 +1,8 @@
-const Promise = require('bluebird')
-const Errors = require('common-errors')
-const ld = require('lodash')
-const redis = require('ioredis')
-const paypal = require('paypal-rest-sdk')
-
-const { format: fmt } = require('util')
-const bunyan = require('bunyan')
-
-const MService = require('mservice')
-const path = require('path')
+const ld = require('lodash');
+const paypal = require('paypal-rest-sdk');
+const bunyan = require('bunyan');
+const MService = require('mservice');
+const path = require('path');
 
 /**
  * Class representing payments handling
@@ -28,12 +22,12 @@ class Payments extends MService {
         initRoutes: true,
         initRouter: true,
         prefix: 'payments',
-        postfix: path.join(__dirname, 'actions'),
+        postfix: path.join(__dirname, 'actions')
       },
       redis: {
         options: {
-          keyPrefix: '{ms-payments}',
-        },
+          keyPrefix: '{ms-payments}'
+        }
       },
       paypal: {
         mode: "sandbox",
@@ -41,7 +35,7 @@ class Payments extends MService {
         client_secret: "EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv"
       },
       validator: [ __dirname + '/../schemas' ]
-  }
+  };
 
   /**
    * Create Payments instance
@@ -53,4 +47,4 @@ class Payments extends MService {
   }
 }
 
-module.exports = Payments
+module.exports = Payments;

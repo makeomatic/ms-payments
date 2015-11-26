@@ -1,19 +1,17 @@
-const Promise = require('bluebird')
-const Errors = require('common-errors')
-
-const paypal = require('paypal-rest-sdk')
+const Promise = require('bluebird');
+const paypal = require('paypal-rest-sdk');
 
 /**
  * Retrieve list of available Plans
- * @param {query} https://developer.paypal.com/docs/rest/api/payments.billing-plans/#list
- * @return {plans} Array of plans
+ * @param query https://developer.paypal.com/docs/rest/api/payments.billing-plans/#list
+ * @return plans Array of plans
  */
 function planList(query) {
 	const {
 		_config
-	} = this
+	} = this;
 
-	let promise = Promise.bind(this)
+	let promise = Promise.bind(this);
 
 	function sendRequest() {
 		return new Promise((resolve, reject) => {
@@ -30,4 +28,4 @@ function planList(query) {
 	return promise.then(sendRequest)
 }
 
-module.exports = planList
+module.exports = planList;
