@@ -1,14 +1,36 @@
 {
-	"id": "plan.list",
-	"type": "object",
-	"properties": {
-    "hidden": { "type": "boolean" },
-		"query": {
+  "id": "plan.list",
+  "type": "object",
+  "properties": {
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "filter": {
       "type": "object",
-      "page": { "type": "string", "minLength": 1 },
-      "status": { "type": "string", "minLength": 1, "enum": ["created", "active", "inactive"] },
-      "page_size": { "type": "string", "minLength": 1 },
-      "total_required": { "type": "string", "minLength": 1 }
+      "patternProperties": {
+        "^.+$": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 50
+        }
+      }
+    },
+    "criteria": {
+      "type": "string",
+      "minLength": 1
+    },
+    "order": {
+      "type": "string",
+      "enum": [ "ASC", "DESC" ]
+    },
+    "owner": {
+      "type": "string"
     }
-	}
+  }
 }

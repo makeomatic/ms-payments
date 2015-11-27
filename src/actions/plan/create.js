@@ -1,35 +1,52 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
+const key = require('../../redisKey.js');
 
-/**
- * Create a plan with supplied parameters according to schema
- * @param plan A Plan object to create
- */
-function planCreate(plan) {
+function planCreate(message) {
   const {
-    _config
+    _config,
+    redis,
   } = this;
 
-  let promise = Promise.bind(this);
+  const promise = Promise.bind(this);
 
   function sendRequest() {
     return new Promise((resolve, reject) => {
-      paypal.billingPlan.create(plan, _config.paypal, function(error, newPlan) {
+      paypal.billingPlan.create(message.plan, _config.paypal, (error, newPlan) => {
         if (error) {
-          reject(error)
+          reject(error);
         } else {
-          resolve(newPlan)
+          resolve(newPlan);
         }
-      })
-    })
+      });
+    });
+  }
+
+  function checkAlias() {
+
   }
 
   function saveToRedis(plan) {
-    // TODO: save to redis something like ID
-    return plan
+    const planKey = key('plans-data', plan.id);
+    const pipeline = redis.pipeline;
+
+    if (message.alias !== null && message.alias !== undefined) {
+      pipeline.hsetnx(planKey, 'alias', message.alias);
+    }
+    pipeline.hsetnx(planKey, 'plan', JSON.stringify(plan));
+    pipeline.hsetnx(planKey, 'type', plan.type);
+    pipeline.hsetnx(planKey, 'state', plan.state);
+    pipeline.hsetnx(planKey, 'name', plan.name);
+    pipeline.hsetnx(planKey, 'hidden', message.hidden);
+
+    pipeline.sadd('plans-index', plan.id);
+
+    return pipeline.exec().then(() => {
+      return plan;
+    });
   }
 
-  return promise.then(sendRequest).then(saveToRedis)
+  return promise.then(checkAlias).then(sendRequest).then(saveToRedis);
 }
 
 module.exports = planCreate;

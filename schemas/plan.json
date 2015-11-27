@@ -1,5 +1,5 @@
 {
-	"id": "plan.create",
+	"id": "plan",
 	"type": "object",
 	"required": ["name", "description", "type", "payment_definitions", "merchant_preferences"],
 	"properties": {

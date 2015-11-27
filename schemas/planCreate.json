@@ -1,0 +1,10 @@
+{
+  "id": "plan.create",
+  "type": "object",
+  "required": ["hidden", "plan"],
+  "properties": {
+    "hidden": { "type": "boolean" },
+    "alias": { "type": "string", "minLength": 1 },
+    "plan": { "$ref": "plan#" }
+  }
+}

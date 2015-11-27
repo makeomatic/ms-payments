@@ -1,31 +1,50 @@
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
+// const paypal = require('paypal-rest-sdk');
 
-/**
- * Retrieve list of available Plans
- * @param message https://developer.paypal.com/docs/rest/api/payments.billing-plans/#list
- * @return plans Array of plans
- */
-function planList(message) {
-  const {
-    _config,
-    } = this;
+function planList(opts) {
+  const { redis } = this;
+  const { owner, filter } = opts;
+  const criteria = opts.criteria || 'startedAt';
+  const strFilter = typeof filter === 'string' ? filter : JSON.stringify(filter || {});
+  const order = opts.order || 'ASC';
+  const offset = opts.offset || 0;
+  const limit = opts.limit || 10;
 
-  const promise = Promise.bind(this);
+  return redis
+    .sortedFilteredFilesList('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
+    .then((planIds) => {
+      const length = +planIds.pop();
+      if (length === 0 || planIds.length === 0) {
+        return [
+          planIds || [],
+          [],
+          length,
+        ];
+      }
 
-  function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingPlan.list(message.query, _config.paypal, (error, list) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(list);
-        }
+      const pipeline = redis.pipeline();
+      planIds.forEach(planId => {
+        pipeline.hgetall(`plans-data:${planId}`);
       });
-    });
-  }
 
-  return promise.then(sendRequest);
+      return Promise.join(
+        planIds,
+        pipeline.exec(),
+        length
+      );
+    })
+    .spread((planIds, props, length) => {
+      const files = planIds.map(function remapData(planId, idx) {
+        return props[idx][1];
+      });
+
+      return {
+        files,
+        cursor: offset + limit,
+        page: Math.floor(offset / limit + 1),
+        pages: Math.ceil(length / limit),
+      };
+    });
 }
 
 module.exports = planList;
