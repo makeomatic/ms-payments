@@ -15,26 +15,29 @@ class Payments extends MService {
    * @type {Object}
    */
   static defaultOpts = {
-      debug: process.env.NODE_ENV === 'development',
-      plugins: [ 'logger', 'amqp', 'redisCluster', 'validator' ],
-      amqp: {
-        queue: 'ms-payments',
-        initRoutes: true,
-        initRouter: true,
-        prefix: 'payments',
-        postfix: path.join(__dirname, 'actions')
-      },
-      redis: {
-        options: {
-          keyPrefix: '{ms-payments}'
-        }
-      },
-      paypal: {
-        mode: "sandbox",
-        client_id: "ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx",
-        client_secret: "EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv"
-      },
-      validator: [ __dirname + '/../schemas' ]
+    debug: process.env.NODE_ENV === 'development',
+    plugins: ['logger', 'amqp', 'redisCluster', 'validator'],
+    amqp: {
+      queue: 'ms-payments',
+      initRoutes: true,
+      initRouter: true,
+      prefix: 'payments',
+      postfix: path.join(__dirname, 'actions')
+    },
+    redis: {
+      options: {
+        keyPrefix: '{ms-payments}'
+      }
+    },
+    paypal: {
+      mode: "sandbox",
+      client_id: "ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx",
+      client_secret: "EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv"
+    },
+    validator: [__dirname + '/../schemas'],
+    billing: {
+      audience: 'billing',
+    },
   };
 
   /**

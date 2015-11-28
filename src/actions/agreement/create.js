@@ -3,10 +3,13 @@ const Errors = require('common-errors');
 const ld = require('lodash');
 const paypal = require('paypal-rest-sdk');
 const url = require('url');
+const key = require('../../redisKey.js');
 
-function agreementCreate(agreement) {
+function agreementCreate(message) {
   const {
     _config,
+    redis,
+    amqp
     } = this;
 
   const promise = Promise.bind(this);
@@ -29,7 +32,41 @@ function agreementCreate(agreement) {
     });
   }
 
-  return promise.then(sendRequest);
+  function saveToRedis(response) {
+    const agreementKey = key('agreements-data', response.agreement.id);
+    const pipeline = redis.pipeline;
+
+    pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(response.agreement));
+    pipeline.hsetnx(agreementKey, 'state', response.agreement.state);
+    pipeline.hsetnx(agreementKey, 'name', response.agreement.name);
+    pipeline.hsetnx(agreementKey, 'token', response.agreement.token);
+    pipeline.hsetnx(agreementKey, 'owner', message.owner);
+
+    pipeline.sadd('agreements-index', response.agreement.id);
+
+    return pipeline.exec().then(() => {
+      return response;
+    });
+  }
+
+  function updateMetadata(response) {
+    const updateRequest = {
+      'username': message.owner,
+      'audience': _config.billing.audience,
+      '$set': {
+        'agreement': response.agreement.id,
+      },
+    };
+
+    // TODO: remove hardcoded values?
+    return amqp
+      .publishAndWait('users.updateMetadata', updateRequest, {timeout: 5000})
+      .then(() => {
+        return response;
+      });
+  }
+
+  return promise.then(sendRequest).then(saveToRedis).then(updateMetadata);
 }
 
 module.exports = agreementCreate;
