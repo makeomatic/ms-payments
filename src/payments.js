@@ -38,6 +38,13 @@ class Payments extends MService {
     billing: {
       audience: 'billing',
     },
+    users: {
+      audience: '*.localhost',
+      prefix: 'users',
+      postfix: {
+        updateMetadata: 'updateMetadata',
+      },
+    }
   };
 
   /**
