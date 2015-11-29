@@ -13,8 +13,8 @@ function planList(opts) {
   const limit = opts.limit || 10;
 
   return redis
-    .sortedFilteredFilesList('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
-    .then(processResult('plans-data', redis))
+    .sortedFilteredFilesList('agreements-index', 'agreements-data:*', criteria, order, strFilter, offset, limit)
+    .then(processResult('agreements-data', redis))
     .spread(mapResult(offset, limit));
 }
 

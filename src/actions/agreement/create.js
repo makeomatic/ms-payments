@@ -58,7 +58,6 @@ function agreementCreate(message) {
       },
     };
 
-    // TODO: remove hardcoded values?
     return amqp
       .publishAndWait(_config.users.prefix + '.' + _config.users.postfix['updateMetadata'], updateRequest, {timeout: 5000})
       .then(() => {
