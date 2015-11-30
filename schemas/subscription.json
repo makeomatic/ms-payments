@@ -1,0 +1,10 @@
+{
+  "id": "subscription",
+  "type": "object",
+  "required": ["code", "models"],
+  "properties": {
+    "models": { "type": "number" },
+    "price": { "type": "number" },
+    "name": { "type": "string", "minLength": 1 }
+  }
+}

@@ -1,13 +1,10 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
+const ld = require('lodash');
 
 function planCreate(message) {
-  const {
-    _config,
-    redis,
-  } = this;
-
+  const { _config, redis } = this;
   const promise = Promise.bind(this);
 
   function sendRequest() {
@@ -22,18 +19,20 @@ function planCreate(message) {
     });
   }
 
-  function checkAlias() {
-
-  }
-
   function saveToRedis(plan) {
     const planKey = key('plans-data', plan.id);
     const pipeline = redis.pipeline;
+
+    const subscriptions = ld.map(message.subscriptions, (subscription) => {
+      subscription.id = ld.findWhere(plan.payment_definitions, { name: subscription.name });
+      return subscription;
+    });
 
     if (message.alias !== null && message.alias !== undefined) {
       pipeline.hsetnx(planKey, 'alias', message.alias);
     }
     pipeline.hsetnx(planKey, 'plan', JSON.stringify(plan));
+    pipeline.hsetnx(planKey, 'subs', JSON.stringify(subscriptions));
     pipeline.hsetnx(planKey, 'type', plan.type);
     pipeline.hsetnx(planKey, 'state', plan.state);
     pipeline.hsetnx(planKey, 'name', plan.name);
@@ -48,7 +47,7 @@ function planCreate(message) {
     });
   }
 
-  return promise.then(checkAlias).then(sendRequest).then(saveToRedis);
+  return promise.then(sendRequest).then(saveToRedis);
 }
 
 module.exports = planCreate;
