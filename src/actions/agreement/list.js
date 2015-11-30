@@ -1,6 +1,3 @@
-const Promise = require('bluebird');
-// const paypal = require('paypal-rest-sdk');
-
 const { processResult, mapResult } = require('../../listUtils');
 
 function planList(opts) {

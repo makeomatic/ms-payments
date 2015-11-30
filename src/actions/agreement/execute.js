@@ -1,26 +1,49 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
+const key = require('../../redisKey');
 
 function agreementExecute(token) {
-	const {
-		_config
-	} = this;
+  const { _config, redis } = this;
+  const promise = Promise.bind(this);
 
-	let promise = Promise.bind(this);
+  function sendRequest() {
+    return new Promise((resolve, reject) => {
+      paypal.billingAgreement.execute(token, {}, _config.paypal, (error, info) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(info.id);
+        }
+      });
+    });
+  }
 
-	function sendRequest() {
-		return new Promise((resolve, reject) => {
-			paypal.billingAgreement.execute(token, {}, _config.paypal, (error, executedInfo) => {
-				if (error) {
-					reject(error)
-				} else {
-					resolve(executedInfo)
-				}
-			})
-		})
-	}
+  function fetchUpdatedAgreement(id) {
+    return new Promise((resolve, reject) => {
+      paypal.billingAgreement.get(id, _config.paypal, (error, agreement) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(agreement);
+        }
+      });
+    });
+  }
 
-	return promise.then(sendRequest)
+  function updateRedis(agreement) {
+    const agreementKey = key('agreements-data', agreement.id);
+    const pipeline = redis.pipeline;
+
+    pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(agreement));
+    pipeline.hsetnx(agreementKey, 'state', agreement.state);
+    pipeline.hsetnx(agreementKey, 'name', agreement.name);
+
+    return pipeline.exec().then(() => {
+      return agreement;
+    });
+  }
+
+  return promise.then(sendRequest).then(fetchUpdatedAgreement).then(updateRedis);
 }
 
 module.exports = agreementExecute;

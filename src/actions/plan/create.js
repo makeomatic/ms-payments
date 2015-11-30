@@ -41,6 +41,8 @@ function planCreate(message) {
 
     pipeline.sadd('plans-index', plan.id);
 
+    plan.hidden = message.hidden;
+
     return pipeline.exec().then(() => {
       return plan;
     });

@@ -6,17 +6,12 @@ const url = require('url');
 const key = require('../../redisKey.js');
 
 function agreementCreate(message) {
-  const {
-    _config,
-    redis,
-    amqp
-    } = this;
-
+  const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
 
   function sendRequest() {
     return new Promise((resolve, reject) => {
-      paypal.billingAgreement.create(agreement, _config.paypal, (error, newAgreement) => {
+      paypal.billingAgreement.create(message.agreement, _config.paypal, (error, newAgreement) => {
         if (error) {
           reject(error);
         } else {
@@ -59,7 +54,7 @@ function agreementCreate(message) {
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix['updateMetadata'], updateRequest, {timeout: 5000})
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
       .then(() => {
         return response;
       });
