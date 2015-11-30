@@ -1,0 +1,9 @@
+{
+  "id": "agreement.state",
+  "type": "object",
+  "required": ["id", "state"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "state": { "type": "string", "enum": [ "suspend", "reactivate", "cancel" ] }
+  }
+}
