@@ -1,7 +1,7 @@
 {
   "id": "subscription",
   "type": "object",
-  "required": ["code", "models"],
+  "required": ["name", "models"],
   "properties": {
     "models": { "type": "number" },
     "price": { "type": "number" },

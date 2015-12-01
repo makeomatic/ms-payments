@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
+const key = require('../../redisKey.js');
 
 function planState(message) {
   const { _config, redis } = this;

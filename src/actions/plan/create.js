@@ -42,9 +42,7 @@ function planCreate(message) {
 
     plan.hidden = message.hidden;
 
-    return pipeline.exec().then(() => {
-      return plan;
-    });
+    return pipeline.exec().then(() => { return plan; });
   }
 
   return promise.then(sendRequest).then(saveToRedis);
