@@ -24,7 +24,7 @@ WORKDIR /src
 ADD package.json package.json
 
 ARG NODE_ENV=production
-ENV NCONF_NAMESPACE=MS_FILES
+ENV NCONF_NAMESPACE=MS_PAYMENTS
 
 RUN npm install
 RUN apk del curl make gcc g++ python && \
