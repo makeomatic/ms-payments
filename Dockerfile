@@ -1,6 +1,6 @@
 FROM alpine:3.2
 
-ARG VERSION=v5.0.0
+ARG VERSION=v5.1.0
 ARG NPM_VERSION=3
 
 RUN apk add --update curl make gcc g++ python linux-headers paxctl libgcc libstdc++
@@ -21,13 +21,15 @@ RUN curl -sSL https://nodejs.org/dist/${VERSION}/node-${VERSION}.tar.gz | tar -x
     /usr/lib/node_modules/npm/man /usr/lib/node_modules/npm/doc /usr/lib/node_modules/npm/html
 
 WORKDIR /src
-ADD . .
+ADD package.json package.json
 
-ENV NODE_ENV=production
-ENV NCONF_NAMESPACE=MS_PAYMENTS
+ARG NODE_ENV=production
+ENV NCONF_NAMESPACE=MS_FILES
 
 RUN npm install
 RUN apk del curl make gcc g++ python && \
   rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.node-gyp src
+
+ADD . /src
 
 CMD [ "npm", "start" ]
