@@ -3,6 +3,8 @@ const paypal = require('paypal-rest-sdk');
 const bunyan = require('bunyan');
 const MService = require('mservice');
 const path = require('path');
+const fs = require('fs');
+const sortedFilteredListLua = fs.readFileSync(path.resolve(__dirname, '../lua/sorted-filtered-list.lua'), 'utf-8');
 
 /**
  * Class representing payments handling
@@ -53,7 +55,14 @@ class Payments extends MService {
    * @return {Payments}
    */
   constructor(opts = {}) {
-    super(ld.merge({}, Payments.defaultOpts, opts))
+    super(ld.merge({}, Payments.defaultOpts, opts));
+
+    this.on('plugin:connect:redisCluster', (redis) => {
+      redis.defineCommand('sortedFilteredPaymentsList', {
+        numberOfKeys: 2,
+        lua: sortedFilteredListLua,
+      });
+    });
   }
 }
 

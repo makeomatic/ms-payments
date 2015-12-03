@@ -1,3 +1,5 @@
+const Promise = require('bluebird');
+
 function processResult(dataIndex, redis) {
   return (ids) => {
     const length = +ids.pop();
@@ -24,12 +26,12 @@ function processResult(dataIndex, redis) {
 
 function mapResult(offset, limit) {
   return (ids, props, length) => {
-    const files = ids.map(function remapData(_, idx) {
+    const items = ids.map(function remapData(_, idx) {
       return props[idx][1];
     });
 
     return {
-      files,
+      items,
       cursor: offset + limit,
       page: Math.floor(offset / limit + 1),
       pages: Math.ceil(length / limit),
