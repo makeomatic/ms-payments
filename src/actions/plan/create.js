@@ -42,10 +42,16 @@ function planCreate(message) {
 
     plan.hidden = message.hidden;
 
-    return pipeline.exec().then(() => { return plan; });
+    return pipeline.exec().return(plan);
   }
 
-  return promise.then(sendRequest).then(saveToRedis);
+  if (message.alias === 'free') {
+    // this is a free plan, don't put it on paypal
+    message.plan.id = 'free';
+    return promise.resolve(message.plan).then(saveToRedis);
+  } else {
+    return promise.then(sendRequest).then(saveToRedis);
+  }
 }
 
 module.exports = planCreate;
