@@ -23,22 +23,21 @@ function transactionSync(message) {
     const pipeline = redis.pipeline;
 
     ld.forEach(transactions, (transaction) => {
-      const planKey = key('transaction-data', transaction.transaction_id);
+      const transactionKey = key('transaction-data', transaction.transaction_id);
 
-      pipeline.hsetnx(planKey, 'transactions', JSON.stringify(transaction));
-      pipeline.hsetnx(planKey, 'status', transaction.status);
-      pipeline.hsetnx(planKey, 'transaction_type', transaction.transaction_type);
-      pipeline.hsetnx(planKey, 'payer_email', transaction.payer_email);
-      pipeline.hsetnx(planKey, 'time_stamp', transaction.time_stamp);
-      pipeline.hsetnx(planKey, 'time_zone', transaction.time_zone);
-      pipeline.hsetnx(planKey, 'owner', message.owner);
+      pipeline.hsetnx(transactionKey, 'transaction', JSON.stringify(transaction));
+      pipeline.hsetnx(transactionKey, 'agreement', message.id);
+      pipeline.hsetnx(transactionKey, 'status', transaction.status);
+      pipeline.hsetnx(transactionKey, 'transaction_type', transaction.transaction_type);
+      pipeline.hsetnx(transactionKey, 'payer_email', transaction.payer_email);
+      pipeline.hsetnx(transactionKey, 'time_stamp', transaction.time_stamp);
+      pipeline.hsetnx(transactionKey, 'time_zone', transaction.time_zone);
+      pipeline.hsetnx(transactionKey, 'owner', message.owner);
 
       pipeline.sadd('transaction-index', transaction.transaction_id);
     });
 
-    return pipeline.exec().then(() => {
-      return transactions;
-    });
+    return pipeline.exec().return(transactions);
   }
 
   return promise.then(sendRequest).then(saveToRedis);

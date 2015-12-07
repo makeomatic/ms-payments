@@ -35,6 +35,7 @@ function agreementCreate(message) {
     pipeline.hsetnx(agreementKey, 'state', response.agreement.state);
     pipeline.hsetnx(agreementKey, 'name', response.agreement.name);
     pipeline.hsetnx(agreementKey, 'token', response.agreement.token);
+    pipeline.hsetnx(agreementKey, 'plan', response.agreement.plan.id);
     pipeline.hsetnx(agreementKey, 'owner', message.owner);
 
     pipeline.sadd('agreements-index', response.agreement.id);
