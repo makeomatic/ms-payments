@@ -45,12 +45,30 @@ function agreementBill(id) {
   }
 
   function getTransactions(data) {
+    if (data.agreement.plan.id === 'free') {
+      return Promise.resolve(data);
+    }
     return sync({id, start, end}).then((transactions) => {
       return ld.merge(data, {transactions});
     });
   }
 
   function checkData(data) {
+    if (data.agreement.plan.id === 'free') {
+      const nextCycle = moment(data.agreement.start_date);
+      const current = moment();
+      while (nextCycle.isBefore(current)) {
+        nextCycle.add(1, 'month');
+      }
+      data.shouldUpdate = nextCycle.isSame(current, 'day');
+      if (data.shouldUpdate) {
+        data.nextUpdate = nextCycle.add(1, 'month');
+      } else {
+        data.lastUpdate = nextCycle;
+      }
+      return Promise.resolve(data);
+    }
+    
     if (data.transactions.length === 0) {
       return Promise.reject();
     }
@@ -71,6 +89,8 @@ function agreementBill(id) {
     if (data.shouldUpdate) {
       data.nextUpdate = nextCycle.add(1, frequency);
       data.transaction = transaction;
+    } else {
+      data.lastUpdate = nextCycle;
     }
     return Promise.resolve(data);
   }
