@@ -2,10 +2,10 @@ const Promise = require('bluebird');
 const key = require('../../redisKey.js');
 const ld = require('lodash');
 
-const sync = require('./sync');
+const sync = require('./../transaction/sync');
 const moment = require('moment');
 
-function transactionBill(id) {
+function agreementBill(id) {
   const { _config, redis, amqp } = this;
   const start = moment().subtract(1, 'day').format('YYYY-MM-DD');
   const end = moment().format('YYYY-MM-DD');
@@ -96,4 +96,4 @@ function transactionBill(id) {
   return promise.then(getAgreement).then(getPlan).then(getTransactions).then(checkData).then(saveToRedis);
 }
 
-module.exports = transactionBill;
+module.exports = agreementBill;
