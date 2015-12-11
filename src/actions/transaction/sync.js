@@ -20,7 +20,7 @@ function transactionSync(message) {
   }
 
   function saveToRedis(transactions) {
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     ld.forEach(transactions, (transaction) => {
       const transactionKey = key('transaction-data', transaction.transaction_id);

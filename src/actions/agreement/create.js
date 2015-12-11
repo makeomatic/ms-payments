@@ -29,7 +29,7 @@ function agreementCreate(message) {
 
   function saveToRedis(response) {
     const agreementKey = key('agreements-data', response.agreement.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(response.agreement));
     pipeline.hsetnx(agreementKey, 'state', response.agreement.state);

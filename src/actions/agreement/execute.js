@@ -32,7 +32,7 @@ function agreementExecute(token) {
 
   function updateRedis(agreement) {
     const agreementKey = key('agreements-data', agreement.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(agreement));
     pipeline.hsetnx(agreementKey, 'state', agreement.state);

@@ -31,7 +31,7 @@ function planUpdate(message) {
 
   function updateRedis() {
     const planKey = key('plans-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     if (message.alias !== null && message.alias !== undefined) {
       pipeline.hsetnx(planKey, 'alias', message.alias);

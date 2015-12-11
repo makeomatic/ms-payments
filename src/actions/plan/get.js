@@ -7,7 +7,7 @@ function planGet(id) {
 
   function getFromRedis() {
     const planKey = key('plans-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hget(planKey, 'plan');
     pipeline.hget(planKey, 'subs');

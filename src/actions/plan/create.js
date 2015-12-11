@@ -21,7 +21,7 @@ function planCreate(message) {
 
   function saveToRedis(plan) {
     const planKey = key('plans-data', plan.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     const subscriptions = ld.map(message.subscriptions, (subscription) => {
       subscription.id = ld.findWhere(plan.payment_definitions, { name: subscription.name });

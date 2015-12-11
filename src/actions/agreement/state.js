@@ -22,7 +22,7 @@ function planState(message) {
 
   function updateRedis() {
     const agreementKey = key('agreements-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'state', state);
 

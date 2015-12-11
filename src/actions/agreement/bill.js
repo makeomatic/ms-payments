@@ -13,7 +13,7 @@ function agreementBill(id) {
 
   function getAgreement() {
     const agreementKey = key('agreements-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hget(agreementKey, 'agreement');
     pipeline.hget(agreementKey, 'owner');
@@ -27,7 +27,7 @@ function agreementBill(id) {
 
   function getPlan(agreement) {
     const planKey = key('plans-data', agreement.plan.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hget(planKey, 'plan');
     pipeline.hget(planKey, 'subs');
