@@ -48,7 +48,7 @@ function planCreate(message) {
   if (message.alias === 'free') {
     // this is a free plan, don't put it on paypal
     message.plan.id = 'free';
-    return promise.resolve(message.plan).then(saveToRedis);
+    return promise.return(message.plan).then(saveToRedis);
   }
 
   return promise.then(sendRequest).then(saveToRedis);
