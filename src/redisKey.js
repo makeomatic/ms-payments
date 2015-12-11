@@ -6,4 +6,4 @@ const SEPARATOR = ':';
  */
 module.exports = function combineKey(...args) {
   return args.join(SEPARATOR);
-}
+};

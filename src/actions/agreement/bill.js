@@ -48,8 +48,8 @@ function agreementBill(id) {
     if (data.agreement.plan.id === 'free') {
       return Promise.resolve(data);
     }
-    return sync({id, start, end}).then((transactions) => {
-      return ld.merge(data, {transactions});
+    return sync({ id, start, end }).then(transactions => {
+      return ld.merge(data, { transactions });
     });
   }
 
@@ -68,7 +68,7 @@ function agreementBill(id) {
       }
       return Promise.resolve(data);
     }
-    
+
     if (data.transactions.length === 0) {
       return Promise.reject();
     }
@@ -109,7 +109,7 @@ function agreementBill(id) {
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
       .return(data);
   }
 

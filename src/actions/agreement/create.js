@@ -13,16 +13,16 @@ function agreementCreate(message) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.create(message.agreement, _config.paypal, (error, newAgreement) => {
         if (error) {
-          reject(error);
-        } else {
-          const approval = ld.findWhere(newAgreement.links, {rel: 'approval_url'});
-          if (approval === null) {
-            reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
-          } else {
-            const token = url.parse(approval.href, true).query.token;
-            resolve({token, url: approval.href, agreement: newAgreement});
-          }
+          return reject(error);
         }
+
+        const approval = ld.findWhere(newAgreement.links, { rel: 'approval_url' });
+        if (approval === null) {
+          return reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
+        }
+
+        const token = url.parse(approval.href, true).query.token;
+        resolve({ token, url: approval.href, agreement: newAgreement });
       });
     });
   }
@@ -55,7 +55,7 @@ function agreementCreate(message) {
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
       .then(() => {
         return response;
       });

@@ -11,10 +11,10 @@ function transactionSync(message) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.searchTransactions(message.id, message.start, message.end, _config.paypal, (error, transactions) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(transactions);
+          return reject(error);
         }
+
+        return resolve(transactions);
       });
     });
   }

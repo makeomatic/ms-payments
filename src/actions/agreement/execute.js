@@ -10,10 +10,10 @@ function agreementExecute(token) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.execute(token, {}, _config.paypal, (error, info) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(info.id);
+          return reject(error);
         }
+
+        resolve(info.id);
       });
     });
   }
@@ -22,10 +22,10 @@ function agreementExecute(token) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.get(id, _config.paypal, (error, agreement) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(agreement);
+          return reject(error);
         }
+
+        resolve(agreement);
       });
     });
   }

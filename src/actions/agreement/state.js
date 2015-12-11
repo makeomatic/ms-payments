@@ -12,10 +12,10 @@ function planState(message) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement[message.state].call(paypal.billingAgreement, id, state, _config.paypal, (error) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(state);
+          return reject(error);
         }
+
+        resolve(state);
       });
     });
   }

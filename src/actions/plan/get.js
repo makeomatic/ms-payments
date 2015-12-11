@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 const key = require('../../redisKey.js');
 
 function planGet(id) {
-  const { _config, redis } = this;
+  const { redis } = this;
   const promise = Promise.bind(this);
 
   function getFromRedis() {

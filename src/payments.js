@@ -1,6 +1,4 @@
 const ld = require('lodash');
-const paypal = require('paypal-rest-sdk');
-const bunyan = require('bunyan');
 const MService = require('mservice');
 const path = require('path');
 const fs = require('fs');
@@ -27,17 +25,17 @@ class Payments extends MService {
       initRoutes: true,
       initRouter: true,
       prefix: 'payments',
-      postfix: path.join(__dirname, 'actions')
+      postfix: path.join(__dirname, 'actions'),
     },
     redis: {
       options: {
-        keyPrefix: '{ms-payments}'
-      }
+        keyPrefix: '{ms-payments}',
+      },
     },
     paypal: {
-      mode: "sandbox",
-      client_id: "ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx",
-      client_secret: "EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv"
+      mode: 'sandbox',
+      client_id: 'ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx',
+      client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv',
     },
     validator: [__dirname + '/../schemas'],
     billing: {
@@ -66,16 +64,16 @@ class Payments extends MService {
           cycles: '0',
           amount: {
             currency: 'USD',
-            value: '0'
-          }
-        }]
+            value: '0',
+          },
+        }],
       },
       subscriptions: [{
         name: 'free', // must be equal to payment_definitions name,
         models: 100,
-        price: 0.5
-      }]
-    }]
+        price: 0.5,
+      }],
+    }],
   };
 
   /**
@@ -103,17 +101,17 @@ class Payments extends MService {
       return createPlan.call(this, plan).reflect();
     })
     .bind(this)
-    .then((plans) => {
-      const messages = plans.map((plan) => {
+    .then(function iterateOverPlans(plans) {
+      const messages = plans.map(plan => {
         if (plan.isFulfilled()) {
           return `Created plan ${plan.value().name}`;
-        } else {
-          return `Error creating plan ${plan.reason()}`;
         }
+
+        return `Error creating plan ${plan.reason()}`;
       });
 
       this.log.info(messages);
-    })
+    });
   }
 }
 

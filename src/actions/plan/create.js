@@ -11,10 +11,10 @@ function planCreate(message) {
     return new Promise((resolve, reject) => {
       paypal.billingPlan.create(message.plan, _config.paypal, (error, newPlan) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(newPlan);
+          return reject(error);
         }
+
+        resolve(newPlan);
       });
     });
   }
@@ -49,9 +49,9 @@ function planCreate(message) {
     // this is a free plan, don't put it on paypal
     message.plan.id = 'free';
     return promise.resolve(message.plan).then(saveToRedis);
-  } else {
-    return promise.then(sendRequest).then(saveToRedis);
   }
+
+  return promise.then(sendRequest).then(saveToRedis);
 }
 
 module.exports = planCreate;

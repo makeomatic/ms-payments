@@ -21,10 +21,10 @@ function planUpdate(message) {
     return new Promise((resolve, reject) => {
       paypal.billingPlan.update(id, buildQuery(plan), _config.paypal, (error) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(true);
+          return reject(error);
         }
+
+        return resolve(true);
       });
     });
   }
