@@ -4,6 +4,8 @@ const ld = require('lodash');
 const paypal = require('paypal-rest-sdk');
 const url = require('url');
 const key = require('../../redisKey.js');
+const getPlan = require('../plan/get');
+const moment = require('moment');
 
 function agreementCreate(message) {
   const { _config, redis, amqp } = this;
@@ -40,28 +42,39 @@ function agreementCreate(message) {
 
     pipeline.sadd('agreements-index', response.agreement.id);
 
-    return pipeline.exec().then(() => {
-      return response;
+    return pipeline.exec().return(response.agreement);
+  }
+
+  function fetchPlan(agreement) {
+    return getPlan(agreement.plan.id).then((plan) => {
+      return { agreement, plan };
     });
   }
 
-  function updateMetadata(response) {
+  function updateMetadata(data) {
+    const { plan, agreement } = data;
+
+    const subscription = ld.findWhere(plan.subscriptions, { name: 'free' });
+    const nextCycle = moment().add(1, 'month').format();
+
     const updateRequest = {
       'username': message.owner,
       'audience': _config.billing.audience,
       '$set': {
-        'agreement': response.agreement.id,
+        'agreement': agreement.id,
+        plan: plan.id,
+        models: subscription.models,
+        model_price: subscription.price,
+        next_cycle: nextCycle,
       },
     };
 
     return amqp
       .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
-      .then(() => {
-        return response;
-      });
+      .return(agreement);
   }
 
-  return promise.then(sendRequest).then(saveToRedis).then(updateMetadata);
+  return promise.then(sendRequest).then(saveToRedis).then(fetchPlan).then(updateMetadata);
 }
 
 module.exports = agreementCreate;
