@@ -12,7 +12,7 @@ chai.config.includeStack = true;
 
 function debug(result) {
   if (result.isRejected()) {
-    console.log(require('util').inspect(result, {depth: 5}));
+    process.stdout.write(require('util').inspect(result, { depth: 5 }) + '\n');
   }
 }
 
@@ -71,14 +71,14 @@ describe('Payments suite', function UserClassSuite() {
   }
 
   describe('unit tests', function UnitSuite() {
-    const createPlanHeaders = {routingKey: 'payments.plan.create'};
-    const deletePlanHeaders = {routingKey: 'payments.plan.delete'};
-    const listPlanHeaders = {routingKey: 'payments.plan.list'};
-    const updatePlanHeaders = {routingKey: 'payments.plan.update'};
-    const statePlanHeaders = {routingKey: 'payments.plan.state'};
+    const createPlanHeaders = { routingKey: 'payments.plan.create' };
+    const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
+    const listPlanHeaders = { routingKey: 'payments.plan.list' };
+    const updatePlanHeaders = { routingKey: 'payments.plan.update' };
+    const statePlanHeaders = { routingKey: 'payments.plan.state' };
 
-    const createAgreementHeaders = {routingKey: 'payments.agreement.create'};
-    const executeAgreementHeaders = {routingKey: 'payments.agreement.execute'};
+    const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
+    const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
 
     let payments;
     let billingPlan;
@@ -95,21 +95,22 @@ describe('Payments suite', function UserClassSuite() {
       payments._mailer = {
         send: emptyStub,
       };
-      payments._redis = {pipeline: {}};
+      const pipelineStub = {};
+      payments._redis = { pipeline: () => { return pipelineStub; } };
       [
         'hexists', 'hsetnx', 'expire', 'zadd', 'hgetallBuffer', 'get',
         'set', 'hget', 'hdel', 'del', 'hmgetBuffer', 'incrby', 'zrem', 'zscoreBuffer', 'hmget',
         'hset', 'sadd',
       ].forEach(prop => {
-        payments._redis[prop] = payments._redis.pipeline[prop] = emptyStub;
+        payments._redis[prop] = pipelineStub[prop] = emptyStub;
       });
       payments._redis.pipeline.exec = emptyStub;
-      payments._redis.sortedFilteredFilesList = function () {
+      payments._redis.sortedFilteredFilesList = () => {
         return Promise.resolve(['P-12U98928TT9129128ECALAJY']);
       };
 
       payments._amqp = {
-        publishAndWait: function() {
+        publishAndWait: () => {
           return Promise.resolve(true);
         },
       };
@@ -157,7 +158,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to activate on an unknown plan id', () => {
-        return payments.router({'id': 'random', 'state': 'active'}, statePlanHeaders)
+        return payments.router({ 'id': 'random', 'state': 'active' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -166,7 +167,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to activate on an invalid state', () => {
-        return payments.router({'id': 'random', 'state': 'invalid'}, statePlanHeaders)
+        return payments.router({ 'id': 'random', 'state': 'invalid' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -175,7 +176,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should activate the plan', () => {
-        return payments.router({'id': billingPlan.id, 'state': 'active'}, statePlanHeaders)
+        return payments.router({ 'id': billingPlan.id, 'state': 'active' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isFulfilled()).to.be.eq(true);
@@ -183,7 +184,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to update on an unknown plan id', () => {
-        return payments.router({'id': 'random', 'plan': {'name': 'Updated name'}}, updatePlanHeaders)
+        return payments.router({ 'id': 'random', 'plan': { 'name': 'Updated name' } }, updatePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -192,7 +193,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to update on invalid plan schema', () => {
-        return payments.router({'id': billingPlan.id, 'plan': {'invalid': true}}, updatePlanHeaders)
+        return payments.router({ 'id': billingPlan.id, 'plan': { 'invalid': true } }, updatePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -216,7 +217,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to list on invalid query schema', () => {
-        return payments.router({'status': 'invalid'}, listPlanHeaders)
+        return payments.router({ 'status': 'invalid' }, listPlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -246,13 +247,12 @@ describe('Payments suite', function UserClassSuite() {
           .then((result) => {
             expect(result.isFulfilled()).to.be.eq(true);
           });
-      })
+      });
     });
 
     describe('agreements#', function agreementsSuite() {
-
       it('Should fail to create agreement on invalid schema', () => {
-        return payments.router({'random': true}, createAgreementHeaders)
+        return payments.router({ 'random': true }, createAgreementHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
