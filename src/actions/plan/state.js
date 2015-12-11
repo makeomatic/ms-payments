@@ -20,17 +20,17 @@ function planState(message) {
     return new Promise((resolve, reject) => {
       paypal.billingPlan.update(id, request, _config.paypal, (error) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(message.state);
+          return reject(error);
         }
+
+        return resolve(message.state);
       });
     });
   }
 
   function updateRedis() {
     const agreementKey = key('plans-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'state', state);
 

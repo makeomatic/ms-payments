@@ -15,23 +15,23 @@ function agreementCreate(message) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.create(message.agreement, _config.paypal, (error, newAgreement) => {
         if (error) {
-          reject(error);
-        } else {
-          const approval = ld.findWhere(newAgreement.links, {rel: 'approval_url'});
-          if (approval === null) {
-            reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
-          } else {
-            const token = url.parse(approval.href, true).query.token;
-            resolve({token, url: approval.href, agreement: newAgreement});
-          }
+          return reject(error);
         }
+
+        const approval = ld.findWhere(newAgreement.links, { rel: 'approval_url' });
+        if (approval === null) {
+          return reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
+        }
+
+        const token = url.parse(approval.href, true).query.token;
+        resolve({ token, url: approval.href, agreement: newAgreement });
       });
     });
   }
 
   function saveToRedis(response) {
     const agreementKey = key('agreements-data', response.agreement.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(response.agreement));
     pipeline.hsetnx(agreementKey, 'state', response.agreement.state);

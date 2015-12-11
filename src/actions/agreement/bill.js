@@ -13,7 +13,7 @@ function agreementBill(id) {
 
   function getAgreement() {
     const agreementKey = key('agreements-data', id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hget(agreementKey, 'agreement');
     pipeline.hget(agreementKey, 'owner');
@@ -27,7 +27,7 @@ function agreementBill(id) {
 
   function getPlan(agreement) {
     const planKey = key('plans-data', agreement.plan.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hget(planKey, 'plan');
     pipeline.hget(planKey, 'subs');
@@ -48,8 +48,8 @@ function agreementBill(id) {
     if (data.agreement.plan.id === 'free') {
       return Promise.resolve(data);
     }
-    return sync({id, start, end}).then((transactions) => {
-      return ld.merge(data, {transactions});
+    return sync({ id, start, end }).then(transactions => {
+      return ld.merge(data, { transactions });
     });
   }
 
@@ -68,7 +68,7 @@ function agreementBill(id) {
       }
       return Promise.resolve(data);
     }
-    
+
     if (data.transactions.length === 0) {
       return Promise.reject();
     }
@@ -109,7 +109,7 @@ function agreementBill(id) {
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
       .return(data);
   }
 

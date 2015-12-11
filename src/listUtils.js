@@ -39,5 +39,5 @@ function mapResult(offset, limit) {
   };
 }
 
-module.exports.processResult = processResult;
-module.exports.mapResult = mapResult;
+exports.processResult = processResult;
+exports.mapResult = mapResult;

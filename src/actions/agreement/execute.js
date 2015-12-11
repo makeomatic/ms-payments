@@ -10,10 +10,10 @@ function agreementExecute(token) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.execute(token, {}, _config.paypal, (error, info) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(info.id);
+          return reject(error);
         }
+
+        resolve(info.id);
       });
     });
   }
@@ -22,17 +22,17 @@ function agreementExecute(token) {
     return new Promise((resolve, reject) => {
       paypal.billingAgreement.get(id, _config.paypal, (error, agreement) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(agreement);
+          return reject(error);
         }
+
+        resolve(agreement);
       });
     });
   }
 
   function updateRedis(agreement) {
     const agreementKey = key('agreements-data', agreement.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(agreement));
     pipeline.hsetnx(agreementKey, 'state', agreement.state);

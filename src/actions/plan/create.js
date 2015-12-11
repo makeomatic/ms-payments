@@ -11,17 +11,17 @@ function planCreate(message) {
     return new Promise((resolve, reject) => {
       paypal.billingPlan.create(message.plan, _config.paypal, (error, newPlan) => {
         if (error) {
-          reject(error);
-        } else {
-          resolve(newPlan);
+          return reject(error);
         }
+
+        resolve(newPlan);
       });
     });
   }
 
   function saveToRedis(plan) {
     const planKey = key('plans-data', plan.id);
-    const pipeline = redis.pipeline;
+    const pipeline = redis.pipeline();
 
     const subscriptions = ld.map(message.subscriptions, (subscription) => {
       subscription.id = ld.findWhere(plan.payment_definitions, { name: subscription.name });
@@ -48,10 +48,10 @@ function planCreate(message) {
   if (message.alias === 'free') {
     // this is a free plan, don't put it on paypal
     message.plan.id = 'free';
-    return promise.resolve(message.plan).then(saveToRedis);
-  } else {
-    return promise.then(sendRequest).then(saveToRedis);
+    return promise.return(message.plan).then(saveToRedis);
   }
+
+  return promise.then(sendRequest).then(saveToRedis);
 }
 
 module.exports = planCreate;
