@@ -1,0 +1,9 @@
+{
+  "id": "sale.execute",
+  "type": "object",
+  "required": ["token", "payer_id"],
+  "properties": {
+    "token": { "type": "string" },
+    "payer_id": { "type": "string" }
+  }
+}

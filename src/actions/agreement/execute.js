@@ -38,9 +38,7 @@ function agreementExecute(token) {
     pipeline.hsetnx(agreementKey, 'state', agreement.state);
     pipeline.hsetnx(agreementKey, 'name', agreement.name);
 
-    return pipeline.exec().then(() => {
-      return agreement;
-    });
+    return pipeline.exec().return(agreement);
   }
 
   return promise.then(sendRequest).then(fetchUpdatedAgreement).then(updateRedis);

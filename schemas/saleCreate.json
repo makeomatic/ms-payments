@@ -1,0 +1,9 @@
+{
+  "id": "sale.create",
+  "type": "object",
+  "require": ["owner", "sale"],
+  "properties": {
+    "owner": { "type": "string" },
+    "sale": { "$ref": "sale#" }
+  }
+}

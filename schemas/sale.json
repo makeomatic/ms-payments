@@ -1,0 +1,45 @@
+{
+  "id": "sale",
+  "type": "object",
+  "required": ["intent", "payer", "transactions"],
+  "properties": {
+    "intent": { "type": "string", "enum": ["sale", "authorize", "order"] },
+    "payer": {
+      "type": "object",
+      "required": ["payment_method"],
+      "properties": {
+        "payment_method": { "type": "string", "enum": ["credit_card", "bank", "paypal", "pay_upon_invoice", "carrier"] },
+        "funding_instruments": { "type": "array" },
+        "funding_option_id": { "type": "string" },
+        "payer_info": {
+          "type": "object",
+          "properties": {
+            "email": { "type": "string" },
+            "external_remember_me_id": { "type": "string" },
+            "buyer_account_number": { "type": "string" },
+            "phone": { "type": "string" },
+            "phone_type": { "type": "string" },
+            "birth_date": { "type": "string" },
+            "tax_id": { "type": "string" },
+            "tax_id_type": { "type": "string" },
+            "country_code": { "type": "string" },
+            "billing_address": { "$ref": "common#/definitions/address" }
+          }
+        }
+      }
+    },
+    "transactions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["amount"],
+        "properties": {
+          "reference_id": { "type": "string" },
+          "amount": { "$ref": "common#/definitions/amount" }
+
+
+        }
+      }
+    }
+  }
+}

@@ -64,8 +64,8 @@ function agreementCreate(message) {
         'agreement': agreement.id,
         plan: plan.id,
         models: subscription.models,
-        model_price: subscription.price,
-        next_cycle: nextCycle,
+        modelPrice: subscription.price,
+        nextCycle: nextCycle,
       },
     };
 
