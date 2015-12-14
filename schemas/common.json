@@ -87,10 +87,13 @@
 			"type": "object",
 			"required": ["payment_method"],
 			"properties": {
-				"payment_method": { "type": "string", "minLength": 1 },
+				"payment_method": { "type": "string", "enum": ["credit_card", "bank", "paypal"] },
+        "status": { "type": "string", "minLength": 1 },
+        "account_type": { "type": "string", "enum": ["business", "personal", "premier"] },
+        "account_age": { "type": "string" },
 				"funding_instruments": { "type": "array", "items": { "$ref": "common#/definitions/funding_instrument" } },
-				"payer_info": { "$ref": "common#/definitions/payer_info" },
-				"status": { "type": "string", "minLength": 1 }
+        "funding_option_id": { "type": "string" },
+				"payer_info": { "$ref": "common#/definitions/payer_info" }
 			}
 		},
 		"funding_instrument": {
@@ -183,6 +186,37 @@
 				"charge_id": { "type": "string", "minLength": 1 },
 				"amount": { "$ref": "common#/definitions/currency" }
 			}
-		}
+		},
+    "item": {
+      "type": "object",
+      "required": ["quantity", "name", "price", "currency"],
+      "properties": {
+        "quantity": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "string" },
+        "tax": { "type": "string" },
+        "currency": { "type": "string" },
+        "sku": { "type": "string" },
+        "url": { "type": "string" },
+        "category": { "type": "string", "enum": ["digital", "physical"] },
+        "supplementary_data": {
+          "type": "array",
+          "items": { "$ref": "common#/definitions/kv" }
+        },
+        "postback_data": {
+          "type": "array",
+          "items": { "$ref": "common#/definitions/kv" }
+        }
+      }
+    },
+    "kv": {
+      "type": "object",
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
 	}
 }
