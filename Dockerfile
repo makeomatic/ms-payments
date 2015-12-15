@@ -1,6 +1,6 @@
 FROM alpine:3.2
 
-ARG VERSION=v5.1.0
+ARG VERSION=v5.1.1
 ARG NPM_VERSION=3
 
 RUN apk add --update curl make gcc g++ python linux-headers paxctl libgcc libstdc++
