@@ -30,8 +30,8 @@ ENV NCONF_NAMESPACE=MS_PAYMENTS
 RUN npm config set registry $NPM_PROXY && \
     npm install && \
     npm config set registry https://registry.npmjs.com && \
-    apk del curl make gcc g++ python git openssh && \
-    rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.node-gyp src /root/.ssh
+    apk del curl make gcc g++ python && \
+    rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.node-gyp src
 
 ADD . /src
 
