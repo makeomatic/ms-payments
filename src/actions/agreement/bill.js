@@ -99,12 +99,12 @@ function agreementBill(id) {
     const sub = ld.findWhere(data.subs, { id: data.agreement.plan.payment_definitions[0].name });
     const updateRequest = {
       'username': data.agreement.owner,
-      'audience': _config.billing.audience,
+      'audience': _config.users.audience,
       '$set': {
         'models': sub.models,
-        'model_price': sub.price,
-        'billing_amount': data.transactions[data.transaction].amount.value,
-        'next_billing': data.nextUpdate,
+        'modelPrice': sub.price,
+        'billingAmount': data.transactions[data.transaction].amount.value,
+        'nextCycle': data.nextUpdate,
       },
     };
 

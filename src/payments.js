@@ -38,9 +38,6 @@ class Payments extends MService {
       client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv',
     },
     validator: [__dirname + '/../schemas'],
-    billing: {
-      audience: 'billing',
-    },
     users: {
       audience: '*.localhost',
       prefix: 'users',

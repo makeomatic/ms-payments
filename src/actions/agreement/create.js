@@ -23,7 +23,7 @@ function agreementCreate(message) {
           return reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
         }
 
-        const token = url.parse(approval.href, true).query.token;
+        ''
         resolve({ token, url: approval.href, agreement: newAgreement });
       });
     });
@@ -59,13 +59,13 @@ function agreementCreate(message) {
 
     const updateRequest = {
       'username': message.owner,
-      'audience': _config.billing.audience,
+      'audience': _config.users.audience,
       '$set': {
         'agreement': agreement.id,
-        plan: plan.id,
-        models: subscription.models,
-        modelPrice: subscription.price,
-        nextCycle: nextCycle,
+        'plan': plan.id,
+        'models': subscription.models,
+        'modelPrice': subscription.price,
+        'nextCycle': nextCycle,
       },
     };
 
