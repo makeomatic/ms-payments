@@ -3,6 +3,9 @@ NODE_VERSIONS := 5.1.1
 PKG_NAME := $(shell cat package.json | ./node_modules/.bin/json name)
 PKG_VERSION := $(shell cat package.json | ./node_modules/.bin/json version)
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
+NPM_PROXY := --build-arg NPM_PROXY=http://$(shell docker-machine ip dev):4873
+REPO := makeomatic
+BASE_NAME := $(REPO)/$(PKG_NAME)
 
 # define task lists
 TEST_TASKS := $(addsuffix .test, $(NODE_VERSIONS))
@@ -36,13 +39,13 @@ $(TEST_TASKS): build-docker
 
 $(BUILD_TASKS):
 	npm run prepublish
-	docker build --build-arg VERSION=v$(basename $@) --build-arg NODE_ENV=development -t makeomatic/$(PKG_NAME):$(basename $@)-development .
-	docker build --build-arg VERSION=v$(basename $@) -t makeomatic/$(PKG_NAME):$(basename $@)-$(PKG_VERSION) .
-	docker tag -f makeomatic/$(PKG_NAME):$(basename $@)-$(PKG_VERSION) makeomatic/$(PKG_NAME):$(basename $@)
+	docker build $(NPM_PROXY) --build-arg VERSION=v$(basename $@) --build-arg NODE_ENV=development -t $(BASE_NAME):$(basename $@)-development .
+	docker build $(NPM_PROXY) --build-arg VERSION=v$(basename $@) -t $(BASE_NAME):$(basename $@)-$(PKG_VERSION) .
+	docker tag -f $(BASE_NAME):$(basename $@)-$(PKG_VERSION) $(BASE_NAME):$(basename $@)
 
 $(PUSH_TASKS):
-	docker push makeomatic/$(PKG_NAME):$(basename $@)-development
-	docker push makeomatic/$(PKG_NAME):$(basename $@)-$(PKG_VERSION)
-	docker push makeomatic/$(PKG_NAME):$(basename $@)
+	docker push $(BASE_NAME):$(basename $@)-development
+	docker push $(BASE_NAME):$(basename $@)-$(PKG_VERSION)
+	docker push $(BASE_NAME):$(basename $@)
 
 .PHONY: test build push run-test build-docker

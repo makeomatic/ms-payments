@@ -24,11 +24,14 @@ WORKDIR /src
 ADD package.json package.json
 
 ARG NODE_ENV=production
+ARG NPM_PROXY=https://registry.npmjs.com
 ENV NCONF_NAMESPACE=MS_PAYMENTS
 
-RUN npm install
-RUN apk del curl make gcc g++ python && \
-  rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.node-gyp src
+RUN npm config set registry $NPM_PROXY && \
+    npm install && \
+    npm config set registry https://registry.npmjs.com && \
+    apk del curl make gcc g++ python git openssh && \
+    rm -rf /tmp/* /var/cache/apk/* /root/.npm /root/.node-gyp src /root/.ssh
 
 ADD . /src
 
