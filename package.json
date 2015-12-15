@@ -1,6 +1,6 @@
 {
   "name": "ms-payments",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Core of the microservice for handling payments",
   "main": "./lib/index.js",
   "scripts": {
