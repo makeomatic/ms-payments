@@ -23,7 +23,7 @@ function agreementCreate(message) {
           return reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
         }
 
-        ''
+        const token = url.parse(approval.href, true).query.token;
         resolve({ token, url: approval.href, agreement: newAgreement });
       });
     });
