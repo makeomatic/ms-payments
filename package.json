@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
-    "bluebird": "^3.0.5",
+    "bluebird": "^3.1.1",
     "bunyan": "^1.5.1",
     "bytes": "^2.1.0",
     "common-errors": "^0.5.3",
@@ -31,7 +31,7 @@
     "lodash": "^3.10.1",
     "moment": "^2.10.6",
     "ms-amqp-conf": "^0.2.0",
-    "ms-amqp-transport": "^0.4.0",
+    "ms-amqp-transport": "^0.4.1",
     "ms-validation": "^0.5.6",
     "mservice": "^1.0.0",
     "node-uuid": "^1.4.6",
@@ -45,11 +45,11 @@
     "babel-eslint": "^4.1.6",
     "chai": "^3.4.1",
     "eslint": "^1.8.0",
-    "eslint-config-airbnb": "^2.1.0",
+    "eslint-config-airbnb": "^2.1.1",
     "eslint-plugin-mocha": "^1.1.0",
     "json": "^9.0.3",
     "mocha": "^2.3.3",
-    "nock": "^3.3.2",
+    "nock": "^3.5.0",
     "server-destroy": "^1.0.1",
     "sinon": "^1.17.2"
   }
