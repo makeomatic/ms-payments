@@ -3,7 +3,7 @@ NODE_VERSIONS := 5.1.1
 PKG_NAME := $(shell cat package.json | ./node_modules/.bin/json name)
 PKG_VERSION := $(shell cat package.json | ./node_modules/.bin/json version)
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
-NPM_PROXY := --build-arg NPM_PROXY=http://$(shell docker-machine ip dev):4873
+NPM_PROXY := --build-arg NPM_PROXY=http://$(shell docker-machine ip default):4873
 REPO := makeomatic
 BASE_NAME := $(REPO)/$(PKG_NAME)
 

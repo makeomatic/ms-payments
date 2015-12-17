@@ -93,6 +93,7 @@ class Payments extends MService {
    * Initialize default plans
    */
   initPlans() {
+    this.log.info('Creating plans');
     const { defaultPlans } = this.config;
     return Promise.map(defaultPlans, (plan) => {
       return createPlan.call(this, plan).reflect();
