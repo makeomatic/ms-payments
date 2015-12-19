@@ -39,7 +39,7 @@ Subscription name **must be exactly the same** as plan payment definition name.
 
 As for plan, you must specify "name", "description", "type", "payment_definitions" and "merchant_preferences" only.
 
-```JSON
+```
 {
   "name": <string>, // plan name, could be anything
   "description": <string>, // plan description, ditto
