@@ -16,7 +16,7 @@ After plan has been created it becomes available for users to subscribe.
 
 To create a plan you need to provide certain data for create endpoint.
 
-```JSON
+```
 {
   "hidden": <true|false>, // use true to make plan invisible to normal users
   "alias": <string>, // use this to set up plan alias (for your convenience)
@@ -27,7 +27,7 @@ To create a plan you need to provide certain data for create endpoint.
 
 Now onto subscriptions.
 
-```JSON
+```
 {
   "models": <number>, // number of models added on each billing cycle (month or year)
   "price": <number>, // price of additional models (for 1 model)
@@ -51,7 +51,7 @@ As for plan, you must specify "name", "description", "type", "payment_definition
 
 Payment definitions are simple and as with subscriptions you need to provide only 2 of them: monthly and annual.
 
-```JSON
+```
 {
   "name": <string>, // must be exactly the same as in subscription
   "type": "regular", // paypal provides option for trial plans too, but it's not implemented on our side
@@ -68,7 +68,7 @@ Payment definitions are simple and as with subscriptions you need to provide onl
 
 Charge model allows you to apply tax and shipping (not applicable for us).
 
-```JSON
+```
 {
   "type": <tax|shipping>, // self-descriptive
   "amount": {
