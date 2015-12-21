@@ -1,7 +1,9 @@
+const Errors = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const ld = require('lodash');
+const url = require('url');
 
 function saleCreate(message) {
   const { _config, redis } = this;
@@ -30,14 +32,18 @@ function saleCreate(message) {
     const saleKey = key('sales-data', sale.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(saleKey, 'sale', JSON.stringify(sale));
-    pipeline.hsetnx(saleKey, 'create_time', sale.create_time);
-    pipeline.hsetnx(saleKey, 'update_time', sale.update_time);
-    pipeline.hsetnx(saleKey, 'owner', message.owner);
-
-    pipeline.sadd('sales-index', sale.id);
-
+    // adjust state
     sale.hidden = message.hidden;
+
+    const saveData = {
+      sale,
+      create_time: sale.create_time,
+      update_time: sale.update_time,
+      owner: message.owner,
+    };
+
+    pipeline.hmset(saleKey, ld.mapValues(saveData, JSON.stringify, JSON));
+    pipeline.sadd('sales-index', sale.id);
 
     return pipeline.exec().return(data);
   }

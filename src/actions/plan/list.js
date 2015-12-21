@@ -1,9 +1,10 @@
 const { processResult, mapResult } = require('../../listUtils');
+const ld = require('lodash');
 
 function planList(opts) {
   const { redis } = this;
   const { filter } = opts;
-  const criteria = opts.criteria || 'startedAt';
+  const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : JSON.stringify(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;
@@ -13,15 +14,8 @@ function planList(opts) {
     .sortedFilteredPaymentsList('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
     .then(processResult('plans-data', redis))
     .spread(mapResult(offset, limit))
-    .then((data) => {
-      data.items = data.items.map((item) => {
-        item.plan = JSON.parse(item.plan);
-        item.subs = JSON.parse(item.subs);
-
-        return item;
-      });
-
-      return data;
+    .tap(data => {
+      data.items = ld.mapValues(data.items, JSON.parse, JSON);
     });
 }
 

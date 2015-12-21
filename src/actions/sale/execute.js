@@ -1,6 +1,7 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
+const ld = require('lodash');
 
 function saleExecute(message) {
   const { _config, redis } = this;
@@ -20,12 +21,10 @@ function saleExecute(message) {
 
   function updateRedis(sale) {
     const saleKey = key('sales-data', sale.id);
-    const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(saleKey, 'sale', JSON.stringify(sale));
-    pipeline.hsetnx(saleKey, 'update_time', sale.update_time);
-
-    return pipeline.exec().return(sale);
+    return redis
+      .hmset(saleKey, ld.mapValues({ sale, update_time: sale.update_time }, JSON.stringify, JSON))
+      .return(sale);
   }
 
   return promise.then(sendRequest).then(updateRedis);

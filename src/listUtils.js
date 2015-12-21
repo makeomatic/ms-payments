@@ -39,5 +39,19 @@ function mapResult(offset, limit) {
   };
 }
 
+function passThrough(input) {
+  return input;
+}
+
+function hmget(fields, func = passThrough, ctx) {
+  return function transformer(data) {
+    return fields.reduce(function transform(acc, field, idx) {
+      acc[field] = func.call(ctx || this, data[idx]);
+      return acc;
+    }, {});
+  };
+}
+
 exports.processResult = processResult;
 exports.mapResult = mapResult;
+exports.hmget = hmget;

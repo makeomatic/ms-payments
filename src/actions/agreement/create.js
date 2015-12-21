@@ -30,17 +30,21 @@ function agreementCreate(message) {
   }
 
   function saveToRedis(response) {
-    const agreementKey = key('agreements-data', response.agreement.id);
+    const agreement = response.agreement;
+    const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(response.agreement));
-    pipeline.hsetnx(agreementKey, 'state', response.agreement.state);
-    pipeline.hsetnx(agreementKey, 'name', response.agreement.name);
-    pipeline.hsetnx(agreementKey, 'token', response.agreement.token);
-    pipeline.hsetnx(agreementKey, 'plan', response.agreement.plan.id);
-    pipeline.hsetnx(agreementKey, 'owner', message.owner);
+    const data = {
+      agreement,
+      state: agreement.state,
+      name: agreement.name,
+      token: agreement.token,
+      plan: agreement.plan.id,
+      owner: message.owner,
+    };
 
-    pipeline.sadd('agreements-index', response.agreement.id);
+    pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
+    pipeline.sadd('agreements-index', agreement.id);
 
     return pipeline.exec().return(response.agreement);
   }
@@ -61,16 +65,16 @@ function agreementCreate(message) {
       'username': message.owner,
       'audience': _config.users.audience,
       '$set': {
-        'agreement': agreement.id,
-        'plan': plan.id,
-        'models': subscription.models,
-        'modelPrice': subscription.price,
-        'nextCycle': nextCycle,
+        nextCycle,
+        agreement: agreement.id,
+        plan: plan.id,
+        models: subscription.models,
+        modelPrice: subscription.price,
       },
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
       .return(agreement);
   }
 

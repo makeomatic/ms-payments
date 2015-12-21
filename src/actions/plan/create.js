@@ -28,19 +28,25 @@ function planCreate(message) {
       return subscription;
     });
 
-    if (message.alias !== null && message.alias !== undefined) {
-      pipeline.hsetnx(planKey, 'alias', message.alias);
-    }
-    pipeline.hsetnx(planKey, 'plan', JSON.stringify(plan));
-    pipeline.hsetnx(planKey, 'subs', JSON.stringify(subscriptions));
-    pipeline.hsetnx(planKey, 'type', plan.type);
-    pipeline.hsetnx(planKey, 'state', plan.state);
-    pipeline.hsetnx(planKey, 'name', plan.name);
-    pipeline.hsetnx(planKey, 'hidden', message.hidden);
+    const data = {
+      plan: {
+        ...plan,
+        hidden: message.hidden,
+      },
+      subs: subscriptions,
+      type: plan.type,
+      state: plan.state,
+      name: plan.name,
+      hidden: message.hidden,
+    };
 
+    if (message.alias !== null && message.alias !== undefined) {
+      data.alias = message.alias;
+    }
+
+    pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
     pipeline.sadd('plans-index', plan.id);
 
-    plan.hidden = message.hidden;
     return pipeline.exec().return(plan);
   }
 

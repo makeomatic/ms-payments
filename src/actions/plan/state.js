@@ -12,9 +12,7 @@ function planState(message) {
     const request = [{
       'op': 'replace',
       'path': '/',
-      'value': {
-        'state': state,
-      },
+      'value': { state },
     }];
 
     return new Promise((resolve, reject) => {
@@ -30,13 +28,7 @@ function planState(message) {
 
   function updateRedis() {
     const agreementKey = key('plans-data', id);
-    const pipeline = redis.pipeline();
-
-    pipeline.hsetnx(agreementKey, 'state', state);
-
-    return pipeline.exec().then(() => {
-      return state;
-    });
+    return redis.hset(agreementKey, 'state', JSON.stringify(state));
   }
 
   return promise.then(sendRequest).then(updateRedis);

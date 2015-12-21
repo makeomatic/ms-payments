@@ -33,15 +33,19 @@ function planUpdate(message) {
     const planKey = key('plans-data', id);
     const pipeline = redis.pipeline();
 
-    if (message.alias !== null && message.alias !== undefined) {
-      pipeline.hsetnx(planKey, 'alias', message.alias);
-    }
-    pipeline.hsetnx(planKey, 'plan', JSON.stringify(plan));
-    pipeline.hsetnx(planKey, 'type', plan.type);
-    pipeline.hsetnx(planKey, 'state', plan.state);
-    pipeline.hsetnx(planKey, 'name', plan.name);
-    pipeline.hsetnx(planKey, 'hidden', plan.hidden);
+    const data = {
+      plan,
+      type: plan.type,
+      state: plan.state,
+      name: plan.name,
+      hidden: plan.hidden,
+    };
 
+    if (message.alias !== null && message.alias !== undefined) {
+      data.alias = message.alias;
+    }
+
+    pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
     pipeline.sadd('plans-index', plan.id);
 
     return pipeline.exec().then(() => {
