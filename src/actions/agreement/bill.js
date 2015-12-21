@@ -3,7 +3,7 @@ const key = require('../../redisKey.js');
 const ld = require('lodash');
 const { hmget } = require('../../listUtils.js');
 
-const sync = require('../../transaction/sync');
+const sync = require('../transaction/sync.js');
 const moment = require('moment');
 
 const AGREEMENT_KEYS = ['agreement', 'owner'];

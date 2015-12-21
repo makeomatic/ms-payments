@@ -2,6 +2,8 @@ const Promise = require('bluebird');
 
 function processResult(dataIndex, redis) {
   return (ids) => {
+    console.log(ids);
+
     const length = +ids.pop();
     if (length === 0 || ids.length === 0) {
       return [

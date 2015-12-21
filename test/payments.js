@@ -156,9 +156,9 @@ describe('Payments suite', function UserClassSuite() {
 
       it('Should update plan info', () => {
         const updateData = {
-          'id': billingPlan.id,
-          'plan': {
-            'name': 'Updated name',
+          id: billingPlan.id,
+          plan: {
+            name: 'Updated name',
           },
         };
 
