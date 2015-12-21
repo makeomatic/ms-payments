@@ -34,7 +34,7 @@ function planUpdate(message) {
     const pipeline = redis.pipeline();
 
     const data = {
-      plan,
+      plan: { ...plan, id },
       type: plan.type,
       state: plan.state,
       name: plan.name,
@@ -46,7 +46,7 @@ function planUpdate(message) {
     }
 
     pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
-    pipeline.sadd('plans-index', plan.id);
+    pipeline.sadd('plans-index', id);
 
     return pipeline.exec().then(() => {
       return plan;
