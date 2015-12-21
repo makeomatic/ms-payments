@@ -1,9 +1,8 @@
 const Promise = require('bluebird');
+const ld = require('lodash');
 
 function processResult(dataIndex, redis) {
   return (ids) => {
-    console.log(ids);
-
     const length = +ids.pop();
     if (length === 0 || ids.length === 0) {
       return [
@@ -29,7 +28,13 @@ function processResult(dataIndex, redis) {
 function mapResult(offset, limit) {
   return (ids, props, length) => {
     const items = ids.map(function remapData(_, idx) {
-      return props[idx][1];
+      return ld.reduce(props[idx][1], function reduce(result, val, key) {
+        if (val !== '') {
+          result[key] = JSON.parse(val);
+        }
+
+        return result;
+      }, {});
     });
 
     return {

@@ -181,8 +181,8 @@ describe('Payments suite', function UserClassSuite() {
       it('Should list all plans', () => {
         return payments.router({}, listPlanHeaders)
           .reflect()
-          .then((result) => {
-            expect(result.isFulfilled()).to.be.eq(true);
+          .then(result => {
+            return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
           });
       });
 

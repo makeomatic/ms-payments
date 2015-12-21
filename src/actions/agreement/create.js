@@ -49,13 +49,14 @@ function agreementCreate(message) {
     return pipeline.exec().return(response.agreement);
   }
 
-  function fetchPlan(agreement) {
-    return getPlan(agreement.plan.id).then((plan) => {
+  const fetchPlan = agreement => {
+    return getPlan.call(this, agreement.plan.id).then(plan => {
       return { agreement, plan };
     });
-  }
+  };
 
   function updateMetadata(data) {
+    console.log(data);
     const { plan, agreement } = data;
 
     const subscription = ld.findWhere(plan.subscriptions, { name: 'free' });

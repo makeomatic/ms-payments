@@ -1,5 +1,4 @@
 const { processResult, mapResult } = require('../../listUtils');
-const ld = require('lodash');
 
 function planList(opts) {
   const { redis } = this;
@@ -11,12 +10,9 @@ function planList(opts) {
   const limit = opts.limit || 10;
 
   return redis
-    .sortedFilteredPaymentsList('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
+    .sortedFilteredPaymentsListBuffer('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
     .then(processResult('plans-data', redis))
-    .spread(mapResult(offset, limit))
-    .tap(data => {
-      data.items = ld.mapValues(data.items, JSON.parse, JSON);
-    });
+    .spread(mapResult(offset, limit));
 }
 
 module.exports = planList;
