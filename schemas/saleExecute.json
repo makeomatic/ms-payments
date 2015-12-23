@@ -1,9 +1,10 @@
 {
   "id": "sale.execute",
   "type": "object",
-  "required": ["token", "payer_id"],
+  "required": ["payment_id", "payer_id", "owner"],
   "properties": {
-    "token": { "type": "string" },
-    "payer_id": { "type": "string" }
+    "payment_id": { "type": "string", "minLength": 1 },
+    "payer_id": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "minLength": 1 }
   }
 }

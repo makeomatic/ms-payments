@@ -96,6 +96,23 @@ function agreementBill(id) {
     return Promise.resolve(data);
   }
 
+  function getMetadata(data) {
+    // TODO: check if models needs to be added or replaced
+    /*
+    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
+    const getRequest = {
+      username: data.agreement.owner,
+      audience: _config.users.audience,
+    };
+    return amqp.publishAndWait(path, getRequest, {timeout: 5000})
+      .then((metadata) => {
+        data.oldModels = metadata.models || 0;
+        return data;
+      });
+    */
+    return data;
+  }
+
   function saveToRedis(data) {
     const sub = ld.findWhere(data.subs, { id: data.agreement.plan.payment_definitions[0].name });
     const updateRequest = {
@@ -114,7 +131,7 @@ function agreementBill(id) {
       .return(data);
   }
 
-  return promise.then(getAgreement).then(getPlan).then(getTransactions).then(checkData).then(saveToRedis);
+  return promise.then(getAgreement).then(getPlan).then(getTransactions).then(checkData).then(getMetadata).then(saveToRedis);
 }
 
 module.exports = agreementBill;

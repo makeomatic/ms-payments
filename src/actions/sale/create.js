@@ -38,6 +38,13 @@ function saleCreate(message) {
       .then((metadata) => {
         if (metadata.modelPrice) {
           sale.transactions[0].amount.total *= metadata.modelPrice;
+          sale.transactions[0].item_list = {
+            items: [{
+              name: 'Model',
+              price: metadata.modelPrice,
+              quantity: message.amount,
+            }],
+          };
           return sale;
         }
         return new Errors.NotSupportedError('Operation is not available on users not having agreement data.');
