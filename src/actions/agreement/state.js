@@ -22,13 +22,10 @@ function planState(message) {
 
   function updateRedis() {
     const agreementKey = key('agreements-data', id);
-    const pipeline = redis.pipeline();
 
-    pipeline.hset(agreementKey, 'state', state);
-
-    return pipeline.exec().then(() => {
-      return state;
-    });
+    return redis
+      .hset(agreementKey, 'state', JSON.stringify(state))
+      .return(state);
   }
 
   return promise.then(sendRequest).then(updateRedis);

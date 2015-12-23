@@ -1,51 +1,76 @@
 SHELL := /bin/bash
-NODE_VERSIONS := 5.1.1
+THIS_FILE := $(lastword $(MAKEFILE_LIST))
 PKG_NAME := $(shell cat package.json | ./node_modules/.bin/json name)
 PKG_VERSION := $(shell cat package.json | ./node_modules/.bin/json version)
-THIS_FILE := $(lastword $(MAKEFILE_LIST))
-NPM_PROXY := --build-arg NPM_PROXY=http://$(shell docker-machine ip default):4873
-REPO := makeomatic
-BASE_NAME := $(REPO)/$(PKG_NAME)
+NPM_PROXY := http://$(shell docker-machine ip dev):4873
+DOCKER_USER := makeomatic
+DIST := $(DOCKER_USER)/$(PKG_NAME)
+NODE_VERSIONS := 5.3.0
+ENVS := development production
+TASK_LIST := $(foreach env,$(ENVS),$(addsuffix .$(env), $(NODE_VERSIONS)))
+WORKDIR := /src
+COMPOSE_FILE := test/docker-compose.yml
 
-# define task lists
-TEST_TASKS := $(addsuffix .test, $(NODE_VERSIONS))
-BUILD_TASKS := $(addsuffix .build, $(NODE_VERSIONS))
-PUSH_TASKS := $(addsuffix .push, $(NODE_VERSIONS))
+test: mocha cleanup
 
-test: $(TEST_TASKS)
+build: docker tag
 
-build: $(BUILD_TASKS)
+%.production.mocha:
+	@echo "testing $@"
+	$(COMPOSE) run -e SKIP_REBUILD=${SKIP_REBUILD} --rm tester npm test
 
-push: $(PUSH_TASKS)
+%.mocha: ;
 
-build-docker:
-	docker build -t makeomatic/node-test:5.1.0 ./test
+%.production.cleanup:
+	@echo "cleaning up $@"
+	$(COMPOSE) stop
+	$(COMPOSE) rm -f
 
-run-test:
-	docker run --link=rabbitmq --link=redis_1 --link=redis_2 --link=redis_3 -v ${PWD}:/usr/src/app -w /usr/src/app --rm -e TEST_ENV=docker makeomatic/node-test:5.1.0 npm test;
+%.cleanup: ;
 
-$(TEST_TASKS): build-docker
-	docker run -d --name=rabbitmq rabbitmq; \
-	docker run -d --name=redis_1 makeomatic/alpine-redis; \
-	docker run -d --name=redis_2 makeomatic/alpine-redis; \
-	docker run -d --name=redis_3 makeomatic/alpine-redis; \
-	$(MAKE) -f $(THIS_FILE) run-test; \
-	EXIT_CODE=$$?; \
-	docker rm -f rabbitmq; \
-	docker rm -f redis_1; \
-	docker rm -f redis_2; \
-	docker rm -f redis_3; \
-	exit ${EXIT_CODE};
+%.docker: ARGS = --build-arg NODE_ENV=$(NODE_ENV) --build-arg NPM_PROXY=$(NPM_PROXY)
+%.docker:
+	@echo "building $@"
+	NODE_VERSION=$(NODE_VERSION) envsubst < "./Dockerfile" > $(DOCKERFILE)
+	docker build $(ARGS) -t $(PKG_PREFIX_ENV) -f $(DOCKERFILE) .
+	rm $(DOCKERFILE)
 
-$(BUILD_TASKS):
-	npm run prepublish
-	docker build $(NPM_PROXY) --build-arg VERSION=v$(basename $@) --build-arg NODE_ENV=development -t $(BASE_NAME):$(basename $@)-development .
-	docker build $(NPM_PROXY) --build-arg VERSION=v$(basename $@) -t $(BASE_NAME):$(basename $@)-$(PKG_VERSION) .
-	docker tag -f $(BASE_NAME):$(basename $@)-$(PKG_VERSION) $(BASE_NAME):$(basename $@)
+%.production.tag:
+	@echo "tagging build $@"
+	docker tag -f $(PKG_PREFIX_ENV) $(PKG_PREFIX)
+	docker tag -f $(PKG_PREFIX_ENV) $(PKG_PREFIX)-$(PKG_VERSION)
 
-$(PUSH_TASKS):
-	docker push $(BASE_NAME):$(basename $@)-development
-	docker push $(BASE_NAME):$(basename $@)-$(PKG_VERSION)
-	docker push $(BASE_NAME):$(basename $@)
+%.tag: ;
 
-.PHONY: test build push run-test build-docker
+%.development.pull:
+	@echo "pulling development $@"
+	docker pull $(PKG_PREFIX_ENV)
+
+%.pull:
+	@echo "pulling $@"
+	docker pull $(PKG_PREFIX)
+	docker pull $(PKG_PREFIX)-$(PKG_VERSION)
+
+%.production.push: %.push
+	@echo "pushing production $@"
+	docker push $(PKG_PREFIX)
+	docker push $(PKG_PREFIX)-$(PKG_VERSION)
+
+%.push:
+	@echo "pushing $@"
+	docker push $(PKG_PREFIX_ENV)
+
+all: test build push
+
+%: COMPOSE = DIR=$(WORKDIR) IMAGE=$(IMAGE) docker-compose -f $(COMPOSE_FILE)
+%: IMAGE=$(DOCKER_USER)/alpine-node:$(NODE_VERSION)
+%: NODE_VERSION = $(basename $(basename $@))
+%: NODE_ENV = $(subst .,,$(suffix $(basename $@)))
+%: DOCKERFILE = "./Dockerfile.$(NODE_VERSION)"
+%: PKG_PREFIX = $(DIST):$(NODE_VERSION)
+%: PKG_PREFIX_ENV = $(PKG_PREFIX)-$(NODE_ENV)
+%::
+	@echo $@  # print target name
+	@$(MAKE) -f $(THIS_FILE) $(addsuffix .$@, $(TASK_LIST))
+
+.PHONY: all test build %.mocha %.docker %.push %.pull

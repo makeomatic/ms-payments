@@ -1,6 +1,5 @@
 const chai = require('chai');
 const { expect } = chai;
-const MockServer = require('ioredis/test/helpers/mock_server.js');
 const Promise = require('bluebird');
 
 // mock paypal requests
@@ -44,32 +43,6 @@ const config = {
 describe('Payments suite', function UserClassSuite() {
   const Payments = require('../src/payments.js');
 
-  // inits redis mock cluster
-  function redisMock() {
-    const slotTable = [
-      [0, 5460, ['127.0.0.1', 30001]],
-      [5461, 10922, ['127.0.0.1', 30002]],
-      [10923, 16383, ['127.0.0.1', 30003]],
-    ];
-
-    function argvHandler(argv) {
-      if (argv[0] === 'cluster' && argv[1] === 'slots') {
-        return slotTable;
-      }
-    }
-
-    this.server_1 = new MockServer(30001, argvHandler);
-    this.server_2 = new MockServer(30002, argvHandler);
-    this.server_3 = new MockServer(30003, argvHandler);
-  }
-
-  // teardown cluster
-  function tearDownRedisMock() {
-    this.server_1.disconnect();
-    this.server_2.disconnect();
-    this.server_3.disconnect();
-  }
-
   describe('unit tests', function UnitSuite() {
     const createPlanHeaders = { routingKey: 'payments.plan.create' };
     const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
@@ -84,36 +57,16 @@ describe('Payments suite', function UserClassSuite() {
     let billingPlan;
     let billingAgreement;
 
-    before(redisMock);
-
     before(function startService() {
-      function emptyStub(data) {
-        return Promise.resolve(data || {});
-      }
-
       payments = new Payments(config);
-      payments._mailer = {
-        send: emptyStub,
-      };
-      const pipelineStub = {};
-      payments._redis = { pipeline: () => { return pipelineStub; } };
-      [
-        'hexists', 'hsetnx', 'expire', 'zadd', 'hgetallBuffer', 'get',
-        'set', 'hget', 'hdel', 'del', 'hmgetBuffer', 'incrby', 'zrem', 'zscoreBuffer', 'hmget',
-        'hset', 'sadd',
-      ].forEach(prop => {
-        payments._redis[prop] = pipelineStub[prop] = emptyStub;
-      });
-      payments._redis.pipeline.exec = emptyStub;
-      payments._redis.sortedFilteredFilesList = () => {
-        return Promise.resolve(['P-12U98928TT9129128ECALAJY']);
-      };
-
-      payments._amqp = {
-        publishAndWait: () => {
-          return Promise.resolve(true);
-        },
-      };
+      return payments.connect()
+        .then(function stub() {
+          payments._amqp = {
+            publishAndWait: () => {
+              return Promise.resolve(true);
+            },
+          };
+        });
     });
 
     describe('plans#', function plansSuite() {
@@ -203,9 +156,9 @@ describe('Payments suite', function UserClassSuite() {
 
       it('Should update plan info', () => {
         const updateData = {
-          'id': billingPlan.id,
-          'plan': {
-            'name': 'Updated name',
+          id: billingPlan.id,
+          plan: {
+            name: 'Updated name',
           },
         };
 
@@ -228,8 +181,8 @@ describe('Payments suite', function UserClassSuite() {
       it('Should list all plans', () => {
         return payments.router({}, listPlanHeaders)
           .reflect()
-          .then((result) => {
-            expect(result.isFulfilled()).to.be.eq(true);
+          .then(result => {
+            return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
           });
       });
 
@@ -300,7 +253,5 @@ describe('Payments suite', function UserClassSuite() {
           });
       });
     });
-
-    after(tearDownRedisMock);
   });
 });

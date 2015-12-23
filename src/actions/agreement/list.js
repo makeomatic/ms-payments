@@ -3,7 +3,7 @@ const { processResult, mapResult } = require('../../listUtils');
 function planList(opts) {
   const { redis } = this;
   const { filter } = opts;
-  const criteria = opts.criteria || 'startedAt';
+  const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : JSON.stringify(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;

@@ -1,9 +1,15 @@
 const Promise = require('bluebird');
 const key = require('../../redisKey.js');
 const ld = require('lodash');
+const { hmget } = require('../../listUtils.js');
 
-const sync = require('./../transaction/sync');
+const sync = require('../transaction/sync.js');
 const moment = require('moment');
+
+const AGREEMENT_KEYS = ['agreement', 'owner'];
+const PLAN_KEYS = ['plan', 'subs'];
+const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
+const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 
 function agreementBill(id) {
   const { _config, redis, amqp } = this;
@@ -13,42 +19,37 @@ function agreementBill(id) {
 
   function getAgreement() {
     const agreementKey = key('agreements-data', id);
-    const pipeline = redis.pipeline();
 
-    pipeline.hget(agreementKey, 'agreement');
-    pipeline.hget(agreementKey, 'owner');
-
-    return pipeline.exec().then((result) => {
-      const agreement = JSON.parse(result[0]);
-      agreement.owner = result[1];
-      return agreement;
-    });
+    return redis.hmget(agreementKey, AGREEMENT_KEYS)
+      .then(data => {
+        const { agreement, owner } = agreementParser(data);
+        agreement.owner = owner;
+        return agreement;
+      });
   }
 
   function getPlan(agreement) {
     const planKey = key('plans-data', agreement.plan.id);
-    const pipeline = redis.pipeline();
 
-    pipeline.hget(planKey, 'plan');
-    pipeline.hget(planKey, 'subs');
-
-    return pipeline.exec().then((result) => {
-      const plan = JSON.parse(result[0]);
-      const subs = JSON.parse(result[1]);
-
-      return {
-        agreement: agreement,
-        plan: plan,
-        subscriptions: subs,
-      };
-    });
+    return redis
+      .hmget(planKey, PLAN_KEYS)
+      .then(planParser)
+      .then(({ plan, subs }) => {
+        return {
+          agreement,
+          plan,
+          subscriptions: subs,
+        };
+      });
   }
 
   function getTransactions(data) {
     if (data.agreement.plan.id === 'free') {
       return Promise.resolve(data);
     }
+
     return sync({ id, start, end }).then(transactions => {
+      // TODO: maybe assign is enough?
       return ld.merge(data, { transactions });
     });
   }
@@ -98,13 +99,13 @@ function agreementBill(id) {
   function saveToRedis(data) {
     const sub = ld.findWhere(data.subs, { id: data.agreement.plan.payment_definitions[0].name });
     const updateRequest = {
-      'username': data.agreement.owner,
-      'audience': _config.users.audience,
-      '$set': {
-        'models': sub.models,
-        'modelPrice': sub.price,
-        'billingAmount': data.transactions[data.transaction].amount.value,
-        'nextCycle': data.nextUpdate,
+      username: data.agreement.owner,
+      audience: _config.users.audience,
+      $set: {
+        models: sub.models,
+        modelPrice: sub.price,
+        billingAmount: data.transactions[data.transaction].amount.value,
+        nextCycle: data.nextUpdate,
       },
     };
 

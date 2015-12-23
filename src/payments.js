@@ -19,7 +19,7 @@ class Payments extends MService {
    */
   static defaultOpts = {
     logger: process.env.NODE_ENV === 'development',
-    plugins: ['logger', 'amqp', 'redisCluster', 'validator'],
+    plugins: ['logger', 'validator', 'amqp', 'redisCluster'],
     amqp: {
       queue: 'ms-payments',
       initRoutes: true,

@@ -1,6 +1,7 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
+const ld = require('lodash');
 
 function agreementExecute(token) {
   const { _config, redis } = this;
@@ -32,13 +33,14 @@ function agreementExecute(token) {
 
   function updateRedis(agreement) {
     const agreementKey = key('agreements-data', agreement.id);
-    const pipeline = redis.pipeline();
 
-    pipeline.hset(agreementKey, 'agreement', JSON.stringify(agreement));
-    pipeline.hset(agreementKey, 'state', agreement.state);
-    pipeline.hset(agreementKey, 'name', agreement.name);
+    const data = ld.mapValues({
+      agreement,
+      state: agreement.state,
+      name: agreement.name,
+    }, JSON.stringify, JSON);
 
-    return pipeline.exec().return(agreement);
+    return redis.hmset(agreementKey, data).return(agreement);
   }
 
   return promise.then(sendRequest).then(fetchUpdatedAgreement).then(updateRedis);

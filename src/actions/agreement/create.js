@@ -30,29 +30,34 @@ function agreementCreate(message) {
   }
 
   function saveToRedis(response) {
-    const agreementKey = key('agreements-data', response.agreement.id);
+    const agreement = response.agreement;
+    const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hset(agreementKey, 'agreement', JSON.stringify(response.agreement));
-    pipeline.hset(agreementKey, 'state', response.agreement.state);
-    pipeline.hset(agreementKey, 'name', response.agreement.name);
-    pipeline.hset(agreementKey, 'token', response.agreement.token);
-    pipeline.hset(agreementKey, 'plan', response.agreement.plan.id);
-    pipeline.hset(agreementKey, 'owner', message.owner);
+    const data = {
+      agreement,
+      state: agreement.state,
+      name: agreement.name,
+      token: agreement.token,
+      plan: agreement.plan.id,
+      owner: message.owner,
+    };
 
-    pipeline.sadd('agreements-index', response.agreement.id);
+    pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
+    pipeline.sadd('agreements-index', agreement.id);
 
     return pipeline.exec().return(response);
   }
 
-  function fetchPlan(response) {
-    return getPlan(response.plan.id).then((plan) => {
-      response.plan = plan;
+  const fetchPlan = agreement => {
+    return getPlan.call(this, agreement.plan.id).then(plan => {
+      return { agreement, plan };
       return response;
     });
-  }
+  };
 
   function updateMetadata(data) {
+    console.log(data);
     const { plan, agreement } = data;
 
     const subscription = ld.findWhere(plan.subscriptions, { name: 'free' });
@@ -62,17 +67,17 @@ function agreementCreate(message) {
       'username': message.owner,
       'audience': _config.users.audience,
       '$set': {
-        'agreement': agreement.id,
-        'plan': plan.id,
-        'models': subscription.models,
-        'modelPrice': subscription.price,
-        'nextCycle': nextCycle,
+        nextCycle,
+        agreement: agreement.id,
+        plan: plan.id,
+        models: subscription.models,
+        modelPrice: subscription.price,
       },
     };
 
     return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
-      .return(data);
+      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
+      .return(agreement);
   }
 
   return promise.then(sendRequest).then(saveToRedis).then(fetchPlan).then(updateMetadata);

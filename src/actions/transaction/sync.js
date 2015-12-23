@@ -22,18 +22,20 @@ function transactionSync(message) {
   function saveToRedis(transactions) {
     const pipeline = redis.pipeline();
 
-    ld.forEach(transactions, (transaction) => {
+    transactions.map(transaction => {
       const transactionKey = key('transaction-data', transaction.transaction_id);
+      const data = {
+        transaction,
+        agreement: message.id,
+        status: transaction.status,
+        transaction_type: transaction.transaction_type,
+        payer_email: transaction.payer_email,
+        time_stamp: transaction.time_stamp,
+        time_zone: transaction.time_zone,
+        owner: message.owner,
+      };
 
-      pipeline.hset(transactionKey, 'transaction', JSON.stringify(transaction));
-      pipeline.hset(transactionKey, 'agreement', message.id);
-      pipeline.hset(transactionKey, 'status', transaction.status);
-      pipeline.hset(transactionKey, 'transaction_type', transaction.transaction_type);
-      pipeline.hset(transactionKey, 'payer_email', transaction.payer_email);
-      pipeline.hset(transactionKey, 'time_stamp', transaction.time_stamp);
-      pipeline.hset(transactionKey, 'time_zone', transaction.time_zone);
-      pipeline.hset(transactionKey, 'owner', message.owner);
-
+      pipeline.hmset(transactionKey, ld.mapValues(data, JSON.stringify, JSON));
       pipeline.sadd('transaction-index', transaction.transaction_id);
     });
 
