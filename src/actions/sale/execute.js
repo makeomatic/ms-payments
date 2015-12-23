@@ -22,8 +22,8 @@ function saleExecute(message) {
     const saleKey = key('sales-data', sale.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(saleKey, 'sale', JSON.stringify(sale));
-    pipeline.hsetnx(saleKey, 'update_time', sale.update_time);
+    pipeline.hset(saleKey, 'sale', JSON.stringify(sale));
+    pipeline.hset(saleKey, 'update_time', sale.update_time);
 
     return pipeline.exec().return(sale);
   }

@@ -1,9 +1,11 @@
 {
   "id": "sale.create",
   "type": "object",
-  "require": ["owner", "sale"],
+  "require": ["owner", "amount", "return_url", "cancel_url"],
   "properties": {
-    "owner": { "type": "string" },
-    "sale": { "$ref": "sale#" }
+    "owner": { "type": "string", "minLength": 1 },
+    "amount": { "type": "number" },
+    "return_url": { "type": "string", "format": "uri" },
+    "cancel_url": { "type": "string", "format": "uri" }
   }
 }

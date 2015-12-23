@@ -34,9 +34,9 @@ function agreementExecute(token) {
     const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(agreement));
-    pipeline.hsetnx(agreementKey, 'state', agreement.state);
-    pipeline.hsetnx(agreementKey, 'name', agreement.name);
+    pipeline.hset(agreementKey, 'agreement', JSON.stringify(agreement));
+    pipeline.hset(agreementKey, 'state', agreement.state);
+    pipeline.hset(agreementKey, 'name', agreement.name);
 
     return pipeline.exec().return(agreement);
   }

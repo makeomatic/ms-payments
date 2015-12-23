@@ -29,14 +29,14 @@ function planCreate(message) {
     });
 
     if (message.alias !== null && message.alias !== undefined) {
-      pipeline.hsetnx(planKey, 'alias', message.alias);
+      pipeline.hset(planKey, 'alias', message.alias);
     }
-    pipeline.hsetnx(planKey, 'plan', JSON.stringify(plan));
-    pipeline.hsetnx(planKey, 'subs', JSON.stringify(subscriptions));
-    pipeline.hsetnx(planKey, 'type', plan.type);
-    pipeline.hsetnx(planKey, 'state', plan.state);
-    pipeline.hsetnx(planKey, 'name', plan.name);
-    pipeline.hsetnx(planKey, 'hidden', message.hidden);
+    pipeline.hset(planKey, 'plan', JSON.stringify(plan));
+    pipeline.hset(planKey, 'subs', JSON.stringify(subscriptions));
+    pipeline.hset(planKey, 'type', plan.type);
+    pipeline.hset(planKey, 'state', plan.state);
+    pipeline.hset(planKey, 'name', plan.name);
+    pipeline.hset(planKey, 'hidden', message.hidden);
 
     pipeline.sadd('plans-index', plan.id);
 

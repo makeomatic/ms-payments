@@ -25,14 +25,14 @@ function transactionSync(message) {
     ld.forEach(transactions, (transaction) => {
       const transactionKey = key('transaction-data', transaction.transaction_id);
 
-      pipeline.hsetnx(transactionKey, 'transaction', JSON.stringify(transaction));
-      pipeline.hsetnx(transactionKey, 'agreement', message.id);
-      pipeline.hsetnx(transactionKey, 'status', transaction.status);
-      pipeline.hsetnx(transactionKey, 'transaction_type', transaction.transaction_type);
-      pipeline.hsetnx(transactionKey, 'payer_email', transaction.payer_email);
-      pipeline.hsetnx(transactionKey, 'time_stamp', transaction.time_stamp);
-      pipeline.hsetnx(transactionKey, 'time_zone', transaction.time_zone);
-      pipeline.hsetnx(transactionKey, 'owner', message.owner);
+      pipeline.hset(transactionKey, 'transaction', JSON.stringify(transaction));
+      pipeline.hset(transactionKey, 'agreement', message.id);
+      pipeline.hset(transactionKey, 'status', transaction.status);
+      pipeline.hset(transactionKey, 'transaction_type', transaction.transaction_type);
+      pipeline.hset(transactionKey, 'payer_email', transaction.payer_email);
+      pipeline.hset(transactionKey, 'time_stamp', transaction.time_stamp);
+      pipeline.hset(transactionKey, 'time_zone', transaction.time_zone);
+      pipeline.hset(transactionKey, 'owner', message.owner);
 
       pipeline.sadd('transaction-index', transaction.transaction_id);
     });

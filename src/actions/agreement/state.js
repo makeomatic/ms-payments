@@ -24,7 +24,7 @@ function planState(message) {
     const agreementKey = key('agreements-data', id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(agreementKey, 'state', state);
+    pipeline.hset(agreementKey, 'state', state);
 
     return pipeline.exec().then(() => {
       return state;

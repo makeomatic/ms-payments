@@ -33,21 +33,22 @@ function agreementCreate(message) {
     const agreementKey = key('agreements-data', response.agreement.id);
     const pipeline = redis.pipeline();
 
-    pipeline.hsetnx(agreementKey, 'agreement', JSON.stringify(response.agreement));
-    pipeline.hsetnx(agreementKey, 'state', response.agreement.state);
-    pipeline.hsetnx(agreementKey, 'name', response.agreement.name);
-    pipeline.hsetnx(agreementKey, 'token', response.agreement.token);
-    pipeline.hsetnx(agreementKey, 'plan', response.agreement.plan.id);
-    pipeline.hsetnx(agreementKey, 'owner', message.owner);
+    pipeline.hset(agreementKey, 'agreement', JSON.stringify(response.agreement));
+    pipeline.hset(agreementKey, 'state', response.agreement.state);
+    pipeline.hset(agreementKey, 'name', response.agreement.name);
+    pipeline.hset(agreementKey, 'token', response.agreement.token);
+    pipeline.hset(agreementKey, 'plan', response.agreement.plan.id);
+    pipeline.hset(agreementKey, 'owner', message.owner);
 
     pipeline.sadd('agreements-index', response.agreement.id);
 
-    return pipeline.exec().return(response.agreement);
+    return pipeline.exec().return(response);
   }
 
-  function fetchPlan(agreement) {
-    return getPlan(agreement.plan.id).then((plan) => {
-      return { agreement, plan };
+  function fetchPlan(response) {
+    return getPlan(response.plan.id).then((plan) => {
+      response.plan = plan;
+      return response;
     });
   }
 
@@ -71,7 +72,7 @@ function agreementCreate(message) {
 
     return amqp
       .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, {timeout: 5000})
-      .return(agreement);
+      .return(data);
   }
 
   return promise.then(sendRequest).then(saveToRedis).then(fetchPlan).then(updateMetadata);
