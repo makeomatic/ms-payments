@@ -24,7 +24,7 @@ function planCreate(message) {
     const pipeline = redis.pipeline();
 
     const subscriptions = ld.map(message.subscriptions, (subscription) => {
-      subscription.id = ld.findWhere(plan.payment_definitions, { name: subscription.name });
+      subscription.definition = ld.findWhere(plan.payment_definitions, { name: subscription.name });
       return subscription;
     });
 

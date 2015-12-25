@@ -11,7 +11,9 @@ chai.config.includeStack = true;
 
 function debug(result) {
   if (result.isRejected()) {
-    process.stdout.write(require('util').inspect(result, { depth: 5 }) + '\n');
+    const err = result.reason();
+    //process.stdout.write(require('util').inspect(result, { depth: 5 }) + '\n');
+    process.stdout.write(err && err.stack || err);
   }
 }
 

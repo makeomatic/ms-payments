@@ -238,7 +238,7 @@ const mockAgreement = {
   'name': 'Fast Speed Agreement',
   'description': 'Agreement for Fast Speed Plan',
   'plan': {
-    'id': 'P-8M239038M4250351NECAMIPI',
+    'id': 'P-12U98928TT9129128ECALAJY',
     'state': 'ACTIVE',
     'name': 'Testing1-Regular1',
     'description': 'Create Plan for Regular',
@@ -277,7 +277,7 @@ const mockAgreement = {
       'cancel_url': 'http://www.cancel.com',
       'auto_bill_amount': 'YES',
       'initial_fail_amount_action': 'CONTINUE'
-    }
+    },
   },
   'links': [{
     'href': 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-28Y23504JA4250117',
@@ -296,7 +296,7 @@ nock('https://api.sandbox.paypal.com')
     'name': 'Fast Speed Agreement',
     'description': 'Agreement for Fast Speed Plan',
     'start_date': '2015-02-19T00:37:04Z',
-    'plan': {'id': 'P-8M239038M4250351NECAMIPI'},
+    'plan': {'id': 'P-12U98928TT9129128ECALAJY'},
     'payer': {'payment_method': 'paypal'},
     'shipping_address': {
       'line1': 'StayBr111idge Suites',

@@ -75,7 +75,7 @@ module.exports.billingAgreementAttributes = {
   'name': 'Fast Speed Agreement',
   'description': 'Agreement for Fast Speed Plan',
   'start_date': '2015-02-19T00:37:04Z',
-  'plan': {'id': 'P-8M239038M4250351NECAMIPI'},
+  'plan': {'id': 'P-12U98928TT9129128ECALAJY'},
   'payer': {'payment_method': 'paypal'},
   'shipping_address': {
     'line1': 'StayBr111idge Suites',
