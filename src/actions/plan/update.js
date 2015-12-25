@@ -13,20 +13,24 @@ function planUpdate(message) {
     return [{
       'op': 'replace',
       'path': '/',
-      'value': ld.omit(values, 'hidden'),
+      'value': ld.omit(values, ['hidden', 'id']),
     }];
   }
 
   function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingPlan.update(id, buildQuery(plan), _config.paypal, (error) => {
-        if (error) {
-          return reject(error);
-        }
+    const request = buildQuery(plan);
+    const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
+    const ids = id.split('|');
 
-        return resolve(true);
-      });
+    if (ids.length === 1) {
+      return update(ids[0], request, _config.paypal);
+    }
+
+    const requests = ld.map(ids, (planId) => {
+      return update(planId, request, _config.paypal);
     });
+
+    return Promise.all(requests);
   }
 
   function updateRedis() {

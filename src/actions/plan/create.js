@@ -8,27 +8,53 @@ function planCreate(message) {
   const promise = Promise.bind(this);
 
   function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingPlan.create(message.plan, _config.paypal, (error, newPlan) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(newPlan);
+    const create = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan });
+    // divide single plan definition into as many as payment_definitions present
+    const plans = message.plan.payment_definitions.map((definition) => {
+      const plan = ld.assign(ld.cloneDeep(message.plan), {
+        name: message.plan.name + ' - ' + definition.frequency,
+        payment_definitions: [definition],
       });
+      return create(plan, _config.paypal);
     });
+
+    return Promise.all(plans);
   }
 
-  function saveToRedis(plan) {
-    const planKey = key('plans-data', plan.id);
+  function joinPlans(plans) {
+    // join plan_definitions of created plans
+    const merger = (a, b, k) => {
+      if (k === 'id') {
+        return a + '|' + b;
+      }
+      if (ld.isArray(a) && ld.isArray(b)) {
+        return a.concat(b);
+      }
+    };
+    const args = plans.concat([merger]);
+    return {
+      plan: ld.merge.apply(ld, args),
+      plans,
+    };
+  }
+
+  function saveToRedis(data) {
+    const { plan, plans } = data;
     const pipeline = redis.pipeline();
+    const planKey = key('plans-data', plan.id);
+    const plansData = ld.reduce(plans, (a, p) => {
+      const frequency = p.payment_definitions[0].frequency;
+      a[frequency] = p.id;
+      return a;
+    }, { full: plan.id });
+    const plansKeys = ld.values(plansData);
 
     const subscriptions = ld.map(message.subscriptions, (subscription) => {
       subscription.definition = ld.findWhere(plan.payment_definitions, { name: subscription.name });
       return subscription;
     });
 
-    const data = {
+    const saveDataFull = {
       plan: {
         ...plan,
         hidden: message.hidden,
@@ -38,14 +64,37 @@ function planCreate(message) {
       state: plan.state,
       name: plan.name,
       hidden: message.hidden,
+      ...plansData,
     };
 
     if (message.alias !== null && message.alias !== undefined) {
-      data.alias = message.alias;
+      saveDataFull.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
-    pipeline.sadd('plans-index', plan.id);
+    pipeline.hmset(planKey, ld.mapValues(saveDataFull, JSON.stringify, JSON));
+
+    ld.forEach(plans, (p) => {
+      const saveData = {
+        plan: {
+          ...p,
+          hidden: message.hidden,
+        },
+        subs: subscriptions,
+        type: p.type,
+        state: p.state,
+        name: p.name,
+        hidden: message.hidden,
+        ...plansData,
+      };
+
+      if (message.alias !== null && message.alias !== undefined) {
+        saveData.alias = message.alias;
+      }
+
+      pipeline.hmset(planKey, ld.mapValues(saveData, JSON.stringify, JSON));
+    });
+
+    ld.forEach(plansKeys, (id) => { pipeline.sadd('plans-index', id); });
 
     return pipeline.exec().return(plan);
   }
@@ -56,7 +105,7 @@ function planCreate(message) {
     return promise.return(message.plan).then(saveToRedis);
   }
 
-  return promise.then(sendRequest).then(saveToRedis);
+  return promise.then(sendRequest).then(joinPlans).then(saveToRedis);
 }
 
 module.exports = planCreate;
