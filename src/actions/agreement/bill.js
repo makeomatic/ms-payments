@@ -96,42 +96,26 @@ function agreementBill(id) {
     return Promise.resolve(data);
   }
 
-  function getMetadata(data) {
-    // TODO: check if models needs to be added or replaced
-    /*
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const getRequest = {
-      username: data.agreement.owner,
-      audience: _config.users.audience,
-    };
-    return amqp.publishAndWait(path, getRequest, {timeout: 5000})
-      .then((metadata) => {
-        data.oldModels = metadata.models || 0;
-        return data;
-      });
-    */
-    return data;
-  }
-
   function saveToRedis(data) {
+    const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
     const sub = ld.findWhere(data.subs, { id: data.agreement.plan.payment_definitions[0].name });
     const updateRequest = {
       username: data.agreement.owner,
       audience: _config.users.audience,
       $set: {
-        models: sub.models,
         modelPrice: sub.price,
         billingAmount: data.transactions[data.transaction].amount.value,
         nextCycle: data.nextUpdate,
       },
+      $incr: {
+        models: sub.models,
+      },
     };
 
-    return amqp
-      .publishAndWait(_config.users.prefix + '.' + _config.users.postfix.updateMetadata, updateRequest, { timeout: 5000 })
-      .return(data);
+    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return(data);
   }
 
-  return promise.then(getAgreement).then(getPlan).then(getTransactions).then(checkData).then(getMetadata).then(saveToRedis);
+  return promise.then(getAgreement).then(getPlan).then(getTransactions).then(checkData).then(saveToRedis);
 }
 
 module.exports = agreementBill;

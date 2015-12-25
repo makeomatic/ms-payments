@@ -27,28 +27,14 @@ function saleExecute(message) {
       .return(sale);
   }
 
-  function getMetadata(sale) {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const getRequest = {
-      username: message.owner,
-      audience: _config.users.audience,
-    };
-    return amqp.publishAndWait(path, getRequest, {timeout: 5000})
-      .then((metadata) => {
-        const oldModels = metadata.models || 0;
-        return { sale, oldModels };
-      });
-  }
-
-  function updateMetadata(data) {
-    const { sale, oldModels } = data;
-    const models = sale.transactions[0].item_list.items[0].quantity + oldModels;
+  function updateMetadata(sale) {
+    const models = sale.transactions[0].item_list.items[0].quantity;
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
     const updateRequest = {
       'username': message.owner,
       'audience': _config.users.audience,
-      '$set': {models},
+      '$incr': {models},
     };
 
     return amqp
@@ -56,7 +42,7 @@ function saleExecute(message) {
       .return(sale);
   }
 
-  return promise.then(sendRequest).then(updateRedis).then(getMetadata).then(updateMetadata);
+  return promise.then(sendRequest).then(updateRedis).then(updateMetadata);
 }
 
 module.exports = saleExecute;
