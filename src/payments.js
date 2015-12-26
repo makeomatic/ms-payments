@@ -108,16 +108,18 @@ class Payments extends MService {
       return createPlan.call(this, plan).reflect();
     })
     .bind(this)
-    .then(function iterateOverPlans(plans) {
-      const messages = plans.map(plan => {
-        if (plan.isFulfilled()) {
-          return `Created plan ${plan.value().name}`;
-        }
+    .map(function iterateOverPlans(plan) {
+      if (plan.isFulfilled()) {
+        this.log.info('Created plan %s', plan.value().name);
+        return;
+      }
 
-        return `Error creating plan ${plan.reason().stack}`;
-      });
-
-      this.log.info(messages);
+      const err = plan.reason();
+      if (err.status !== 409) {
+        this.log.error('Error creating plan', err.stack);
+      } else {
+        this.log.warn(err.message);
+      }
     });
   }
 }
