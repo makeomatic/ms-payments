@@ -114,7 +114,7 @@ class Payments extends MService {
           return `Created plan ${plan.value().name}`;
         }
 
-        return `Error creating plan ${plan.reason()}`;
+        return `Error creating plan ${plan.reason().stack}`;
       });
 
       this.log.info(messages);
