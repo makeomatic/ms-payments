@@ -7,13 +7,22 @@ function planCreate(message) {
   const { _config, redis } = this;
   const promise = Promise.bind(this);
 
+  const defaultMerchantPreferences = {
+    return_url: _config.urls.plan_return,
+    cancel_url: _config.urls.plan_cancel,
+    notify_url: _config.urls.plan_notify,
+  };
+
   function sendRequest() {
+    // promisify paypal
     const create = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan });
+    // setup default merchant preferences
+    message.plan.merchant_preferences = ld.merge(defaultMerchantPreferences, message.plan.merchant_preferences || {});
     // divide single plan definition into as many as payment_definitions present
     const plans = message.plan.payment_definitions.map((definition) => {
       const plan = ld.assign(ld.cloneDeep(message.plan), {
         name: message.plan.name + ' - ' + definition.frequency,
-        payment_definitions: [definition],
+        payment_definitions: [definition]
       });
       return create(plan, _config.paypal);
     });

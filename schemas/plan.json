@@ -1,7 +1,7 @@
 {
 	"id": "plan",
 	"type": "object",
-	"required": ["name", "description", "type", "payment_definitions", "merchant_preferences"],
+	"required": ["name", "description", "type", "payment_definitions"],
 	"properties": {
 		"id":                   { "type": "string", "minLength": 1 },
 		"name":                 { "type": "string", "minLength": 1 },

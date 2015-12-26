@@ -21,10 +21,11 @@ function saleCreate(message) {
         currency: 'USD',
       },
       description: `Buy ${message.amount} models`,
+      notify_url: _config.urls.sale_notify,
     }],
     redirect_urls: {
-      return_url: message.return_url,
-      cancel_url: message.cancel_url,
+      return_url: _config.urls.sale_return,
+      cancel_url: _config.urls.sale_cancel,
     },
   };
 
