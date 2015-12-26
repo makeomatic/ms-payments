@@ -10,7 +10,6 @@ function planCreate(message) {
   const defaultMerchantPreferences = {
     return_url: _config.urls.plan_return,
     cancel_url: _config.urls.plan_cancel,
-    notify_url: _config.urls.plan_notify,
   };
 
   function sendRequest() {
@@ -22,7 +21,7 @@ function planCreate(message) {
     const plans = message.plan.payment_definitions.map((definition) => {
       const plan = ld.assign(ld.cloneDeep(message.plan), {
         name: message.plan.name + ' - ' + definition.frequency,
-        payment_definitions: [definition]
+        payment_definitions: [definition],
       });
       return create(plan, _config.paypal);
     });
