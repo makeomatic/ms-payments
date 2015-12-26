@@ -111,7 +111,7 @@ function planCreate(message) {
   if (message.alias === 'free') {
     // this is a free plan, don't put it on paypal
     message.plan.id = 'free';
-    return promise.return(message.plan).then(saveToRedis);
+    return promise.return({ plan: message.plan, plans: [] }).then(saveToRedis);
   }
 
   return promise.then(sendRequest).then(joinPlans).then(saveToRedis);
