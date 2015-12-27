@@ -6,7 +6,7 @@ const url = require('url');
 const key = require('../../redisKey.js');
 
 function agreementCreate(message) {
-  const { _config, redis, amqp } = this;
+  const { _config, redis } = this;
   const promise = Promise.bind(this);
 
   function sendRequest() {
@@ -27,6 +27,7 @@ function agreementCreate(message) {
     });
   }
 
+  /* return back after PayPal fixes it's api
   function saveToRedis(response) {
     const agreement = response.agreement;
     const agreementKey = key('agreements-data', agreement.id);
@@ -46,8 +47,9 @@ function agreementCreate(message) {
 
     return pipeline.exec().return(response);
   }
+  */
 
-  return promise.then(sendRequest).then(saveToRedis);
+  return promise.then(sendRequest);
 }
 
 module.exports = agreementCreate;

@@ -5,9 +5,10 @@ const ld = require('lodash');
 const getPlan = require('../plan/get');
 const moment = require('moment');
 
-function agreementExecute(token) {
+function agreementExecute(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
+  const { token, owner } = message;
 
   function sendRequest() {
     return new Promise((resolve, reject) => {
@@ -37,8 +38,6 @@ function agreementExecute(token) {
     const subscriptionName = agreement.plan.payment_definitions[0].name;
 
     return getPlan.call(this, agreement.plan.id).then((plan) => {
-      console.log(plan);
-      console.log(agreement.plan);
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
       return { agreement, subscription };
     });
@@ -53,7 +52,7 @@ function agreementExecute(token) {
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
     const updateRequest = {
-      'username': agreement.owner,
+      'username': owner,
       'audience': _config.users.audience,
       '$set': {
         nextCycle,
@@ -69,14 +68,21 @@ function agreementExecute(token) {
 
   function updateRedis(agreement) {
     const agreementKey = key('agreements-data', agreement.id);
+    const pipeline = redis.pipeline();
 
-    const data = ld.mapValues({
+    const data = {
       agreement,
       state: agreement.state,
       name: agreement.name,
-    }, JSON.stringify, JSON);
+      token: token,
+      plan: agreement.plan.id,
+      owner: owner,
+    };
 
-    return redis.hmset(agreementKey, data).return(agreement);
+    pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
+    pipeline.sadd('agreements-index', agreement.id);
+
+    return pipeline.exec().return(agreement);
   }
 
   return promise.then(sendRequest).then(fetchUpdatedAgreement).then(fetchSubscription).then(updateMetadata).then(updateRedis);
