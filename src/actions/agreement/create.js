@@ -28,7 +28,7 @@ function agreementCreate(message) {
   }
 
   function setToken(response) {
-    return redis.setex('{ms-payments}' + response.token, 3600 * 24, response.agreement.plan.id).return(response);
+    return redis.setex(response.token, 3600 * 24, response.agreement.plan.id).return(response);
   }
 
   /* return back after PayPal fixes it's api

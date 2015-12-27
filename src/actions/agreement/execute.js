@@ -28,7 +28,6 @@ function agreementExecute(message) {
     const subscriptionName = agreement.plan.payment_definitions[0].name;
 
     return getPlan.call(this, planId).then((plan) => {
-      .then(plan => {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
       return { agreement, subscription, planId };
     });
