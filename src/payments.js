@@ -106,9 +106,16 @@ class Payments extends MService {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
     return Promise.map(defaultPlans, (plan) => {
-      return createPlan.call(this, plan).then((newPlan) => {
-        return statePlan.call(this, { id: newPlan.id, state: 'active' });
-      }).bind(this).reflect();
+      return createPlan
+        .call(this, plan)
+        .then(newPlan => {
+          if (newPlan.id === 'free') {
+            return newPlan;
+          }
+
+          return statePlan.call(this, { id: newPlan.id, state: 'active' }).return(newPlan);
+        })
+        .reflect();
     })
     .bind(this)
     .map(function iterateOverPlans(plan) {
