@@ -5,6 +5,7 @@ const fs = require('fs');
 const sortedFilteredListLua = fs.readFileSync(path.resolve(__dirname, '../lua/sorted-filtered-list.lua'), 'utf-8');
 
 const createPlan = require('./actions/plan/create');
+const statePlan = require('./actions/plan/state');
 const Promise = require('bluebird');
 
 /**
@@ -105,7 +106,9 @@ class Payments extends MService {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
     return Promise.map(defaultPlans, (plan) => {
-      return createPlan.call(this, plan).reflect();
+      return createPlan.call(this, plan).then((newPlan) => {
+        return statePlan.call(this, { id: newPlan.id, state: 'active' });
+      }).bind(this).reflect();
     })
     .bind(this)
     .map(function iterateOverPlans(plan) {
