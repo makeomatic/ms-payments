@@ -4,6 +4,7 @@ const key = require('../../redisKey');
 const ld = require('lodash');
 const getPlan = require('../plan/get');
 const moment = require('moment');
+const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
 
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
@@ -11,27 +12,11 @@ function agreementExecute(message) {
   const { token, owner } = message;
 
   function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingAgreement.execute(token, {}, _config.paypal, (error, info) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(info.id);
-      });
-    });
+    return billingAgreement.executeAsync(token, {}, _config.paypal).get('id');
   }
 
   function fetchUpdatedAgreement(id) {
-    return new Promise((resolve, reject) => {
-      paypal.billingAgreement.get(id, _config.paypal, (error, agreement) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(agreement);
-      });
-    });
+    return billingAgreement.getAsync(id, _config.paypal);
   }
 
   function fetchPlan(agreement) {
@@ -43,6 +28,7 @@ function agreementExecute(message) {
     const subscriptionName = agreement.plan.payment_definitions[0].name;
 
     return getPlan.call(this, planId).then((plan) => {
+      .then(plan => {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
       return { agreement, subscription, planId };
     });
@@ -52,7 +38,7 @@ function agreementExecute(message) {
     const { subscription, agreement, planId } = data;
 
     const period = subscription.definition.frequency;
-    const nextCycle = moment().add(1, period).format();
+    const nextCycle = moment().add(1, period.toLowerCase()).format();
 
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
@@ -79,9 +65,9 @@ function agreementExecute(message) {
       agreement,
       state: agreement.state,
       name: agreement.name,
-      token: token,
+      token,
       plan: agreement.plan.id,
-      owner: owner,
+      owner,
     };
 
     pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
