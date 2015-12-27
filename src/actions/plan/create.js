@@ -70,7 +70,7 @@ function createSaveToRedis(redis, message) {
     pipeline.sadd('plans-index', aliasedId);
 
     const subscriptions = message.subscriptions.map(subscription => {
-      subscription.definition = findWhere(plan.payment_definitions, { name: subscription.name });
+      subscription.definition = findWhere(plan.payment_definitions, { frequency: subscription.name });
       return subscription;
     });
 
@@ -99,7 +99,7 @@ function createSaveToRedis(redis, message) {
           ...p,
           hidden: hidden,
         },
-        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].name })],
+        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].frequency })],
         type: p.type,
         state: p.state,
         name: p.name,

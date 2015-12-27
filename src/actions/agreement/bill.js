@@ -98,7 +98,7 @@ function agreementBill(id) {
 
   function saveToRedis(data) {
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
-    const sub = ld.findWhere(data.subs, { id: data.agreement.plan.payment_definitions[0].name });
+    const sub = ld.findWhere(data.subs, { name: data.agreement.plan.payment_definitions[0].frequency.toLowerCase() });
     const updateRequest = {
       username: data.agreement.owner,
       audience: _config.users.audience,

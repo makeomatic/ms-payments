@@ -25,7 +25,7 @@ function agreementExecute(message) {
 
   function fetchSubscription(data) {
     const { planId, agreement } = data;
-    const subscriptionName = agreement.plan.payment_definitions[0].name;
+    const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
     return getPlan.call(this, planId).then((plan) => {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
@@ -36,8 +36,8 @@ function agreementExecute(message) {
   function updateMetadata(data) {
     const { subscription, agreement, planId } = data;
 
-    const period = subscription.definition.frequency;
-    const nextCycle = moment().add(1, period.toLowerCase()).format();
+    const period = subscription.definition.frequency.toLowerCase();
+    const nextCycle = moment().add(1, period).format();
 
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
