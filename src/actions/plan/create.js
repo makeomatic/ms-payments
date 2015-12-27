@@ -57,6 +57,7 @@ function createSaveToRedis(redis, message) {
   return function saveToRedis(data) {
     const { plan, plans } = data;
     const aliasedId = message.alias || plan.id;
+    const hidden = message.hidden || false;
 
     const pipeline = redis.pipeline();
     const planKey = key('plans-data', aliasedId);
@@ -76,13 +77,13 @@ function createSaveToRedis(redis, message) {
     const saveDataFull = {
       plan: {
         ...plan,
-        hidden: message.hidden,
+        hidden: hidden,
       },
       subs: subscriptions,
       type: plan.type,
       state: plan.state,
       name: plan.name,
-      hidden: message.hidden,
+      hidden: hidden,
       ...plansData,
     };
 
@@ -96,11 +97,13 @@ function createSaveToRedis(redis, message) {
       const saveData = {
         plan: {
           ...p,
-          hidden: message.hidden,
+          hidden: hidden,
         },
+        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].name })],
         type: p.type,
         state: p.state,
         name: p.name,
+        hidden,
       };
 
       if (message.alias) {
