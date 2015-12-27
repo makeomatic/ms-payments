@@ -68,7 +68,7 @@ class Payments extends MService {
         }],
       },
       subscriptions: [{
-        name: 'free', // must be equal to payment_definitions name,
+        name: 'month', // must be equal to payment_definitions frequency,
         models: 100,
         price: 0.5,
       }],
