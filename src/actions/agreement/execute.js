@@ -34,17 +34,22 @@ function agreementExecute(message) {
     });
   }
 
-  function fetchSubscription(agreement) {
+  function fetchPlan(agreement) {
+    return redis.get(token).then((planId) => { return { planId, agreement }; });
+  }
+
+  function fetchSubscription(data) {
+    const { planId, agreement } = data;
     const subscriptionName = agreement.plan.payment_definitions[0].name;
 
-    return getPlan.call(this, agreement.plan.id).then((plan) => {
+    return getPlan.call(this, planId).then((plan) => {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
-      return { agreement, subscription };
+      return { agreement, subscription, planId };
     });
   }
 
   function updateMetadata(data) {
-    const { subscription, agreement } = data;
+    const { subscription, agreement, planId } = data;
 
     const period = subscription.definition.frequency;
     const nextCycle = moment().add(1, period).format();
@@ -57,7 +62,7 @@ function agreementExecute(message) {
       '$set': {
         nextCycle,
         agreement: agreement.id,
-        plan: agreement.plan.id,
+        plan: planId,
         models: subscription.models,
         modelPrice: subscription.price,
       },
@@ -85,7 +90,13 @@ function agreementExecute(message) {
     return pipeline.exec().return(agreement);
   }
 
-  return promise.then(sendRequest).then(fetchUpdatedAgreement).then(fetchSubscription).then(updateMetadata).then(updateRedis);
+  return promise
+    .then(sendRequest)
+    .then(fetchUpdatedAgreement)
+    .then(fetchPlan)
+    .then(fetchSubscription)
+    .then(updateMetadata)
+    .then(updateRedis);
 }
 
 module.exports = agreementExecute;
