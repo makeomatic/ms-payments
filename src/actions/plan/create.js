@@ -6,6 +6,7 @@ const assign = require('lodash/object/assign');
 const cloneDeep = require('lodash/lang/cloneDeep');
 const reduce = require('lodash/collection/reduce');
 const findWhere = require('lodash/collection/findWhere');
+const find = require('lodash/collection/find');
 const mapValues = require('lodash/object/mapValues');
 const compact = require('lodash/array/compact');
 const isArray = Array.isArray;
@@ -43,7 +44,7 @@ function sendRequest(config, message) {
   // divide single plan definition into as many as payment_definitions present
   const plans = message.plan.payment_definitions.map(definition => {
     const plan = assign(cloneDeep(message.plan), {
-      name: message.plan.name + ' - ' + definition.frequency,
+      name: message.plan.name + ' - ' + definition.frequency.toLowerCase(),
       payment_definitions: [definition],
     });
 
@@ -70,7 +71,9 @@ function createSaveToRedis(redis, message) {
     pipeline.sadd('plans-index', aliasedId);
 
     const subscriptions = message.subscriptions.map(subscription => {
-      subscription.definition = findWhere(plan.payment_definitions, { frequency: subscription.name });
+      subscription.definition = find(plan.payment_definitions, (item) => {
+        return item.frequency.toLowerCase() === subscription.name;
+      });
       return subscription;
     });
 
@@ -99,7 +102,7 @@ function createSaveToRedis(redis, message) {
           ...p,
           hidden: hidden,
         },
-        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].frequency })],
+        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].frequency.toLowerCase() })],
         type: p.type,
         state: p.state,
         name: p.name,
