@@ -11,6 +11,7 @@ function agreementExecute(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
   const { token } = message;
+  const tokenKey = key('subscription-token', token);
 
   function sendRequest() {
     return billingAgreement.executeAsync(token, {}, _config.paypal).get('id');
@@ -21,7 +22,6 @@ function agreementExecute(message) {
   }
 
   function fetchPlan(agreement) {
-    const tokenKey = key('subscription-token', token);
     return redis.hgetall(tokenKey)
       .then(data => ({ ...data, agreement }));
   }
@@ -84,12 +84,17 @@ function agreementExecute(message) {
 
   function verifyToken() {
     return redis
-      .exists(key('subscription-token', token))
+      .exists(tokenKey)
       .then(response => {
         if (!response) {
           throw new Errors.HttpStatusError(404, `subscription token ${token} was not found`);
         }
       });
+  }
+
+  // that way we cant use the token again
+  function cleanup() {
+    return redis.del(tokenKey);
   }
 
   return promise
@@ -99,7 +104,8 @@ function agreementExecute(message) {
     .then(fetchPlan)
     .then(fetchSubscription)
     .then(updateMetadata)
-    .then(updateRedis);
+    .then(updateRedis)
+    .tap(cleanup);
 }
 
 module.exports = agreementExecute;
