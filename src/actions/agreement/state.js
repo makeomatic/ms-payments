@@ -1,23 +1,19 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
+const operations = ['suspend', 'reactivate', 'cancel'].map((op) => {
+  return Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
+});
 
 function planState(message) {
   const { _config, redis } = this;
   const { id, state } = message;
+  const note = message.note || `Applying '${state}' operation to agreement`;
 
   const promise = Promise.bind(this);
 
   function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingAgreement[message.state].call(paypal.billingAgreement, id, state, _config.paypal, (error) => {
-        if (error) {
-          return reject(error);
-        }
-
-        resolve(state);
-      });
-    });
+    return operations[state].call(this, id, { note });
   }
 
   function updateRedis() {
