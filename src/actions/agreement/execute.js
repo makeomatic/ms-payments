@@ -42,14 +42,18 @@ function agreementExecute(message) {
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
     const updateRequest = {
-      'username': owner,
-      'audience': _config.users.audience,
-      '$set': {
-        nextCycle,
-        agreement: agreement.id,
-        plan: planId,
-        models: subscription.models,
-        modelPrice: subscription.price,
+      username: owner,
+      audience: _config.users.audience,
+      metadata: {
+        $set: {
+          nextCycle,
+          agreement: agreement.id,
+          plan: planId,
+          modelPrice: subscription.price,
+        },
+        $incr: {
+          models: subscription.models,
+        },
       },
     };
 
