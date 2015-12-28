@@ -1,9 +1,11 @@
 {
 	"id": "agreement.execute",
 	"type": "object",
-	"required": ["owner", "token"],
+	"required": [ "token" ],
   "properties": {
-    "token": { "type": "string", "minLength": 1 },
-    "owner": { "type": "string", "minLength": 1 }
+    "token": {
+			"type": "string",
+			"minLength": 1
+		}
   }
 }

@@ -1,3 +1,4 @@
+const Errors = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
@@ -9,7 +10,7 @@ const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
-  const { token, owner } = message;
+  const { token } = message;
 
   function sendRequest() {
     return billingAgreement.executeAsync(token, {}, _config.paypal).get('id');
@@ -20,21 +21,23 @@ function agreementExecute(message) {
   }
 
   function fetchPlan(agreement) {
-    return redis.get(token).then((planId) => { return { planId, agreement }; });
+    const tokenKey = key('subscription-token', token);
+    return redis.hgetall(tokenKey)
+      .then(data => ({ ...data, agreement }));
   }
 
   function fetchSubscription(data) {
-    const { planId, agreement } = data;
+    const { planId, agreement, owner } = data;
     const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
     return getPlan.call(this, planId).then((plan) => {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
-      return { agreement, subscription, planId };
+      return { agreement, subscription, planId, owner };
     });
   }
 
   function updateMetadata(data) {
-    const { subscription, agreement, planId } = data;
+    const { subscription, agreement, planId, owner } = data;
 
     const period = subscription.definition.frequency.toLowerCase();
     const nextCycle = moment().add(1, period).format();
@@ -57,10 +60,10 @@ function agreementExecute(message) {
       },
     };
 
-    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return(agreement);
+    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner });
   }
 
-  function updateRedis(agreement) {
+  function updateRedis({ agreement, owner }) {
     const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
@@ -79,7 +82,18 @@ function agreementExecute(message) {
     return pipeline.exec().return(agreement);
   }
 
+  function verifyToken() {
+    return redis
+      .exists(key('subscription-token', token))
+      .then(response => {
+        if (!response) {
+          throw new Errors.HttpStatusError(404, `subscription token ${token} was not found`);
+        }
+      });
+  }
+
   return promise
+    .then(verifyToken)
     .then(sendRequest)
     .then(fetchUpdatedAgreement)
     .then(fetchPlan)

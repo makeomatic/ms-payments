@@ -28,7 +28,16 @@ function agreementCreate(message) {
   }
 
   function setToken(response) {
-    return redis.setex(response.token, 3600 * 24, response.agreement.plan.id).return(response);
+    const planId = response.agreement.plan.id;
+    const owner = message.owner;
+    const tokenKey = key('subscription-token', response.token);
+
+    return redis
+      .pipeline()
+      .hmset(tokenKey, { planId, owner })
+      .expire(tokenKey, 3600 * 24)
+      .exec()
+      .return(response);
   }
 
   /* return back after PayPal fixes it's api
