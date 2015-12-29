@@ -14,7 +14,7 @@ function planState(message) {
   const promise = Promise.bind(this);
 
   function sendRequest() {
-    return operations[state].call(this, id, { note });
+    return operations[state].call(this, id, { note }, _config.paypal);
   }
 
   function updateRedis() {

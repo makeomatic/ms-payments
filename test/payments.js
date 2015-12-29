@@ -58,6 +58,8 @@ describe('Payments suite', function UserClassSuite() {
     const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
     const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
 
+    const createSaleHeaders = { routingKey: 'payments.sale.create' };
+
     let payments;
     let billingPlan;
     let billingAgreement;

@@ -6,7 +6,7 @@ const ld = require('lodash');
 const url = require('url');
 
 function saleCreate(message) {
-  const { _config, redis, amqp } = this;
+  const { _config, redis, amqp, log } = this;
   const promise = Promise.bind(this);
 
   // convert request to sale object
@@ -53,6 +53,7 @@ function saleCreate(message) {
   }
 
   function sendRequest(request) {
+    log.info(request);
     return new Promise((resolve, reject) => {
       paypal.payment.create(request, _config.paypal, (error, newSale) => {
         if (error) {
