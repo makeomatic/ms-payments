@@ -36,6 +36,7 @@ function saleCreate(message) {
       audience: _config.users.audience,
     };
     return amqp.publishAndWait(path, getRequest, {timeout: 5000})
+      .get(getRequest.audience)
       .then((metadata) => {
         if (metadata.modelPrice) {
           sale.transactions[0].amount.total *= metadata.modelPrice;
