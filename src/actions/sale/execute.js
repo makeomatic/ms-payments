@@ -22,11 +22,11 @@ function saleExecute(message) {
 
     return redis
       .pipeline()
-      .hget(saleKey, 'owner')
+      .hgetBuffer(saleKey, 'owner')
       .hmset(saleKey, ld.mapValues({ sale, update_time: sale.update_time }, JSON.stringify, JSON))
       .exec()
       .spread(owner => {
-        return { sale, username: owner[1] };
+        return { sale, username: JSON.parse(owner[1]) };
       });
   }
 
