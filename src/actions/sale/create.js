@@ -46,8 +46,9 @@ function saleCreate(message) {
           sale.transactions[0].item_list = {
             items: [{
               name: 'Model',
-              price: metadata.modelPrice,
-              quantity: message.amount,
+              price: String(metadata.modelPrice),
+              quantity: String(message.amount),
+              currency: 'USD',
             }],
           };
           return sale;
