@@ -62,7 +62,13 @@ function agreementCreate(message) {
   }
   */
 
-  return promise.then(sendRequest).then(setToken);
+  return promise
+    .then(sendRequest)
+    .then(setToken)
+    .catch(err => {
+      this.log.error('paypal err: ', err.reason || err);
+      throw err;
+    });
 }
 
 module.exports = agreementCreate;
