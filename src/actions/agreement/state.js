@@ -7,14 +7,18 @@ const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
 }, {});
 
 function planState(message) {
-  const { _config, redis } = this;
+  const { _config, redis, log } = this;
   const { id, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
 
   const promise = Promise.bind(this);
 
   function sendRequest() {
-    return operations[state].call(this, id, { note }, _config.paypal);
+    return operations[state].call(this, id, { note }, _config.paypal)
+      .catch(err => {
+        log.error('paypal err:', err);
+        throw err;
+      });
   }
 
   function updateRedis() {
