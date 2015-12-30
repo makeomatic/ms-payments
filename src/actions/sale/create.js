@@ -31,12 +31,14 @@ function saleCreate(message) {
 
   function getPrice() {
     const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
+    const audience = _config.users.audience;
     const getRequest = {
       username: message.owner,
-      audience: _config.users.audience,
+      audience,
     };
-    return amqp.publishAndWait(path, getRequest, {timeout: 5000})
-      .then((metadata) => {
+    return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+      .get(audience)
+      .then(metadata => {
         if (metadata.modelPrice) {
           sale.transactions[0].amount.total *= metadata.modelPrice;
           sale.transactions[0].item_list = {
