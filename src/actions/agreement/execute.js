@@ -60,19 +60,18 @@ function agreementExecute(message) {
       },
     };
 
-    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner });
+    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId });
   }
 
-  function updateRedis({ agreement, owner }) {
+  function updateRedis({ agreement, owner, planId }) {
     const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
     const data = {
       agreement,
       state: agreement.state,
-      name: agreement.name,
       token,
-      plan: agreement.plan.id,
+      plan: planId,
       owner,
     };
 
