@@ -66,7 +66,7 @@ function agreementCreate(message) {
     .then(sendRequest)
     .then(setToken)
     .catch(err => {
-      this.log.error('paypal err: ', err.reason || err);
+      this.log.error('paypal err: ', err.response || err);
       throw err;
     });
 }
