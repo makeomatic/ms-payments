@@ -7,7 +7,7 @@ const url = require('url');
 const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
 
 function saleCreate(message) {
-  const { _config, redis, amqp, log } = this;
+  const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
 
   // convert request to sale object
@@ -59,7 +59,6 @@ function saleCreate(message) {
   }
 
   function sendRequest(request) {
-    log.info(request);
     return paypalPaymentCreate(request, _config.paypal).then(newSale => {
       const approval = ld.findWhere(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
