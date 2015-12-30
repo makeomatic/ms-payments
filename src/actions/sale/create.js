@@ -69,7 +69,7 @@ function saleCreate(message) {
 
       return {
         token,
-        url: approval,
+        url: approval.href,
         sale: newSale,
       };
     });
