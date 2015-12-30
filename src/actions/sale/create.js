@@ -4,6 +4,7 @@ const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const ld = require('lodash');
 const url = require('url');
+const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
 
 function saleCreate(message) {
   const { _config, redis, amqp, log } = this;
@@ -36,6 +37,7 @@ function saleCreate(message) {
       username: message.owner,
       audience,
     };
+
     return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
       .get(audience)
       .then(metadata => {
@@ -50,26 +52,25 @@ function saleCreate(message) {
           };
           return sale;
         }
-        return new Errors.NotSupportedError('Operation is not available on users not having agreement data.');
+
+        throw new Errors.NotSupportedError('Operation is not available on users not having agreement data.');
       });
   }
 
   function sendRequest(request) {
     log.info(request);
-    return new Promise((resolve, reject) => {
-      paypal.payment.create(request, _config.paypal, (error, newSale) => {
-        if (error) {
-          return reject(error);
-        }
+    return paypalPaymentCreate(request, _config.paypal).then(newSale => {
+      const approval = ld.findWhere(newSale.links, { rel: 'approval_url' });
+      if (approval === null) {
+        throw new Errors.NotSupportedError('Unexpected PayPal response!');
+      }
+      const token = url.parse(approval.href, true).query.token;
 
-        const approval = ld.findWhere(newSale.links, { 'rel': 'approval_url' });
-        if (approval === null) {
-          return reject(new Errors.NotSupportedError('Unexpected PayPal response!'));
-        }
-        const token = url.parse(approval.href, true).query.token;
-
-        resolve({ token, url: approval, sale: newSale });
-      });
+      return {
+        token,
+        url: approval,
+        sale: newSale,
+      };
     });
   }
 
