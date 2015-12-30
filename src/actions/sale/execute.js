@@ -37,8 +37,10 @@ function saleExecute(message) {
     const updateRequest = {
       username,
       audience: _config.users.audience,
-      $incr: {
-        models,
+      metadata: {
+        $incr: {
+          models,
+        },
       },
     };
 
