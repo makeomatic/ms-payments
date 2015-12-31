@@ -36,6 +36,8 @@ function sendRequest(config, message) {
   const defaultMerchantPreferences = {
     return_url: config.urls.plan_return,
     cancel_url: config.urls.plan_cancel,
+    auto_bill_amount: 'YES',
+    initial_fail_amount_action: 'CANCEL',
   };
 
   // setup default merchant preferences
@@ -80,13 +82,13 @@ function createSaveToRedis(redis, message) {
     const saveDataFull = {
       plan: {
         ...plan,
-        hidden: hidden,
+        hidden,
       },
       subs: subscriptions,
       type: plan.type,
       state: plan.state,
       name: plan.name,
-      hidden: hidden,
+      hidden,
       ...plansData,
     };
 
@@ -100,7 +102,7 @@ function createSaveToRedis(redis, message) {
       const saveData = {
         plan: {
           ...p,
-          hidden: hidden,
+          hidden,
         },
         subs: [findWhere(subscriptions, { name: p.payment_definitions[0].frequency.toLowerCase() })],
         type: p.type,

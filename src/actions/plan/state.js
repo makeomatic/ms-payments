@@ -2,9 +2,10 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const ld = require('lodash');
+const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
 
 function planState(message) {
-  const { _config, redis } = this;
+  const { _config, redis, log } = this;
   const { id, state } = message;
 
   const promise = Promise.bind(this);
@@ -16,9 +17,7 @@ function planState(message) {
       'value': { state },
     }];
 
-    const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
     const ids = id.split('|');
-
     if (ids.length === 1) {
       return update(ids[0], request, _config.paypal);
     }
@@ -35,9 +34,11 @@ function planState(message) {
     const keys = ld.map(ids, (planId) => { return key('plans-data', planId); });
     const pipeline = redis.pipeline();
 
-    ld.forEach(keys, (key) => {
-      pipeline.hset(key, 'state', JSON.stringify(state));
+    ld.forEach(keys, planId => {
+      pipeline.hset(planId, 'state', JSON.stringify(state));
     });
+
+    log.debug('updating state for ids %s to %s', ids.join(', '), state);
 
     return pipeline.exec();
   }
