@@ -34,6 +34,7 @@ ${COMPOSE} -f ${DC} up -d
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
   ${COMPOSE} -f ${DC} run --rm tester npm rebuild
+  ${COMPOSE} -f ${DC} run --rm tester npm i mocha chai casperjs@latest casper-chai mocha-casperjs
 fi
 
 echo "cleaning old coverage"
