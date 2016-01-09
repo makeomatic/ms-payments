@@ -1,21 +1,21 @@
 /* global TEST_CONFIG */
-const { expect } = require('chai');
 const Promise = require('bluebird');
+const { expect } = require('chai');
 const Browser = require('zombie');
 
 function debug(result) {
   if (result.isRejected()) {
     const err = result.reason();
-    console.log(require('util').inspect(err, { depth: 5 }) + '\n');
-    console.log(err && err.stack || err);
-    console.log(err && err.response || '');
+    console.log(require('util').inspect(err, { depth: 5 }) + '\n'); // eslint-disable-line
+    console.log(err && err.stack || err); // eslint-disable-line
+    console.log(err && err.response || ''); // eslint-disable-line
   }
 }
 
 const duration = 20 * 1000;
 
 describe('Agreements suite', function AgreementSuite() {
-  const browser = new Browser({waitDuration: duration});
+  const browser = new Browser({ runScripts: false, waitDuration: duration });
   const Payments = require('../../src');
 
   // mock paypal requests
@@ -43,8 +43,8 @@ describe('Agreements suite', function AgreementSuite() {
       });
   });
 
-  before(function() {
-    return payments.router(billingPlanBase, createPlanHeaders).then(function(plan) {
+  before(function initPlan() {
+    return payments.router(billingPlanBase, createPlanHeaders).then(plan => {
       const id = plan.id.split('|')[0];
       planId = id;
       billingAgreementAttributes.plan.id = id;
@@ -52,7 +52,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
   });
 
-  after(function() {
+  after(function deletePlan() {
     return payments.router(planId, deletePlanHeaders);
   });
 
@@ -104,28 +104,26 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an approved agreement', () => {
       return browser.visit(billingAgreement.url)
-        .then(function() {
+        .then(() => {
+          browser.assert.success();
           return browser.pressButton('#loadLogin');
         })
-        .then(function() {
-          console.log('login loaded');
-          browser
+        .then(() => {
+          return browser
             .fill('#login_email', 'test@cappacity.com')
-            .fill('#login_password', '12345678');
-          return browser.pressButton('#submitLogin', function(err, b) {
-            console.log(err);
-            console.log(b);
-          });
+            .fill('#login_password', '12345678')
+            .pressButton('#submitLogin');
         })
-        .then(function() {
-          console.log('button pressed');
-          return browser.pressButton('continue', function(err, b) {
-            console.log(err);
-            console.log(b);
-          });
+        .then(() => {
+          // TypeError: unable to verify the first certificate
+          return browser
+            .pressButton('#continue')
+            .catch(err => {
+              expect(err.message).to.be.eq('unable to verify the first certificate');
+              return { success: true, err };
+            });
         })
-        .then(function() {
-          console.log('browser done');
+        .then(() => {
           return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
             .reflect()
             .then((result) => {

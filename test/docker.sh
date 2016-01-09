@@ -33,7 +33,6 @@ ${COMPOSE} -f ${DC} up -d
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
   ${COMPOSE} -f ${DC} run --rm tester npm rebuild
-  ${COMPOSE} -f ${DC} run --rm tester npm i mocha chai casperjs@latest casper-chai mocha-casperjs
 fi
 
 echo "cleaning old coverage"
@@ -41,7 +40,6 @@ rm -rf ./coverage
 
 echo "running tests"
 for fn in ${TESTS}; do
-  echo "running $fn"
   $COMPOSE -f $DC run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
 done
 
