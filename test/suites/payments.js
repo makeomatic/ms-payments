@@ -1,13 +1,6 @@
-const chai = require('chai');
-const { expect } = chai;
+/* global TEST_CONFIG */
+const { expect } = require('chai');
 const Promise = require('bluebird');
-
-// mock paypal requests
-// require('./mocks/paypal');
-const { billingAgreementAttributes, billingPlanBase } = require('./data/paypal');
-
-// make sure we have stack
-chai.config.includeStack = true;
 
 function debug(result) {
   if (result.isRejected()) {
@@ -18,33 +11,12 @@ function debug(result) {
   }
 }
 
-const config = {
-  amqp: {
-    connection: {
-      host: process.env.RABBITMQ_PORT_5672_TCP_ADDR || '127.0.0.1',
-      port: +process.env.RABBITMQ_PORT_5672_TCP_PORT || 5672,
-    },
-  },
-  redis: {
-    hosts: [
-      {
-        host: process.env.REDIS_1_PORT_6379_TCP_ADDR || '127.0.0.1',
-        port: +process.env.REDIS_1_PORT_6379_TCP_PORT || 30001,
-      },
-      {
-        host: process.env.REDIS_2_PORT_6379_TCP_ADDR || '127.0.0.1',
-        port: +process.env.REDIS_2_PORT_6379_TCP_PORT || 30002,
-      },
-      {
-        host: process.env.REDIS_3_PORT_6379_TCP_ADDR || '127.0.0.1',
-        port: +process.env.REDIS_3_PORT_6379_TCP_PORT || 30003,
-      },
-    ],
-  },
-};
-
 describe('Payments suite', function UserClassSuite() {
-  const Payments = require('../src/payments.js');
+  const Payments = require('../../src');
+
+  // mock paypal requests
+  // require('../mocks/paypal');
+  const { billingAgreementAttributes, billingPlanBase } = require('../data/paypal');
 
   this.timeout(20000);
 
@@ -65,7 +37,7 @@ describe('Payments suite', function UserClassSuite() {
     let billingAgreement;
 
     before(function startService() {
-      payments = new Payments(config);
+      payments = new Payments(TEST_CONFIG);
       return payments.connect()
         .then(function stub() {
           payments._amqp = {
@@ -106,7 +78,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to activate on an unknown plan id', () => {
-        return payments.router({ 'id': 'random', 'state': 'active' }, statePlanHeaders)
+        return payments.router({ id: 'random', state: 'active' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -115,7 +87,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to activate on an invalid state', () => {
-        return payments.router({ 'id': 'random', 'state': 'invalid' }, statePlanHeaders)
+        return payments.router({ id: 'random', state: 'invalid' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -124,7 +96,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should activate the plan', () => {
-        return payments.router({ 'id': billingPlan.id, 'state': 'active' }, statePlanHeaders)
+        return payments.router({ id: billingPlan.id, state: 'active' }, statePlanHeaders)
           .reflect()
           .then((result) => {
             debug(result);
@@ -133,7 +105,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to update on an unknown plan id', () => {
-        return payments.router({ 'id': 'random', 'plan': { 'name': 'Updated name' } }, updatePlanHeaders)
+        return payments.router({ id: 'random', plan: { name: 'Updated name' } }, updatePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -142,7 +114,7 @@ describe('Payments suite', function UserClassSuite() {
       });
 
       it('Should fail to update on invalid plan schema', () => {
-        return payments.router({ 'id': billingPlan.id, 'plan': { 'invalid': true } }, updatePlanHeaders)
+        return payments.router({ id: billingPlan.id, plan: { invalid: true } }, updatePlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -150,7 +122,7 @@ describe('Payments suite', function UserClassSuite() {
           });
       });
 
-      /*it('Should update plan info', () => {
+      /* it('Should update plan info', () => {
         const updateData = {
           id: billingPlan.id,
           plan: {
@@ -164,10 +136,10 @@ describe('Payments suite', function UserClassSuite() {
             debug(result);
             expect(result.isFulfilled()).to.be.eq(true);
           });
-      });*/
+      }); */
 
       it('Should fail to list on invalid query schema', () => {
-        return payments.router({ 'status': 'invalid' }, listPlanHeaders)
+        return payments.router({ status: 'invalid' }, listPlanHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -202,7 +174,7 @@ describe('Payments suite', function UserClassSuite() {
 
     describe('agreements#', function agreementsSuite() {
       it('Should fail to create agreement on invalid schema', () => {
-        return payments.router({ 'random': true }, createAgreementHeaders)
+        return payments.router({ random: true }, createAgreementHeaders)
           .reflect()
           .then((result) => {
             expect(result.isRejected()).to.be.eq(true);
@@ -212,8 +184,8 @@ describe('Payments suite', function UserClassSuite() {
 
       it('Should create an agreement', () => {
         const data = {
-          'agreement': billingAgreementAttributes,
-          'owner': 'test@test.com',
+          agreement: billingAgreementAttributes,
+          owner: 'test@test.com',
         };
 
         return payments.router(data, createAgreementHeaders)

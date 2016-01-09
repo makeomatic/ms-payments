@@ -48,10 +48,10 @@ tester:
     - redis_2
     - redis_3
     - rabbitmq
-    - redis_client
-  working_dir: ${DIR}
+  working_dir: /src
   volumes:
-    - ${PWD}:${DIR}
+    - ${PWD}:/src
   environment:
     NODE_ENV: "docker"
     DEBUG: ${DEBUG}
+  command: "true"

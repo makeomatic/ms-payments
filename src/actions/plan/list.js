@@ -1,16 +1,17 @@
 const { processResult, mapResult } = require('../../listUtils');
+const fsort = require('redis-filtered-sort');
 
 function planList(opts) {
   const { redis } = this;
   const { filter } = opts;
   const criteria = opts.criteria;
-  const strFilter = typeof filter === 'string' ? filter : JSON.stringify(filter || {});
+  const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;
   const limit = opts.limit || 10;
 
   return redis
-    .sortedFilteredPaymentsListBuffer('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
+    .fsort('plans-index', 'plans-data:*', criteria, order, strFilter, offset, limit)
     .then(processResult('plans-data', redis))
     .spread(mapResult(offset, limit));
 }

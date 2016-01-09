@@ -1,12 +1,11 @@
 const ld = require('lodash');
+const Promise = require('bluebird');
 const MService = require('mservice');
 const path = require('path');
-const fs = require('fs');
-const sortedFilteredListLua = fs.readFileSync(path.resolve(__dirname, '../lua/sorted-filtered-list.lua'), 'utf-8');
+const fsort = require('redis-filtered-sort');
 
 const createPlan = require('./actions/plan/create');
 const statePlan = require('./actions/plan/state');
-const Promise = require('bluebird');
 
 /**
  * Class representing payments handling
@@ -36,7 +35,7 @@ class Payments extends MService {
     paypal: {
       mode: 'sandbox',
       client_id: 'ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx',
-      client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv',
+      client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv', //eslint-disable-line
     },
     validator: [__dirname + '/../schemas'],
     users: {
@@ -92,10 +91,7 @@ class Payments extends MService {
     super(ld.merge({}, Payments.defaultOpts, opts));
 
     this.on('plugin:connect:redisCluster', (redis) => {
-      redis.defineCommand('sortedFilteredPaymentsList', {
-        numberOfKeys: 2,
-        lua: sortedFilteredListLua,
-      });
+      fsort.attach(redis, 'fsort');
     });
   }
 
