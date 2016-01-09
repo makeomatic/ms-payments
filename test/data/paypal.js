@@ -7,7 +7,7 @@ module.exports.billingPlanBase = {
     type: 'infinite',
     state: 'active',
     payment_definitions: [{
-      name: 'monthly',
+      name: 'month',
       type: 'regular',
       frequency: 'month',
       frequency_interval: '1',
@@ -17,7 +17,7 @@ module.exports.billingPlanBase = {
         value: '49.99',
       },
     }, {
-      name: 'yearly',
+      name: 'year',
       type: 'regular',
       frequency: 'year',
       frequency_interval: '1',
@@ -27,17 +27,13 @@ module.exports.billingPlanBase = {
         value: '499.99',
       },
     }],
-    merchant_preferences: {
-      return_url: 'https://someurl.com/return',
-      cancel_url: 'https://someurl.com/cancel',
-    },
   },
   subscriptions: [{
-    name: 'monthly', // must be equal to payment_definitions name,
+    name: 'month', // must be equal to payment_definitions frequency,
     models: 20,
     price: 5,
   }, {
-    name: 'yearly', // must be equal to payment_definitions name,
+    name: 'year', // must be equal to payment_definitions frequency,
     models: 240,
     price: 5,
   }],

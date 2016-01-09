@@ -7,7 +7,6 @@ DC="$DIR/docker-compose.yml"
 PATH=$PATH:${DIR}/.bin/
 COMPOSE=$(which docker-compose)
 MOCHA=${BIN}/_mocha
-MOCHA_CASPER=${BIN}/mocha-casperjs
 COVER="$BIN/isparta cover"
 NODE=${BIN}/babel-node
 TESTS=./test/suites/*.js
@@ -29,7 +28,7 @@ function finish {
 }
 trap finish EXIT
 
-export IMAGE=makeomatic/alpine-node:${NODE_VER}-phantom
+export IMAGE=makeomatic/alpine-node:${NODE_VER}
 ${COMPOSE} -f ${DC} up -d
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
@@ -43,8 +42,7 @@ rm -rf ./coverage
 echo "running tests"
 for fn in ${TESTS}; do
   echo "running $fn"
-#  $COMPOSE -f $DC run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
-  ${COMPOSE} -f $DC run --rm tester /bin/sh -c "$MOCHA_CASPER $COVER --dir ./coverage/${fn##*/} -- $fn" || exit 1
+  $COMPOSE -f $DC run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
 done
 
 echo "started generating combined coverage"
