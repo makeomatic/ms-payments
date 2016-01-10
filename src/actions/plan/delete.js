@@ -7,8 +7,8 @@ function deleteFromRedis(id, redis) {
   const planKey = key('plans-data', id);
   const pipeline = redis.pipeline();
 
-  return redis.hget(planKey, 'alias').then(function (alias) {
-    const aliasedId = JSON.parse(alias) || id;
+  return redis.hget(planKey, 'alias').then(function(alias) {
+    const aliasedId = alias && JSON.parse(alias) || id;
 
     pipeline.del(planKey);
     pipeline.srem('plans-index', aliasedId);
@@ -21,12 +21,12 @@ function deleteFromRedis(id, redis) {
 function actualDelete(id) {
   const { redis } = this;
   if (id.indexOf('|') >= 0) {
-    return deleteFromRedis(id, redis)
+    return deleteFromRedis(id, redis);
   }
   return state
     .call(this, {id, state: 'deleted'})
     .then(function() {
-      deleteFromRedis(id, redis);
+      return deleteFromRedis(id, redis);
     });
 }
 
@@ -35,7 +35,7 @@ function planDelete(id) {
   if (ids.length > 1) {
     ids.push(id); // also delete full id
   }
-  return Promise.map(ids, actualDelete.bind(this));
+  return Promise.resolve(ids).bind(this).map(actualDelete);
 }
 
 module.exports = planDelete;
