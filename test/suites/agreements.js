@@ -1,6 +1,6 @@
 /* global TEST_CONFIG */
 const Promise = require('bluebird');
-const { expect } = require('chai');
+const assert = require('assert');
 const Browser = require('zombie');
 
 function debug(result) {
@@ -66,8 +66,8 @@ describe('Agreements suite', function AgreementSuite() {
       return payments.router({ random: true }, createAgreementHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().name).to.be.eq('ValidationError');
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
@@ -81,7 +81,7 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then((result) => {
           debug(result);
-          expect(result.isFulfilled()).to.be.eq(true);
+          assert(result.isFulfilled());
           billingAgreement = result.value();
         });
     });
@@ -90,7 +90,7 @@ describe('Agreements suite', function AgreementSuite() {
       return payments.router('random token', executeAgreementHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
+          assert(result.isRejected());
         });
     });
 
@@ -98,7 +98,7 @@ describe('Agreements suite', function AgreementSuite() {
       return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
+          assert(result.isRejected());
         });
     });
 
@@ -119,7 +119,7 @@ describe('Agreements suite', function AgreementSuite() {
           return browser
             .pressButton('#continue')
             .catch(err => {
-              expect(err.message).to.be.eq('unable to verify the first certificate');
+              assert.equal(err.message, 'unable to verify the first certificate');
               return { success: true, err };
             });
         })
@@ -128,7 +128,7 @@ describe('Agreements suite', function AgreementSuite() {
             .reflect()
             .then((result) => {
               debug(result);
-              expect(result.isFulfilled()).to.be.eq(true);
+              assert(result.isFulfilled());
             });
         });
     });

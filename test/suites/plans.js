@@ -1,17 +1,17 @@
 /* global TEST_CONFIG */
-const { expect } = require('chai');
+const assert = require('assert');
 const Promise = require('bluebird');
 
 function debug(result) {
   if (result.isRejected()) {
     const err = result.reason();
-    process.stdout.write(require('util').inspect(err, { depth: 5 }) + '\n');
-    process.stdout.write(err && err.stack || err);
-    process.stdout.write(err && err.response || '');
+    console.log(require('util').inspect(err, { depth: 5 }) + '\n');
+    console.log(err && err.stack || err);
+    console.log(err && err.response || '');
   }
 }
 
-describe('Plans suite', function UserClassSuite() {
+describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
 
   // mock paypal requests
@@ -50,8 +50,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router(data, createPlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().name).to.be.eq('ValidationError');
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
@@ -60,13 +60,12 @@ describe('Plans suite', function UserClassSuite() {
         .reflect()
         .then((result) => {
           debug(result);
-          expect(result.isFulfilled()).to.be.eq(true);
+          assert(result.isFulfilled());
 
           billingPlan = result.value();
 
-          expect(billingPlan).to.have.ownProperty('id');
-          expect(billingPlan.id).to.contain('P-');
-          expect(billingPlan.state).to.contain('CREATED');
+          assert(billingPlan.id);
+          assert.equal(billingPlan.state, 'CREATED');
         });
     });
 
@@ -74,8 +73,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router({ id: 'random', state: 'active' }, statePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().httpStatusCode).to.be.eq(400);
+          assert(result.isRejected());
+          assert.equal(result.reason().httpStatusCode, 400);
         });
     });
 
@@ -83,8 +82,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router({ id: 'random', state: 'invalid' }, statePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().name).to.be.eq('ValidationError');
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
@@ -93,7 +92,7 @@ describe('Plans suite', function UserClassSuite() {
         .reflect()
         .then((result) => {
           debug(result);
-          expect(result.isFulfilled()).to.be.eq(true);
+          assert(result.isFulfilled());
         });
     });
 
@@ -101,8 +100,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router({ id: 'random', plan: { name: 'Updated name' } }, updatePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().httpStatusCode).to.be.eq(400);
+          assert(result.isRejected());
+          assert.equal(result.reason().httpStatusCode, 400);
         });
     });
 
@@ -110,8 +109,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router({ id: billingPlan.id, plan: { invalid: true } }, updatePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().name).to.be.eq('ValidationError');
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
@@ -135,8 +134,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router({ status: 'invalid' }, listPlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
-          expect(result.reason().name).to.be.eq('ValidationError');
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
@@ -152,7 +151,7 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router('random', deletePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isRejected()).to.be.eq(true);
+          assert(result.isRejected());
         });
     });
 
@@ -160,7 +159,8 @@ describe('Plans suite', function UserClassSuite() {
       return payments.router(billingPlan.id, deletePlanHeaders)
         .reflect()
         .then((result) => {
-          expect(result.isFulfilled()).to.be.eq(true);
+          debug(result);
+          assert(result.isFulfilled());
         });
     });
   });

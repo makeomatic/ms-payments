@@ -52,9 +52,7 @@ function planUpdate(message) {
     pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
     pipeline.sadd('plans-index', id);
 
-    return pipeline.exec().then(() => {
-      return plan;
-    });
+    return pipeline.exec().return(plan);
   }
 
   return promise.then(sendRequest).then(updateRedis);
