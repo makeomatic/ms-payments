@@ -1,24 +1,16 @@
 /* global TEST_CONFIG */
 const assert = require('assert');
 const Promise = require('bluebird');
-
-function debug(result) {
-  if (result.isRejected()) {
-    const err = result.reason();
-    console.log(require('util').inspect(err, { depth: 5 }) + '\n');
-    console.log(err && err.stack || err);
-    console.log(err && err.response || '');
-  }
-}
+const { debug, duration } = require('../utils');
 
 describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
 
   // mock paypal requests
   // require('../mocks/paypal');
-  const { billingPlanBase } = require('../data/paypal');
+  const { testPlanData } = require('../data/paypal');
 
-  this.timeout(20000);
+  this.timeout(duration);
 
   describe('unit tests', function UnitSuite() {
     const createPlanHeaders = { routingKey: 'payments.plan.create' };
@@ -56,7 +48,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should create a plan', () => {
-      return payments.router(billingPlanBase, createPlanHeaders)
+      return payments.router(testPlanData, createPlanHeaders)
         .reflect()
         .then((result) => {
           debug(result);

@@ -1,4 +1,4 @@
-module.exports.billingPlanBase = {
+module.exports.testPlanData = {
   alias: 'basic',
   hidden: false,
   plan: {
@@ -39,7 +39,7 @@ module.exports.billingPlanBase = {
   }],
 };
 
-module.exports.billingAgreementAttributes = {
+module.exports.testAgreementData = {
   'name': 'Fast Speed Agreement',
   'description': 'Agreement for Fast Speed Plan',
   'start_date': '2016-12-01T00:37:04Z',
@@ -53,4 +53,9 @@ module.exports.billingAgreementAttributes = {
     'postal_code': '95112',
     'country_code': 'US',
   },
+};
+
+module.exports.testSaleData = {
+  'owner': 'test@test',
+  'amount': 10,
 };

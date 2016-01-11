@@ -15,6 +15,10 @@ if [ -z "$NODE_VER" ]; then
   NODE_VER="5.4.0"
 fi
 
+if [ -z "$COVERAGE" ]; then
+  COVERAGE=0
+fi
+
 if ! [ -x "$COMPOSE" ]; then
   mkdir ${DIR}/.bin
   curl -L https://github.com/docker/compose/releases/download/1.5.2/docker-compose-`uname -s`-`uname -m` > ${DIR}/.bin/docker-compose
@@ -38,10 +42,25 @@ fi
 echo "cleaning old coverage"
 rm -rf ./coverage
 
-echo "running tests"
-for fn in ${TESTS}; do
-  $COMPOSE -f $DC run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
-done
+if [ -z "$SUITE" ]; then
+  echo "running full suite"
+  for fn in ${TESTS}; do
+    echo "running $fn"
+    if [[ "$COVERAGE" == "1" ]]; then
+      ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
+    else
+      ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $MOCHA -- $fn" || exit 1
+    fi
+  done
+else
+  fn=./test/suites/${SUITE}.js
+  echo "running $fn"
+  if [[ "$COVERAGE" == "1" ]]; then
+    ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
+  else
+    ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $MOCHA -- $fn" || exit 1
+  fi
+fi
 
 echo "started generating combined coverage"
 ${COMPOSE} -f ${DC} run --rm tester node ./test/aggregate-report.js

@@ -2,17 +2,7 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const Browser = require('zombie');
-
-function debug(result) {
-  if (result.isRejected()) {
-    const err = result.reason();
-    console.log(require('util').inspect(err, { depth: 5 }) + '\n'); // eslint-disable-line
-    console.log(err && err.stack || err); // eslint-disable-line
-    console.log(err && err.response || ''); // eslint-disable-line
-  }
-}
-
-const duration = 20 * 1000;
+const { debug, duration } = require('../utils');
 
 describe('Agreements suite', function AgreementSuite() {
   const browser = new Browser({ runScripts: false, waitDuration: duration });
@@ -20,7 +10,7 @@ describe('Agreements suite', function AgreementSuite() {
 
   // mock paypal requests
   // require('../mocks/paypal');
-  const { billingAgreementAttributes, billingPlanBase } = require('../data/paypal');
+  const { testAgreementData, testPlanData } = require('../data/paypal');
 
   const createPlanHeaders = { routingKey: 'payments.plan.create' };
   const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
@@ -44,10 +34,10 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   before(function initPlan() {
-    return payments.router(billingPlanBase, createPlanHeaders).then(plan => {
+    return payments.router(testPlanData, createPlanHeaders).then(plan => {
       const id = plan.id.split('|')[0];
       planId = id;
-      billingAgreementAttributes.plan.id = id;
+      testAgreementData.plan.id = id;
       return payments.router({ id, state: 'active' }, statePlanHeaders);
     });
   });
@@ -73,7 +63,7 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should create an agreement', () => {
       const data = {
-        agreement: billingAgreementAttributes,
+        agreement: testAgreementData,
         owner: 'test@test.com',
       };
 

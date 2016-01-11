@@ -52,6 +52,8 @@ tester:
   volumes:
     - ${PWD}:/src
   environment:
-    NODE_ENV: "docker"
+    NODE_ENV: "development"
     DEBUG: ${DEBUG}
+    BLUEBIRD_DEBUG: ${DEBUG}
+    BABEL_CACHE_PATH: "./src/.babel-cache"
   command: "true"

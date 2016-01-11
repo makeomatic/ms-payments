@@ -39,8 +39,13 @@ function saleCreate(message) {
     };
 
     return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+      .tap(() => {
+        const err = new Error();
+        console.log(err.trace);
+      })
       .get(audience)
-      .then(metadata => {
+      .then(function buildMetadata(metadata) {
+        console.log(arguments);
         if (metadata.modelPrice) {
           sale.transactions[0].amount.total *= metadata.modelPrice;
           sale.transactions[0].item_list = {
