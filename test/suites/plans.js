@@ -8,12 +8,13 @@ describe('Plans suite', function PlansSuite() {
 
   // mock paypal requests
   // require('../mocks/paypal');
-  const { testPlanData } = require('../data/paypal');
+  const { testPlanData, freePlanData } = require('../data/paypal');
 
   this.timeout(duration);
 
   describe('unit tests', function UnitSuite() {
     const createPlanHeaders = { routingKey: 'payments.plan.create' };
+    const getPlanHeaders = { routingKey: 'payments.plan.get' };
     const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
     const listPlanHeaders = { routingKey: 'payments.plan.list' };
     const updatePlanHeaders = { routingKey: 'payments.plan.update' };
@@ -24,13 +25,29 @@ describe('Plans suite', function PlansSuite() {
 
     before(function startService() {
       payments = new Payments(TEST_CONFIG);
-      return payments.connect()
-        .then(function stub() {
-          payments._amqp = {
-            publishAndWait: () => {
-              return Promise.resolve(true);
-            },
-          };
+      return payments.connect();
+    });
+
+    it('Should create free plan', () => {
+      return payments.router(freePlanData, createPlanHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          assert(result.value().id);
+        });
+    });
+
+    it('Should get free plan', () => {
+      return payments.router('free', getPlanHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+
+          //console.log(require('util').inspect(result.value(), { depth: 5 }));
+
+          assert(result.value().alias);
         });
     });
 
@@ -149,6 +166,15 @@ describe('Plans suite', function PlansSuite() {
 
     it('Should delete plan', () => {
       return payments.router(billingPlan.id, deletePlanHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+        });
+    });
+
+    it('Should delete free plan', () => {
+      return payments.router('free', deletePlanHeaders)
         .reflect()
         .then((result) => {
           debug(result);

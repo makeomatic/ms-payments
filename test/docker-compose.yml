@@ -41,6 +41,25 @@ redis_client:
   hostname: redis_client
   image: makeomatic/redis-trib
 
+ms-users:
+  links:
+    - redis_1
+    - redis_2
+    - redis_3
+    - rabbitmq
+    - redis_client
+  image: makeomatic/ms-users:5.4.0-1.1.2
+  hostname: ms-users
+  container_name: ms-users
+  volumes:
+    - ${PWD}/test/configs:/src/configs:ro
+    - ${PWD}/../ms-users:/src/ms-users:ro
+  environment:
+    NODE_ENV: 'production'
+    NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
+    MS_USERS__LOGGER: 'true'
+    NPM_TOKEN: "random token"
+
 tester:
   image: ${IMAGE}
   links:
@@ -48,12 +67,13 @@ tester:
     - redis_2
     - redis_3
     - rabbitmq
+    - ms-users
   working_dir: /src
   volumes:
     - ${PWD}:/src
   environment:
-    NODE_ENV: "development"
+    NODE_ENV: "docker"
     DEBUG: ${DEBUG}
-    BLUEBIRD_DEBUG: ${DEBUG}
-    BABEL_CACHE_PATH: "./src/.babel-cache"
+    BLUEBIRD_DEBUG: ${B_DEBUG}
+    BABEL_CACHE_PATH: "/src/.babel-cache"
   command: "true"

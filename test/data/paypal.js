@@ -39,6 +39,33 @@ module.exports.testPlanData = {
   }],
 };
 
+module.exports.freePlanData = {
+  alias: 'free',
+  hidden: false,
+  plan: {
+    name: 'free',
+    description: 'Default free plan',
+    type: 'infinite',
+    state: 'active',
+    payment_definitions: [{
+      name: 'free',
+      type: 'regular',
+      frequency: 'month',
+      frequency_interval: '1',
+      cycles: '0',
+      amount: {
+        currency: 'USD',
+        value: '0',
+      },
+    }],
+  },
+  subscriptions: [{
+    name: 'month', // must be equal to payment_definitions frequency,
+    models: 100,
+    price: 0.5,
+  }],
+};
+
 module.exports.testAgreementData = {
   'name': 'Fast Speed Agreement',
   'description': 'Agreement for Fast Speed Plan',
@@ -56,6 +83,6 @@ module.exports.testAgreementData = {
 };
 
 module.exports.testSaleData = {
-  'owner': 'test@test',
+  'owner': 'test@test.ru',
   'amount': 10,
 };

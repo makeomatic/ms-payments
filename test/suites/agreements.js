@@ -23,14 +23,7 @@ describe('Agreements suite', function AgreementSuite() {
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
-    return payments.connect()
-      .then(function stub() {
-        payments._amqp = {
-          publishAndWait: () => {
-            return Promise.resolve(true);
-          },
-        };
-      });
+    return payments.connect();
   });
 
   before(function initPlan() {

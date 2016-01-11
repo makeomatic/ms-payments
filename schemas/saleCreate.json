@@ -1,7 +1,7 @@
 {
   "id": "sale.create",
   "type": "object",
-  "require": ["owner", "amount", "return_url", "cancel_url"],
+  "require": ["owner", "amount"],
   "properties": {
     "owner": { "type": "string", "minLength": 1 },
     "amount": { "type": "number" }

@@ -26,12 +26,6 @@ if ! [ -x "$COMPOSE" ]; then
   COMPOSE=$(which docker-compose)
 fi
 
-function finish {
-  ${COMPOSE} -f ${DC} stop
-  ${COMPOSE} -f ${DC} rm -f
-}
-trap finish EXIT
-
 export IMAGE=makeomatic/alpine-node:${NODE_VER}
 ${COMPOSE} -f ${DC} up -d
 
@@ -69,3 +63,9 @@ if [[ "$CI" == "true" ]]; then
   echo "uploading coverage report from ./coverage/lcov.info"
   cat ./coverage/lcov.info | ${BIN}/codecov
 fi
+
+function finish {
+  ${COMPOSE} -f ${DC} stop
+  ${COMPOSE} -f ${DC} rm -f
+}
+trap finish EXIT

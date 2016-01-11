@@ -22,14 +22,7 @@ describe('Sales suite', function SalesSuite() {
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
-    return payments.connect()
-      .then(function stub() {
-        payments._amqp = {
-          publishAndWait: () => {
-            return Promise.resolve(true);
-          },
-        };
-      });
+    return payments.connect();
   });
 
   describe('unit tests', function UnitSuite() {
@@ -37,7 +30,6 @@ describe('Sales suite', function SalesSuite() {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
         .then((result) => {
-          debug(result);
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
         });
@@ -47,6 +39,7 @@ describe('Sales suite', function SalesSuite() {
       return payments.router(testSaleData, createSaleHeaders)
         .reflect()
         .then((result) => {
+          debug(result);
           assert(result.isFulfilled());
         });
     });
