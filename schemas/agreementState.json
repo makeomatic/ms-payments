@@ -6,5 +6,6 @@
     "id": { "type": "string", "minLength": 1 },
     "state": { "type": "string", "enum": ["suspend", "reactivate", "cancel"]},
     "note": { "type": "string", "minLength": 1 }
-  }
+  },
+  "additionalProperties": false
 }

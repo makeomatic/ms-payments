@@ -10,5 +10,6 @@
       "page_size": { "type": "string", "minLength": 1 },
       "total_required": { "type": "string", "minLength": 1 }
     }
-	}
+	},
+  "additionalProperties": false
 }
