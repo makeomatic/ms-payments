@@ -42,12 +42,16 @@ function saleCreate(message) {
       .get(audience)
       .then(function buildMetadata(metadata) {
         if (metadata.modelPrice) {
-          sale.transactions[0].amount.total *= metadata.modelPrice;
+          // paypal requires stupid formatting
+          const price = metadata.modelPrice.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+          const total = sale.transactions[0].amount.total * metadata.modelPrice;
+
+          sale.transactions[0].amount.total = total.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
           sale.transactions[0].item_list = {
             items: [{
               name: 'Model',
-              price: String(metadata.modelPrice),
-              quantity: String(message.amount),
+              price: price,
+              quantity: message.amount,
               currency: 'USD',
             }],
           };

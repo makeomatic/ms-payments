@@ -5,5 +5,6 @@
   "properties": {
     "owner": { "type": "string", "minLength": 1 },
     "amount": { "type": "number" }
-  }
+  },
+  "additionalProperties": false
 }
