@@ -56,8 +56,10 @@ else
   fi
 fi
 
-echo "started generating combined coverage"
-${COMPOSE} -f ${DC} run --rm tester node ./test/aggregate-report.js
+if [[ "$COVERAGE" == "1" ]]; then
+  echo "started generating combined coverage"
+  ${COMPOSE} -f ${DC} run --rm tester node ./test/aggregate-report.js
+fi
 
 if [[ "$CI" == "true" ]]; then
   echo "uploading coverage report from ./coverage/lcov.info"
