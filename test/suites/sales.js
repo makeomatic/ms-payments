@@ -2,6 +2,7 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const Browser = require('zombie');
+const url = require('url');
 const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
@@ -16,9 +17,10 @@ describe('Sales suite', function SalesSuite() {
   const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
   const listSaleHeaders = { routingKey: 'payments.sale.list' };
 
-  this.timeout(duration);
+  this.timeout(duration * 2);
 
   let payments;
+  let sale;
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
@@ -41,6 +43,58 @@ describe('Sales suite', function SalesSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+          sale = result.value();
+        });
+    });
+
+    it('Should fail to execute unapproved sale', function() {
+      return payments.router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isRejected());
+        });
+    });
+
+    it('Should execute approved sale', function() {
+      const cappacity = new Promise((resolve, reject) => {
+        browser.on('redirect', (request, response) => {
+          if (request.url.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(request.url, true);
+            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          }
+        });
+      });
+
+      return browser.visit(sale.url)
+        .then(() => {
+          browser.assert.success();
+          return browser.pressButton('#loadLogin');
+        })
+        .then(() => {
+          return browser
+            .fill('#login_email', 'test@cappacity.com')
+            .fill('#login_password', '12345678')
+            .pressButton('#submitLogin');
+        })
+        .then(() => {
+          // TypeError: unable to verify the first certificate
+          return Promise.all([browser
+            .pressButton('#continue_abovefold')
+            .catch(err => {
+              assert.equal(err.message, 'unable to verify the first certificate');
+              return { success: true, err };
+            }), cappacity])
+            .then((data) => {
+              return data[1];
+            });
+        })
+        .then((query) => {
+          return payments.router(query, executeSaleHeaders)
+            .reflect()
+            .then((result) => {
+              debug(result);
+              assert(result.isFulfilled());
+            });
         });
     });
   });
