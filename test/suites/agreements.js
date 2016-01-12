@@ -16,6 +16,12 @@ describe('Agreements suite', function AgreementSuite() {
   const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
   const statePlanHeaders = { routingKey: 'payments.plan.state' };
 
+  const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
+  const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
+  const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
+  const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
+
+  let billingAgreement;
   let planId;
   let payments;
 
@@ -40,11 +46,6 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   describe('unit tests', function UnitSuite() {
-    const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
-    const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
-
-    let billingAgreement;
-
     it('Should fail to create agreement on invalid schema', () => {
       return payments.router({ random: true }, createAgreementHeaders)
         .reflect()
@@ -57,7 +58,7 @@ describe('Agreements suite', function AgreementSuite() {
     it('Should create an agreement', () => {
       const data = {
         agreement: testAgreementData,
-        owner: 'test@test.com',
+        owner: 'test@test.ru',
       };
 
       return payments.router(data, createAgreementHeaders)
@@ -113,6 +114,14 @@ describe('Agreements suite', function AgreementSuite() {
               debug(result);
               assert(result.isFulfilled());
             });
+        });
+    });
+
+    it('Should list all agreements', () => {
+      return payments.router({}, listAgreementHeaders)
+        .reflect()
+        .then(result => {
+          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         });
     });
   });

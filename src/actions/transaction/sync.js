@@ -9,7 +9,7 @@ function transactionSync(message) {
 
   function sendRequest() {
     return new Promise((resolve, reject) => {
-      paypal.billingAgreement.searchTransactions(message.id, message.start, message.end, _config.paypal, (error, transactions) => {
+      paypal.billingAgreement.searchTransactions(message.id, message.start || '', message.end || '', _config.paypal, (error, transactions) => {
         if (error) {
           return reject(error);
         }
@@ -22,7 +22,7 @@ function transactionSync(message) {
   function saveToRedis(transactions) {
     const pipeline = redis.pipeline();
 
-    transactions.map(transaction => {
+    ld.map(transactions, (transaction) => {
       const transactionKey = key('transaction-data', transaction.transaction_id);
       const data = {
         transaction,

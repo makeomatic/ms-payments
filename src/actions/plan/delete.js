@@ -31,6 +31,9 @@ function actualDelete(id) {
 }
 
 function planDelete(id) {
+  if (id === 'free') {
+    return Promise.resolve(1);
+  }
   const ids = id.split('|');
   if (ids.length > 1) {
     ids.push(id); // also delete full id

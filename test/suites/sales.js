@@ -97,5 +97,13 @@ describe('Sales suite', function SalesSuite() {
             });
         });
     });
+
+    it('Should list all sales', () => {
+      return payments.router({}, listSaleHeaders)
+        .reflect()
+        .then(result => {
+          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
+        });
+    });
   });
 });
