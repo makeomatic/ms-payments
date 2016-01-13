@@ -12,14 +12,7 @@
       "maximum": 100
     },
     "filter": {
-      "type": "object",
-      "patternProperties": {
-        "^.+$": {
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 50
-        }
-      }
+      "$ref": "common#/definitions/filter"
     },
     "criteria": {
       "type": "string",
