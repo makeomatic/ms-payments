@@ -2,14 +2,16 @@
 
 export NODE_ENV=development
 BIN=node_modules/.bin
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR=./compiled-test
+#"$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DC="$DIR/docker-compose.yml"
 PATH=$PATH:${DIR}/.bin/
 COMPOSE=$(which docker-compose)
 MOCHA=${BIN}/_mocha
 COVER="$BIN/isparta cover"
-NODE=${BIN}/babel-node
-TESTS=./test/suites/*.js
+#NODE=${BIN}/babel-node
+NODE=node
+TESTS=${DIR}/suites/*.js
 
 if [ -z "$NODE_VER" ]; then
   NODE_VER="5.4.0"
@@ -47,7 +49,7 @@ if [ -z "$SUITE" ]; then
     fi
   done
 else
-  fn=./test/suites/${SUITE}.js
+  fn=${DIR}/suites/${SUITE}.js
   echo "running $fn"
   if [[ "$COVERAGE" == "1" ]]; then
     ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1

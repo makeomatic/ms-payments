@@ -1,12 +1,12 @@
-/* global TEST_CONFIG */
 const Promise = require('bluebird');
 const assert = require('assert');
 const Browser = require('zombie');
 const { debug, duration } = require('../utils');
+const TEST_CONFIG = require('../config');
 
 describe('Agreements suite', function AgreementSuite() {
-  const browser = new Browser({ runScripts: false, waitDuration: duration });
-  const Payments = require('../../src');
+  const browser = new Browser({ runScripts: false, waitDuration: duration * 2 });
+  const Payments = require('../../lib');
 
   // mock paypal requests
   // require('../mocks/paypal');
@@ -18,7 +18,9 @@ describe('Agreements suite', function AgreementSuite() {
 
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
   const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
+  const stateAgreementHeaders = { routingKey: 'payments.agreement.state' };
   const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
+  const forUserAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
   const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
 
   let billingAgreement;
@@ -52,6 +54,16 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+        });
+    });
+
+    it('By default user should have free agreement', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          assert.equal(result.value().id, 'free');
         });
     });
 
@@ -90,7 +102,12 @@ describe('Agreements suite', function AgreementSuite() {
       return browser.visit(billingAgreement.url)
         .then(() => {
           browser.assert.success();
-          return browser.pressButton('#loadLogin');
+          return browser
+            .pressButton('#loadLogin')
+            .catch(err => {
+              assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
+              return { success: true, err };
+            });
         })
         .then(() => {
           return browser
@@ -113,6 +130,7 @@ describe('Agreements suite', function AgreementSuite() {
             .then((result) => {
               debug(result);
               assert(result.isFulfilled());
+              billingAgreement.id = result.value().id;
             });
         });
     });
@@ -122,6 +140,34 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then(result => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
+        });
+    });
+
+    it('Should get agreement for user', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          assert.equal(result.value().agreement.id, billingAgreement.id);
+        });
+    });
+
+    it('Should cancel agreement', () => {
+      return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+        });
+    });
+
+    it('Should get free agreement for user after cancelling', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isFulfilled());
+          assert.equal(result.value().id, 'free');
         });
     });
   });

@@ -67,11 +67,13 @@ tester:
     - rabbitmq
     - ms-users
   working_dir: /src
+  hostname: tester
+  container_name: tester
   volumes:
     - ${PWD}:/src
+    - ${PWD}/../ms-users:/src/ms-users:ro
   environment:
     NODE_ENV: "docker"
     DEBUG: ${DEBUG}
     BLUEBIRD_DEBUG: ${B_DEBUG}
-    BABEL_CACHE_PATH: "/src/.babel-cache"
   command: "true"

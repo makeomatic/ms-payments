@@ -1,17 +1,19 @@
 SHELL := /bin/bash
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
+DOCKER_MACHINE_NAME = dev
 PKG_NAME = $(shell cat package.json | ./node_modules/.bin/json name)
 PKG_VERSION = $(shell cat package.json | ./node_modules/.bin/json version)
-NPM_PROXY = http://$(shell docker-machine ip dev):4873
+NPM_PROXY = http://$(shell docker-machine ip $(DOCKER_MACHINE_NAME)):4873
 DOCKER_USER := makeomatic
 DIST := $(DOCKER_USER)/$(PKG_NAME)
-NODE_VERSIONS := 5.3.0
+NODE_VERSIONS := 5.4.0
 ENVS := development production
 TASK_LIST := $(foreach env,$(ENVS),$(addsuffix .$(env), $(NODE_VERSIONS)))
 WORKDIR := /src
 COMPOSE_FILE := test/docker-compose.yml
 
 test:
+	npm run compile-test
 	npm test
 
 build: docker tag

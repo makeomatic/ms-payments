@@ -7,6 +7,8 @@ const getPlan = require('../plan/get');
 const moment = require('moment');
 const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
 
+const setState = require('./state');
+
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
@@ -34,6 +36,30 @@ function agreementExecute(message) {
       const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
       return { agreement, subscription, planId, owner };
     });
+  }
+
+  function getCurrentAgreement(data) {
+    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
+    const audience = _config.users.audience;
+    const getRequest = {
+      username: data.owner,
+      audience,
+    };
+
+    return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+      .get(audience)
+      .get('agreement')
+      .then((agreement) => {
+        return { data, oldAgreement: agreement };
+      });
+  }
+
+  function checkAndDeleteAgreement(data) {
+    if (data.data.agreement.id !== data.oldAgreement) {
+      // remove old agreement if setting new one
+      return setState({ owner: data.data.owner, status: 'cancel' }).return(data.data);
+    }
+    return data.data;
   }
 
   function updateMetadata(data) {
@@ -102,6 +128,8 @@ function agreementExecute(message) {
     .then(fetchUpdatedAgreement)
     .then(fetchPlan)
     .then(fetchSubscription)
+    .then(getCurrentAgreement)
+    .then(checkAndDeleteAgreement)
     .then(updateMetadata)
     .then(updateRedis)
     .tap(cleanup);

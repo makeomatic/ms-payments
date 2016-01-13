@@ -34,3 +34,4 @@ lib
 docs
 .vagrant
 .babel-cache
+compiled-test

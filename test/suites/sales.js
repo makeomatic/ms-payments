@@ -1,4 +1,4 @@
-/* global TEST_CONFIG */
+const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
 const Browser = require('zombie');
