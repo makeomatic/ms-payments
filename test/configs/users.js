@@ -1,38 +1,8 @@
 const ld = require('../node_modules/lodash');
 const moment = require('../node_modules/moment');
-const setMetadata = require('../ms-users/lib/utils/updateMetadata.js');
+const setMetadata = require('../lib/utils/updateMetadata.js');
 
 module.exports = {
-  server: {
-    proto: 'https',
-    host: 'api-sandbox.cappasity.matic.ninja',
-    port: 443,
-  },
-  validation: {
-    paths: {
-      activate: '/activate',
-      reset: '/reset',
-    },
-    subjects: {
-      activate: 'Activate your account',
-      reset: 'Reset your password',
-    },
-    templates: {
-      password: 'cappasity-password',
-      activate: 'cappasity-activate',
-    },
-    senders: {
-      activate: 'Cappasity Support <cappasity@makeomatic.co>',
-      reset: 'Cappasity Support <cappasity@makeomatic.co>',
-    },
-    email: 'cappasity@makeomatic.co',
-    jwt: {
-      defaultAudience: '*.localhost',
-      secret: '|TUjU0E-mc[x:Ma021:K1ZfJ5M}YRK',
-      lockAfterAttempts: 10,
-      keepLoginAttempts: 30 * 60, // 30 mins
-    },
-  },
   admins: [
     {
       username: 'test@test.ru',
@@ -43,8 +13,6 @@ module.exports = {
   ],
   hooks: {
     'users:activate': function mixPlan(username, audience) {
-      const config = this.config;
-      const payments = config.payments;
       const id = 'free';
       const plan = {
         plan: {
@@ -58,10 +26,10 @@ module.exports = {
             frequency: 'month',
             frequency_interval: '1',
             cycles: '0',
-            amount: {currency: 'USD', value: '0'}
+            amount: { currency: 'USD', value: '0' },
           }],
           id: 'free',
-          hidden: false
+          hidden: false,
         },
         subs: [{
           name: 'month',
@@ -73,20 +41,20 @@ module.exports = {
             frequency: 'month',
             frequency_interval: '1',
             cycles: '0',
-            amount: {currency: 'USD', value: '0'}
-          }
+            amount: { currency: 'USD', value: '0' },
+          },
         }],
         alias: 'free',
-        hidden: false
+        hidden: false,
       };
 
-      const subscription = ld.findWhere(plan.subs, {name: 'month'});
+      const subscription = ld.findWhere(plan.subs, { name: 'month' });
       const nextCycle = moment().add(1, 'month').format();
       const update = {
         username,
         audience,
         metadata: {
-          '$set': {
+          $set: {
             plan: id,
             agreement: id,
             nextCycle,
@@ -97,20 +65,6 @@ module.exports = {
       };
 
       return setMetadata.call(this, update);
-    },
-  },
-  mailer: {
-    prefix: 'mailer',
-    routes: {
-      adhoc: 'adhoc',
-      predefined: 'predefined',
-    },
-  },
-  payments: {
-    prefix: 'payments',
-    routes: {
-      getPlan: 'plan.get',
-      createPlan: 'plan.create',
     },
   },
 };
