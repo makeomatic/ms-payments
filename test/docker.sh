@@ -9,7 +9,7 @@ COMPOSE=$(which docker-compose)
 MOCHA=${BIN}/_mocha
 COVER="$BIN/isparta cover"
 NODE=${BIN}/babel-node
-TESTS=./test/suites/*.js
+TESTS=${DIR}/suites/*.js
 
 if [ -z "$NODE_VER" ]; then
   NODE_VER="5.4.0"
@@ -47,8 +47,9 @@ if [ -z "$SUITE" ]; then
     fi
   done
 else
-  fn=./test/suites/${SUITE}.js
+  fn=${DIR}/suites/${SUITE}.js
   echo "running $fn"
+  ls -la ./test
   if [[ "$COVERAGE" == "1" ]]; then
     ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
   else

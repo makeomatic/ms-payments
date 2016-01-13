@@ -69,6 +69,8 @@ tester:
     - rabbitmq
     - ms-users
   working_dir: /src
+  hostname: tester
+  container_name: tester
   volumes:
     - ${PWD}:/src
   environment:

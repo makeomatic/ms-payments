@@ -18,7 +18,9 @@ describe('Agreements suite', function AgreementSuite() {
 
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
   const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
+  const stateAgreementHeaders = { routingKey: 'payments.agreement.state' };
   const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
+  const forUserAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
   const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
 
   let billingAgreement;
@@ -52,6 +54,16 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+        });
+    });
+
+    it('By default user should have free agreement', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          assert.equal(result.value().id, 'free');
         });
     });
 
@@ -113,6 +125,7 @@ describe('Agreements suite', function AgreementSuite() {
             .then((result) => {
               debug(result);
               assert(result.isFulfilled());
+              billingAgreement.id = result.value().id;
             });
         });
     });
@@ -122,6 +135,34 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then(result => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
+        });
+    });
+
+    it('Should get agreement for user', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          assert.equal(result.value().agreement.id, billingAgreement.id);
+        });
+    });
+
+    it('Should cancel agreement', () => {
+      return payments.router({ id: billingAgreement.id, state: 'cancel' }, stateAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+        });
+    });
+
+    it('Should fail to get agreement for user after cancelling', () => {
+      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'NotFoundError');
         });
     });
   });
