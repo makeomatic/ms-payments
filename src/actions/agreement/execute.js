@@ -7,6 +7,8 @@ const getPlan = require('../plan/get');
 const moment = require('moment');
 const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
 
+const setState = require('./state');
+
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
@@ -48,12 +50,20 @@ function agreementExecute(message) {
       .get(audience)
       .get('agreement')
       .then((agreement) => {
-        return { ...data, oldAgreement: agreement };
+        return { data, oldAgreement: agreement };
       });
   }
 
+  function checkAndDeleteAgreement(data) {
+    if (data.data.agreement.id !== data.oldAgreement) {
+      // remove old agreement if setting new one
+      return setState({ owner: data.data.owner, status: 'cancel' }).return(data.data);
+    }
+    return data.data;
+  }
+
   function updateMetadata(data) {
-    const { subscription, agreement, planId, owner, oldAgreement } = data;
+    const { subscription, agreement, planId, owner } = data;
 
     const period = subscription.definition.frequency.toLowerCase();
     const nextCycle = moment().add(1, period).format();
@@ -76,10 +86,10 @@ function agreementExecute(message) {
       },
     };
 
-    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId, oldAgreement });
+    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId });
   }
 
-  function updateRedis({ agreement, owner, planId, oldAgreement }) {
+  function updateRedis({ agreement, owner, planId }) {
     const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
@@ -93,12 +103,6 @@ function agreementExecute(message) {
 
     pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
     pipeline.sadd('agreements-index', agreement.id);
-
-    if (agreement.id !== oldAgreement) {
-      // remove old agreement if setting new one
-      pipeline.del(key('agreements-data', oldAgreement));
-      pipeline.srem('agreements-index', oldAgreement);
-    }
 
     return pipeline.exec().return(agreement);
   }
@@ -125,6 +129,7 @@ function agreementExecute(message) {
     .then(fetchPlan)
     .then(fetchSubscription)
     .then(getCurrentAgreement)
+    .then(checkAndDeleteAgreement)
     .then(updateMetadata)
     .then(updateRedis)
     .tap(cleanup);
