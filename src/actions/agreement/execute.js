@@ -36,8 +36,24 @@ function agreementExecute(message) {
     });
   }
 
+  function getCurrentAgreement(data) {
+    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
+    const audience = _config.users.audience;
+    const getRequest = {
+      username: data.owner,
+      audience,
+    };
+
+    return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+      .get(audience)
+      .get('agreement')
+      .then((agreement) => {
+        return { ...data, oldAgreement: agreement };
+      });
+  }
+
   function updateMetadata(data) {
-    const { subscription, agreement, planId, owner } = data;
+    const { subscription, agreement, planId, owner, oldAgreement } = data;
 
     const period = subscription.definition.frequency.toLowerCase();
     const nextCycle = moment().add(1, period).format();
@@ -60,10 +76,10 @@ function agreementExecute(message) {
       },
     };
 
-    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId });
+    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId, oldAgreement });
   }
 
-  function updateRedis({ agreement, owner, planId }) {
+  function updateRedis({ agreement, owner, planId, oldAgreement }) {
     const agreementKey = key('agreements-data', agreement.id);
     const pipeline = redis.pipeline();
 
@@ -77,6 +93,12 @@ function agreementExecute(message) {
 
     pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
     pipeline.sadd('agreements-index', agreement.id);
+
+    if (agreement.id !== oldAgreement) {
+      // remove old agreement if setting new one
+      pipeline.del(key('agreements-data', oldAgreement));
+      pipeline.srem('agreements-index', oldAgreement);
+    }
 
     return pipeline.exec().return(agreement);
   }
@@ -102,6 +124,7 @@ function agreementExecute(message) {
     .then(fetchUpdatedAgreement)
     .then(fetchPlan)
     .then(fetchSubscription)
+    .then(getCurrentAgreement)
     .then(updateMetadata)
     .then(updateRedis)
     .tap(cleanup);

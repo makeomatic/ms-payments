@@ -63,7 +63,6 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
-          console.log(result.value());
           assert.equal(result.value().id, 'free');
         });
     });
@@ -155,7 +154,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should cancel agreement', () => {
-      return payments.router({ id: billingAgreement.id, state: 'cancel' }, stateAgreementHeaders)
+      return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
         .reflect()
         .then((result) => {
           debug(result);
@@ -163,12 +162,12 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it('Should fail to get agreement for user after cancelling', () => {
+    it('Should get free agreement for user after cancelling', () => {
       return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
         .reflect()
         .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'NotFoundError');
+          assert(result.isFulfilled());
+          assert.equal(result.value().id, 'free');
         });
     });
   });
