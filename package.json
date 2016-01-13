@@ -1,6 +1,5 @@
 {
   "name": "ms-payments",
-  "version": "0.1.18",
   "description": "Core of the microservice for handling payments",
   "main": "./lib/index.js",
   "scripts": {
@@ -8,11 +7,12 @@
     "prepublish": "npm run compile",
     "test": "./test/docker.sh",
     "start": "node ./bin/mservice.js | ./node_modules/.bin/bunyan -o short",
-    "generate-docs": "jsdoc ./src -d ./docs"
+    "generate-docs": "jsdoc ./src -d ./docs",
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/makeomatic/ms-payments.git"
+    "url": "https://github.com/makeomatic/ms-payments.git"
   },
   "author": "Dmitry Gorbunov <me@tewi.tk>",
   "license": "MIT",
@@ -63,6 +63,7 @@
     "nock": "^5.2.1",
     "server-destroy": "^1.0.1",
     "sinon": "^1.17.2",
-    "zombie": "^4.2.1"
+    "zombie": "^4.2.1",
+    "semantic-release": "^4.3.5"
   }
 }
