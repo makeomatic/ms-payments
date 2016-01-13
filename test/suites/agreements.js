@@ -1,12 +1,12 @@
-/* global TEST_CONFIG */
 const Promise = require('bluebird');
 const assert = require('assert');
 const Browser = require('zombie');
 const { debug, duration } = require('../utils');
+const TEST_CONFIG = require('../config');
 
 describe('Agreements suite', function AgreementSuite() {
-  const browser = new Browser({ runScripts: false, waitDuration: duration });
-  const Payments = require('../../src');
+  const browser = new Browser({ runScripts: false, waitDuration: duration * 2 });
+  const Payments = require('../../lib');
 
   // mock paypal requests
   // require('../mocks/paypal');
@@ -63,6 +63,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+          console.log(result.value());
           assert.equal(result.value().id, 'free');
         });
     });
@@ -102,7 +103,12 @@ describe('Agreements suite', function AgreementSuite() {
       return browser.visit(billingAgreement.url)
         .then(() => {
           browser.assert.success();
-          return browser.pressButton('#loadLogin');
+          return browser
+            .pressButton('#loadLogin')
+            .catch(err => {
+              assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
+              return { success: true, err };
+            });
         })
         .then(() => {
           return browser

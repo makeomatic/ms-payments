@@ -1,8 +1,4 @@
-// make sure we have stack
-const chai = require('chai');
-chai.config.includeStack = true;
-
-global.TEST_CONFIG = {
+module.exports = exports = {
   amqp: {
     connection: {
       host: process.env.RABBITMQ_PORT_5672_TCP_ADDR,

@@ -12,6 +12,7 @@ WORKDIR := /src
 COMPOSE_FILE := test/docker-compose.yml
 
 test:
+	npm run compile-test
 	npm test
 
 build: docker tag

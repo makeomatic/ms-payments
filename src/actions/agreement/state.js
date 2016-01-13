@@ -24,6 +24,11 @@ function planState(message) {
   function updateRedis() {
     const agreementKey = key('agreements-data', id);
 
+    if (state === 'cancel') {
+      // delete agreement
+      return redis.del(agreementKey).return(state);
+    }
+
     return redis
       .hset(agreementKey, 'state', JSON.stringify(state))
       .return(state);
