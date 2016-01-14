@@ -69,6 +69,7 @@ if [[ "$CI" == "true" ]]; then
 fi
 
 function finish {
+  ${COMPOSE} -f ${DC} logs
   ${COMPOSE} -f ${DC} stop
   ${COMPOSE} -f ${DC} rm -f
 }
