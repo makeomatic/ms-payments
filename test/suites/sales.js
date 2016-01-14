@@ -59,14 +59,12 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should execute approved sale', function test() {
-      const cappacity = new Promise((resolve, reject) => {
+      const cappacity = new Promise(resolve => {
         browser.on('redirect', request => {
           if (request.url.indexOf('cappasity') >= 0) {
             const parsed = url.parse(request.url, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
-
-          reject(new Error('invalid redirect URL'));
         });
       });
 
