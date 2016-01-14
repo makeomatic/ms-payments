@@ -74,7 +74,7 @@ describe('Sales suite', function SalesSuite() {
           return browser
             .pressButton('#loadLogin')
             .catch(err => {
-              assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
+              assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
               return { success: true, err };
             });
         })
@@ -92,14 +92,12 @@ describe('Sales suite', function SalesSuite() {
               assert.equal(err.message, 'unable to verify the first certificate');
               return { success: true, err };
             }), cappacity])
-            .then((data) => {
-              return data[1];
-            });
+            .then(data => data[1]);
         })
         .then((query) => {
           return payments.router(query, executeSaleHeaders)
             .reflect()
-            .then((result) => {
+            .then(result => {
               debug(result);
               assert(result.isFulfilled());
             });
