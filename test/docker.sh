@@ -37,7 +37,7 @@ export IMAGE=makeomatic/alpine-node:${NODE_VER}
 ${COMPOSE} -f ${DC} up -d
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
-  ${COMPOSE} -f ${DC} run --rm tester npm rebuild
+  ${COMPOSE} -f ${DC} run --rm tester npm rebuild || echo "failed compiling deps" && exit 1
 fi
 
 echo "cleaning old coverage"

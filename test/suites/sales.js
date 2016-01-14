@@ -68,15 +68,15 @@ describe('Sales suite', function SalesSuite() {
         });
       });
 
-      return browser.visit(sale.url)
+      return browser
+        .visit(sale.url)
         .then(() => {
           browser.assert.success();
-          return browser
-            .pressButton('#loadLogin')
-            .catch(err => {
-              assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
-              return { success: true, err };
-            });
+          return browser.pressButton('#loadLogin');
+        })
+        .catch(err => {
+          assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
+          return { success: true, err };
         })
         .then(() => {
           return browser
@@ -86,13 +86,16 @@ describe('Sales suite', function SalesSuite() {
         })
         .then(() => {
           // TypeError: unable to verify the first certificate
-          return Promise.all([browser
-            .pressButton('#continue_abovefold')
-            .catch(err => {
-              assert.equal(err.message, 'unable to verify the first certificate');
-              return { success: true, err };
-            }), cappacity])
-            .then(data => data[1]);
+          return Promise.join(
+            browser
+              .pressButton('#continue_abovefold')
+              .catch(err => {
+                assert.equal(err.message, 'unable to verify the first certificate');
+                return { success: true, err };
+              }),
+            cappacity
+          )
+          .then(data => data[1]);
         })
         .then((query) => {
           return payments.router(query, executeSaleHeaders)
