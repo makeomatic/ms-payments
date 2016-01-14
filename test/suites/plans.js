@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const { debug, duration } = require('../utils');
 
 describe('Plans suite', function PlansSuite() {
-  const Payments = require('../../lib');
+  const Payments = require('../../src');
 
   // mock paypal requests
   // require('../mocks/paypal');

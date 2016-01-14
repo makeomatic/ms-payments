@@ -6,7 +6,7 @@ const { debug, duration } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
-  const Payments = require('../../lib');
+  const Payments = require('../../src');
   const browser = new Browser({ runScripts: false, waitDuration: duration });
 
   const syncTransactionHeaders = { routingKey: 'payments.transaction.sync' };

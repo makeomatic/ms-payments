@@ -6,7 +6,7 @@ const TEST_CONFIG = require('../config');
 
 describe('Agreements suite', function AgreementSuite() {
   const browser = new Browser({ runScripts: false, waitDuration: duration * 2 });
-  const Payments = require('../../lib');
+  const Payments = require('../../src');
 
   // mock paypal requests
   // require('../mocks/paypal');

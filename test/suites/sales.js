@@ -7,7 +7,7 @@ const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
   const browser = new Browser({ runScripts: false, waitDuration: duration });
-  const Payments = require('../../lib');
+  const Payments = require('../../src');
 
   // mock paypal requests
   // require('../mocks/paypal');
