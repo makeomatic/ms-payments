@@ -6,13 +6,13 @@ const { debug, duration } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
-  const Payments = require('../../src');
+  const Payments = require('../../lib');
   const browser = new Browser({ runScripts: false, waitDuration: duration });
 
-  const syncTransactionHeaders = {routingKey: 'payments.transaction.sync'};
-  const listTransactionHeaders = {routingKey: 'payments.transaction.list'};
+  const syncTransactionHeaders = { routingKey: 'payments.transaction.sync' };
+  const listTransactionHeaders = { routingKey: 'payments.transaction.list' };
 
-  const getAgreementHeaders = {routingKey: 'payments.agreement.forUser'};
+  const getAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
 
   const createPlanHeaders = { routingKey: 'payments.plan.create' };
   const statePlanHeaders = { routingKey: 'payments.plan.state' };
@@ -26,6 +26,8 @@ describe('Transactions suite', function TransactionsSuite() {
   let payments;
   let agreement;
   let planId;
+
+  before('delay for ms-users', () => Promise.delay(2000));
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
@@ -89,7 +91,7 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   before(function getAgreement() {
-    return payments.router({user: 'test@test.ru'}, getAgreementHeaders)
+    return payments.router({ user: 'test@test.ru' }, getAgreementHeaders)
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
@@ -103,7 +105,7 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   describe('unit tests', function UnitSuite() {
-    it('Should not sync transaction on invalid data', function() {
+    it('Should not sync transaction on invalid data', function test() {
       return payments.router({ wrong: 'data' }, syncTransactionHeaders)
         .reflect()
         .then((result) => {
@@ -112,7 +114,7 @@ describe('Transactions suite', function TransactionsSuite() {
         });
     });
 
-    it('Should sync transactions', function() {
+    it('Should sync transactions', function test() {
       const start = '2015-01-01';
       const end = '2016-12-31';
       return payments.router({ id: agreement.id, start, end }, syncTransactionHeaders)

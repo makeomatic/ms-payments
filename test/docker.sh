@@ -1,17 +1,15 @@
 #!/bin/bash
 
-export NODE_ENV=development
 BIN=node_modules/.bin
-DIR=./compiled-test
-#"$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DC="$DIR/docker-compose.yml"
 PATH=$PATH:${DIR}/.bin/
 COMPOSE=$(which docker-compose)
 MOCHA=${BIN}/_mocha
 COVER="$BIN/isparta cover"
-#NODE=${BIN}/babel-node
-NODE=node
-TESTS=${DIR}/suites/*.js
+NODE=${NODE_BIN:-node}
+TESTS=./compiled-test/suites/*.js
+export NODE_ENV=${NODE_ENV:-development}
 
 if [ -z "$NODE_VER" ]; then
   NODE_VER="5.4.0"
@@ -28,6 +26,13 @@ if ! [ -x "$COMPOSE" ]; then
   COMPOSE=$(which docker-compose)
 fi
 
+function finish {
+  # docker logs ms-users
+  ${COMPOSE} -f ${DC} stop
+  ${COMPOSE} -f ${DC} rm -f
+}
+trap finish EXIT
+
 export IMAGE=makeomatic/alpine-node:${NODE_VER}
 ${COMPOSE} -f ${DC} up -d
 
@@ -38,25 +43,14 @@ fi
 echo "cleaning old coverage"
 rm -rf ./coverage
 
-if [ -z "$SUITE" ]; then
-  echo "running full suite"
-  for fn in ${TESTS}; do
-    echo "running $fn"
-    if [[ "$COVERAGE" == "1" ]]; then
-      ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
-    else
-      ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $MOCHA -- $fn" || exit 1
-    fi
-  done
-else
-  fn=${DIR}/suites/${SUITE}.js
+for fn in ${TESTS}; do
   echo "running $fn"
   if [[ "$COVERAGE" == "1" ]]; then
     ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
   else
     ${COMPOSE} -f ${DC} run --rm tester /bin/sh -c "$NODE $MOCHA -- $fn" || exit 1
   fi
-fi
+done
 
 if [[ "$COVERAGE" == "1" ]]; then
   echo "started generating combined coverage"
@@ -67,10 +61,3 @@ if [[ "$CI" == "true" ]]; then
   echo "uploading coverage report from ./coverage/lcov.info"
   cat ./coverage/lcov.info | ${BIN}/codecov
 fi
-
-function finish {
-  ${COMPOSE} -f ${DC} logs
-  ${COMPOSE} -f ${DC} stop
-  ${COMPOSE} -f ${DC} rm -f
-}
-trap finish EXIT

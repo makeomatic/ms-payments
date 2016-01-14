@@ -52,7 +52,7 @@
     "babel-plugin-transform-strict-mode": "^6.3.13",
     "babel-preset-es2015": "^6.3.13",
     "babel-preset-stage-0": "^6.3.13",
-    "babel-register": "^6.3.13",
+    "babel-register": "^6.4.3",
     "codecov.io": "^0.1.6",
     "eslint": "^1.8.0",
     "eslint-config-airbnb": "^3.1.0",
@@ -60,11 +60,12 @@
     "isparta": "^4.0.0",
     "istanbul": "^0.4.2",
     "json": "^9.0.3",
+    "latest-version-cli": "^1.0.0",
     "mocha": "^2.3.3",
     "nock": "^5.2.1",
+    "semantic-release": "^4.3.5",
     "server-destroy": "^1.0.1",
     "sinon": "^1.17.2",
-    "zombie": "^4.2.1",
-    "semantic-release": "^4.3.5"
+    "zombie": "^4.2.1"
   }
 }

@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const { debug, duration } = require('../utils');
 
 describe('Plans suite', function PlansSuite() {
-  const Payments = require('../../src');
+  const Payments = require('../../lib');
 
   // mock paypal requests
   // require('../mocks/paypal');
@@ -22,6 +22,8 @@ describe('Plans suite', function PlansSuite() {
 
     let payments;
     let billingPlan;
+
+    before('delay for ms-users', () => Promise.delay(2000));
 
     before(function startService() {
       payments = new Payments(TEST_CONFIG);
@@ -44,9 +46,6 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
-
-          //console.log(require('util').inspect(result.value(), { depth: 5 }));
-
           assert(result.value().alias);
         });
     });

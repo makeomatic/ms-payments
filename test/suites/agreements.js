@@ -21,13 +21,15 @@ describe('Agreements suite', function AgreementSuite() {
   const stateAgreementHeaders = { routingKey: 'payments.agreement.state' };
   const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
   const forUserAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
-  const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
+  // const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
 
   let billingAgreement;
   let planId;
   let payments;
 
   this.timeout(duration * 2);
+
+  before('delay for ms-users', () => Promise.delay(2000));
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);

@@ -7,7 +7,7 @@ const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
   const browser = new Browser({ runScripts: false, waitDuration: duration });
-  const Payments = require('../../src');
+  const Payments = require('../../lib');
 
   // mock paypal requests
   // require('../mocks/paypal');
@@ -22,13 +22,15 @@ describe('Sales suite', function SalesSuite() {
   let payments;
   let sale;
 
+  before('delay for ms-users', () => Promise.delay(2000));
+
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
   });
 
   describe('unit tests', function UnitSuite() {
-    it('Should fail to create sale on invalid arguments', function() {
+    it('Should fail to create sale on invalid arguments', function test() {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -37,7 +39,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should create sale', function() {
+    it('Should create sale', function test() {
       return payments.router(testSaleData, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -47,21 +49,24 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should fail to execute unapproved sale', function() {
-      return payments.router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
+    it('Should fail to execute unapproved sale', function test() {
+      return payments
+        .router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
         });
     });
 
-    it('Should execute approved sale', function() {
+    it('Should execute approved sale', function test() {
       const cappacity = new Promise((resolve, reject) => {
-        browser.on('redirect', (request, response) => {
+        browser.on('redirect', request => {
           if (request.url.indexOf('cappasity') >= 0) {
             const parsed = url.parse(request.url, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
+
+          reject(new Error('invalid redirect URL'));
         });
       });
 
@@ -73,7 +78,7 @@ describe('Sales suite', function SalesSuite() {
             .catch(err => {
               assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
               return { success: true, err };
-            });;
+            });
         })
         .then(() => {
           return browser

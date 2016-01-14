@@ -57,6 +57,7 @@ ms-users:
     NODE_ENV: 'production'
     NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
     MS_USERS__LOGGER: 'true'
+    MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
 
 tester:
   image: ${IMAGE}
@@ -71,7 +72,6 @@ tester:
   container_name: tester
   volumes:
     - ${PWD}:/src
-    - ${PWD}/../ms-users:/src/ms-users:ro
   environment:
     NODE_ENV: "docker"
     DEBUG: ${DEBUG}
