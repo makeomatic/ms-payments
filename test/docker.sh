@@ -57,7 +57,7 @@ if [[ "$COVERAGE" == "1" ]]; then
   ${COMPOSE} -f ${DC} run --rm tester node ./test/aggregate-report.js
 fi
 
-if [[ "$CI" == "true" ]]; then
+if [[ "$CI" == "true" ]] && [[ "$COVERAGE" == "1" ]]; then
   echo "uploading coverage report from ./coverage/lcov.info"
   cat ./coverage/lcov.info | ${BIN}/codecov
 fi
