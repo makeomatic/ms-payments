@@ -105,7 +105,7 @@ function agreementBill(id) {
       $set: {
         modelPrice: sub.price,
         billingAmount: data.transactions[data.transaction].amount.value,
-        nextCycle: data.nextUpdate,
+        nextCycle: data.nextUpdate.valueOf(),
       },
       $incr: {
         models: sub.models,

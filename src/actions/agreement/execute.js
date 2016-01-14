@@ -75,10 +75,12 @@ function agreementExecute(message) {
       audience: _config.users.audience,
       metadata: {
         $set: {
-          nextCycle,
+          nextCycle: nextCycle.valueOf(),
           agreement: agreement.id,
           plan: planId,
           modelPrice: subscription.price,
+          subscriptionPrice: agreement.plan.payment_definitions[0].amount.value,
+          subscriptionInterval: agreement.plan.payment_definitions[0].frequency.toLowerCase(),
         },
         $incr: {
           models: subscription.models,
