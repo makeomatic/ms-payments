@@ -1,6 +1,6 @@
 const ld = require('../node_modules/lodash/index');
 const moment = require('../node_modules/moment/moment');
-const setMetadata = require('../ms-users/lib/utils/updateMetadata.js');
+const setMetadata = require('../lib/utils/updateMetadata.js');
 
 module.exports = exports = function mixPlan(username, audience) {
   const id = 'free';
@@ -16,10 +16,10 @@ module.exports = exports = function mixPlan(username, audience) {
         frequency: 'month',
         frequency_interval: '1',
         cycles: '0',
-        amount: {currency: 'USD', value: '0'}
+        amount: { currency: 'USD', value: '0' },
       }],
       id: 'free',
-      hidden: false
+      hidden: false,
     },
     subs: [{
       name: 'month',
@@ -31,20 +31,20 @@ module.exports = exports = function mixPlan(username, audience) {
         frequency: 'month',
         frequency_interval: '1',
         cycles: '0',
-        amount: {currency: 'USD', value: '0'}
-      }
+        amount: { currency: 'USD', value: '0' },
+      },
     }],
     alias: 'free',
-    hidden: false
+    hidden: false,
   };
 
-  const subscription = ld.findWhere(plan.subs, {name: 'month'});
+  const subscription = ld.findWhere(plan.subs, { name: 'month' });
   const nextCycle = moment().add(1, 'month').format();
   const update = {
     username,
     audience,
     metadata: {
-      '$set': {
+      $set: {
         plan: id,
         agreement: id,
         nextCycle,

@@ -48,17 +48,15 @@ ms-users:
     - redis_3
     - rabbitmq
     - redis_client
-  image: makeomatic/ms-users:5.4.0-1.3.1
+  image: makeomatic/ms-users:5.4.0
   hostname: ms-users
   container_name: ms-users
   volumes:
     - ${PWD}/test/configs:/src/configs:ro
-    - ${PWD}/../ms-users:/src/ms-users:ro
   environment:
     NODE_ENV: 'production'
     NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
     MS_USERS__LOGGER: 'true'
-    NPM_TOKEN: "random token"
 
 tester:
   image: ${IMAGE}
