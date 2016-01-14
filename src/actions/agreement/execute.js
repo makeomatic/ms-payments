@@ -55,9 +55,9 @@ function agreementExecute(message) {
   }
 
   function checkAndDeleteAgreement(data) {
-    if (data.data.agreement.id !== data.oldAgreement) {
+    if (data.data.agreement.id !== data.oldAgreement && data.oldAgreement !== 'free') {
       // remove old agreement if setting new one
-      return setState({ owner: data.data.owner, status: 'cancel' }).return(data.data);
+      return setState.call(this, { owner: data.data.owner, status: 'cancel' }).return(data.data);
     }
     return data.data;
   }

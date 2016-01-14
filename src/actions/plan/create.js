@@ -133,7 +133,7 @@ module.exports = function planCreate(message) {
   const saveToRedis = createSaveToRedis(redis, message);
   let promise = Promise.bind(this);
 
-  if (alias) {
+  if (alias && alias !== 'free') {
     promise = redis.sismember('plans-index', alias).then(isMember => {
       if (isMember === 1) {
         throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);

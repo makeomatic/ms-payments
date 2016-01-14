@@ -68,7 +68,12 @@ describe('Sales suite', function SalesSuite() {
       return browser.visit(sale.url)
         .then(() => {
           browser.assert.success();
-          return browser.pressButton('#loadLogin');
+          return browser
+            .pressButton('#loadLogin')
+            .catch(err => {
+              assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
+              return { success: true, err };
+            });;
         })
         .then(() => {
           return browser
