@@ -44,6 +44,7 @@ class Payments extends MService {
       postfix: {
         updateMetadata: 'updateMetadata',
         getMetadata: 'getMetadata',
+        list: 'list',
       },
     },
     defaultPlans: [{

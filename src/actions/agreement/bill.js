@@ -5,8 +5,9 @@ const { hmget } = require('../../listUtils.js');
 
 const sync = require('../transaction/sync.js');
 const moment = require('moment');
+const Errors = require('common-errors');
 
-const AGREEMENT_KEYS = ['agreement', 'owner'];
+const AGREEMENT_KEYS = ['agreement', 'owner', 'state'];
 const PLAN_KEYS = ['plan', 'subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
@@ -22,7 +23,10 @@ function agreementBill(id) {
 
     return redis.hmget(agreementKey, AGREEMENT_KEYS)
       .then(data => {
-        const { agreement, owner } = agreementParser(data);
+        const { agreement, owner, state } = agreementParser(data);
+        if (state.toLowerCase() !== 'active') {
+          throw new Errors.NotPermitted('Operation not permitted on non-active agreements.');
+        }
         agreement.owner = owner;
         return agreement;
       });
