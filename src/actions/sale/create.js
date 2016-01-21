@@ -27,7 +27,7 @@ function saleCreate(message) {
         total: message.amount,
         currency: 'USD',
       },
-      description: `Buy ${message.amount} models`,
+      description: `Buy ${message.amount} models for [${message.owner}]`,
       notify_url: _config.urls.sale_notify,
     }],
     redirect_urls: {

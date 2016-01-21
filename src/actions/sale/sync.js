@@ -36,13 +36,15 @@ function transactionSync(message) {
 
   function saveToRedis(data) {
     const pipeline = redis.pipeline();
+    const findOwner = /\[(.+?)\]/gi;
 
     function convertDate(strDate) {
       return moment(strDate).valueOf();
     }
 
     function getOwner(sale) {
-      // FIXME
+      const result = findOwner.exec(sale.transactions[0].description);
+      return result && result[1];
     }
 
     map(data, function(sale) {
