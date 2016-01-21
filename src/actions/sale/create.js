@@ -10,6 +10,8 @@ const find = require('lodash/find');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
+const moment = require('moment');
+
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
   const promise = Promise.bind(this);
@@ -89,10 +91,14 @@ function saleCreate(message) {
     // adjust state
     sale.hidden = message.hidden;
 
+    function convertDate(strDate) {
+      return moment(strDate).valueOf();
+    }
+
     const saveData = {
       sale: data.sale,
-      create_time: data.sale.create_time,
-      update_time: data.sale.update_time,
+      create_time: convertDate(data.sale.create_time),
+      update_time: convertDate(data.sale.update_time),
       owner: message.owner,
     };
 

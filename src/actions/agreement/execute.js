@@ -68,7 +68,7 @@ function agreementExecute(message) {
     const { subscription, agreement, planId, owner } = data;
 
     const period = subscription.definition.frequency.toLowerCase();
-    const nextCycle = moment().add(1, period).format();
+    const nextCycle = moment().add(1, period);
 
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
