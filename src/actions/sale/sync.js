@@ -7,6 +7,7 @@ const JSONStringify = JSON.stringify.bind(JSON);
 const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment }); // eslint-disable-line
 const list = require('./list');
 const moment = require('moment');
+const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 
 function transactionSync(message) {
   const { _config, redis } = this;
@@ -43,7 +44,7 @@ function transactionSync(message) {
     }
 
     function getOwner(sale) {
-      const result = findOwner.exec(sale.transactions[0].description);
+      const result = FIND_OWNER_REGEXP.exec(sale.transactions[0].description);
       return result && result[1];
     }
 
