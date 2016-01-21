@@ -1,5 +1,5 @@
-const find = require('../node_modules/lodash/find');
-const moment = require('../node_modules/moment/moment');
+const ld = require('../node_modules/lodash');
+const moment = require('../node_modules/moment');
 const setMetadata = require('../lib/utils/updateMetadata.js');
 
 module.exports = exports = function mixPlan(username, audience) {
@@ -38,7 +38,7 @@ module.exports = exports = function mixPlan(username, audience) {
     hidden: false,
   };
 
-  const subscription = find(plan.subs, ['name', 'month']);
+  const subscription = ld.find(plan.subs, ['name', 'month']);
   const nextCycle = moment().add(1, 'month').format();
   const update = {
     username,
