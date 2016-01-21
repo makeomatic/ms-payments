@@ -1,34 +1,36 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const ld = require('lodash');
+const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan }); // eslint-disable-line
+
+const omit = require('lodash/omit');
+const map = require('lodash/map');
+const mapValues = require('lodahs/mapValues');
+const JSONStringify = JSON.stringify.bind(JSON);
 
 function planUpdate(message) {
   const { _config, redis } = this;
   const { id, plan } = message;
-
-  const promise = Promise.bind(this);
+  const { paypal: paypalConfig } = _config;
 
   function buildQuery(values) {
     return [{
-      'op': 'replace',
-      'path': '/',
-      'value': ld.omit(values, ['hidden', 'id']),
+      op: 'replace',
+      path: '/',
+      value: omit(values, ['hidden', 'id']),
     }];
   }
 
   function sendRequest() {
     const request = buildQuery(plan);
-    const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
+
     const ids = id.split('|');
 
     if (ids.length === 1) {
-      return update(ids[0], request, _config.paypal);
+      return paypalPlanUpdate(ids[0], request, paypalConfig);
     }
 
-    const requests = ld.map(ids, (planId) => {
-      return update(planId, request, _config.paypal);
-    });
+    const requests = map(ids, planId => paypalPlanUpdate(planId, request, paypalConfig));
 
     return Promise.all(requests);
   }
@@ -49,13 +51,16 @@ function planUpdate(message) {
       data.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, ld.mapValues(data, JSON.stringify, JSON));
+    pipeline.hmset(planKey, mapValues(data, JSONStringify));
     pipeline.sadd('plans-index', id);
 
     return pipeline.exec().return(plan);
   }
 
-  return promise.then(sendRequest).then(updateRedis);
+  return Promise
+    .bind(this)
+    .then(sendRequest)
+    .then(updateRedis);
 }
 
 module.exports = planUpdate;

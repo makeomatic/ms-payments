@@ -1,10 +1,14 @@
-const Errors = require('common-errors');
+const { NotSupportedError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const ld = require('lodash');
 const url = require('url');
 const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
+const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
+
+const find = require('lodash/find');
+const mapValues = require('lodahs/mapValues');
+const JSONStringify = JSON.stringify.bind(JSON);
 
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
@@ -43,14 +47,14 @@ function saleCreate(message) {
       .then(function buildMetadata(metadata) {
         if (metadata.modelPrice) {
           // paypal requires stupid formatting
-          const price = metadata.modelPrice.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+          const price = metadata.modelPrice.toFixed(2).replace(PRICE_REGEXP, '$1,');
           const total = sale.transactions[0].amount.total * metadata.modelPrice;
 
-          sale.transactions[0].amount.total = total.toFixed(2).replace(/(\d)(?=(\d{3})+\.)/g, '$1,');
+          sale.transactions[0].amount.total = total.toFixed(2).replace(PRICE_REGEXP, '$1,');
           sale.transactions[0].item_list = {
             items: [{
               name: 'Model',
-              price: price,
+              price,
               quantity: message.amount,
               currency: 'USD',
             }],
@@ -58,15 +62,15 @@ function saleCreate(message) {
           return sale;
         }
 
-        throw new Errors.NotSupportedError('Operation is not available on users not having agreement data.');
+        throw new NotSupportedError('Operation is not available on users not having agreement data.'); // eslint-disable-line
       });
   }
 
   function sendRequest(request) {
     return paypalPaymentCreate(request, _config.paypal).then(newSale => {
-      const approval = ld.findWhere(newSale.links, { rel: 'approval_url' });
+      const approval = find(newSale.links, ['rel', 'approval_url']);
       if (approval === null) {
-        throw new Errors.NotSupportedError('Unexpected PayPal response!');
+        throw new NotSupportedError('Unexpected PayPal response!');
       }
       const token = url.parse(approval.href, true).query.token;
 
@@ -92,7 +96,7 @@ function saleCreate(message) {
       owner: message.owner,
     };
 
-    pipeline.hmset(saleKey, ld.mapValues(saveData, JSON.stringify, JSON));
+    pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
     pipeline.sadd('sales-index', data.sale.id);
 
     return pipeline.exec().return(data);

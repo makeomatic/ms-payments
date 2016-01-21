@@ -1,10 +1,10 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
-const ld = require('lodash');
 const paypal = require('paypal-rest-sdk');
 const url = require('url');
 const key = require('../../redisKey.js');
-const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement });
+const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement }); // eslint-disable-line
+const find = require('lodash/find');
 
 function agreementCreate(message) {
   const { _config, redis } = this;
@@ -13,7 +13,7 @@ function agreementCreate(message) {
   function sendRequest() {
     return billingAgreementCreate(message.agreement, _config.paypal)
       .then(newAgreement => {
-        const approval = ld.findWhere(newAgreement.links, { rel: 'approval_url' });
+        const approval = find(newAgreement.links, ['rel', 'approval_url']);
         if (approval === null) {
           throw new Errors.NotSupportedError('Unexpected PayPal response!');
         }

@@ -2,10 +2,12 @@ const Errors = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
-const ld = require('lodash');
 const getPlan = require('../plan/get');
 const moment = require('moment');
-const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
+const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement }); // eslint-disable-line
+const find = require('lodash/find');
+const mapValues = require('lodash/mapValues');
+const JSONStringify = JSON.stringify.bind(JSON);
 
 const setState = require('./state');
 
@@ -33,7 +35,7 @@ function agreementExecute(message) {
     const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
     return getPlan.call(this, planId).then((plan) => {
-      const subscription = ld.findWhere(plan.subs, { name: subscriptionName });
+      const subscription = find(plan.subs, ['name', subscriptionName]);
       return { agreement, subscription, planId, owner };
     });
   }
@@ -88,7 +90,9 @@ function agreementExecute(message) {
       },
     };
 
-    return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return({ agreement, owner, planId });
+    return amqp
+      .publishAndWait(path, updateRequest, { timeout: 5000 })
+      .return({ agreement, owner, planId });
   }
 
   function updateRedis({ agreement, owner, planId }) {
@@ -103,7 +107,7 @@ function agreementExecute(message) {
       owner,
     };
 
-    pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
+    pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
     pipeline.sadd('agreements-index', agreement.id);
 
     return pipeline.exec().return(agreement);

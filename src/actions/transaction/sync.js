@@ -1,28 +1,24 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const ld = require('lodash');
+const map = require('lodash/map');
+const mapValues = require('lodash/mapValues');
+const JSONStringify = JSON.stringify.bind(JSON);
+const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement }); // eslint-disable-line
 
 function transactionSync(message) {
   const { _config, redis } = this;
+  const { paypal: paypalConfig } = _config;
   const promise = Promise.bind(this);
 
   function sendRequest() {
-    return new Promise((resolve, reject) => {
-      paypal.billingAgreement.searchTransactions(message.id, message.start || '', message.end || '', _config.paypal, (error, transactions) => {
-        if (error) {
-          return reject(error);
-        }
-
-        return resolve(transactions);
-      });
-    });
+    return searchTransactions(message.id, message.start || '', message.end || '', paypalConfig);
   }
 
   function saveToRedis(transactions) {
     const pipeline = redis.pipeline();
 
-    ld.map(transactions, (transaction) => {
+    map(transactions, transaction => {
       const transactionKey = key('transaction-data', transaction.transaction_id);
       const data = {
         transaction,
@@ -35,7 +31,7 @@ function transactionSync(message) {
         owner: message.owner,
       };
 
-      pipeline.hmset(transactionKey, ld.mapValues(data, JSON.stringify, JSON));
+      pipeline.hmset(transactionKey, mapValues(data, JSONStringify));
       pipeline.sadd('transaction-index', transaction.transaction_id);
     });
 

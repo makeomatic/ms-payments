@@ -1,16 +1,16 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const merge = require('lodash/object/merge');
-const assign = require('lodash/object/assign');
-const cloneDeep = require('lodash/lang/cloneDeep');
-const reduce = require('lodash/collection/reduce');
-const findWhere = require('lodash/collection/findWhere');
+const merge = require('lodash/merge');
+const assign = require('lodash/assign');
+const cloneDeep = require('lodash/cloneDeep');
+const reduce = require('lodash/reduce');
 const find = require('lodash/collection/find');
-const mapValues = require('lodash/object/mapValues');
-const compact = require('lodash/array/compact');
+const mapValues = require('lodash/mapValues');
+const compact = require('lodash/compact');
 const isArray = Array.isArray;
-const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan });
+const JSONStringify = JSON.stringify.bind(JSON);
+const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line
 const Errors = require('common-errors');
 
 function merger(a, b, k) {
@@ -41,16 +41,18 @@ function sendRequest(config, message) {
   };
 
   // setup default merchant preferences
-  message.plan.merchant_preferences = merge(defaultMerchantPreferences, message.plan.merchant_preferences || {});
+  const { plan } = message;
+  const { merchant_preferences: merchatPref } = plan;
+  plan.merchant_preferences = merge(defaultMerchantPreferences, merchatPref || {});
 
   // divide single plan definition into as many as payment_definitions present
-  const plans = message.plan.payment_definitions.map(definition => {
-    const plan = assign(cloneDeep(message.plan), {
+  const plans = plan.payment_definitions.map(definition => {
+    const partialPlan = assign(cloneDeep(message.plan), {
       name: message.plan.name + ' - ' + definition.frequency.toLowerCase(),
       payment_definitions: [definition],
     });
 
-    return billingPlanCreate(plan, config.paypal);
+    return billingPlanCreate(partialPlan, config.paypal);
   });
 
   return Promise.all(plans);
@@ -73,7 +75,7 @@ function createSaveToRedis(redis, message) {
     pipeline.sadd('plans-index', aliasedId);
 
     const subscriptions = message.subscriptions.map(subscription => {
-      subscription.definition = find(plan.payment_definitions, (item) => {
+      subscription.definition = find(plan.payment_definitions, item => {
         return item.frequency.toLowerCase() === subscription.name;
       });
       return subscription;
@@ -96,7 +98,7 @@ function createSaveToRedis(redis, message) {
       saveDataFull.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, mapValues(saveDataFull, JSON.stringify, JSON));
+    pipeline.hmset(planKey, mapValues(saveDataFull, JSONStringify));
 
     plans.forEach(p => {
       const saveData = {
@@ -104,7 +106,7 @@ function createSaveToRedis(redis, message) {
           ...p,
           hidden,
         },
-        subs: [findWhere(subscriptions, { name: p.payment_definitions[0].frequency.toLowerCase() })],
+        subs: [find(subscriptions, ['name', p.payment_definitions[0].frequency.toLowerCase()])],
         type: p.type,
         state: p.state,
         name: p.name,
@@ -115,7 +117,7 @@ function createSaveToRedis(redis, message) {
         saveData.alias = message.alias;
       }
 
-      pipeline.hmset(key('plans-data', p.id), mapValues(saveData, JSON.stringify, JSON));
+      pipeline.hmset(key('plans-data', p.id), mapValues(saveData, JSONStringify));
     });
 
     return pipeline.exec().return(plan);

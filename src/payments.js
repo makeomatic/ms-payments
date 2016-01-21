@@ -1,8 +1,8 @@
-const ld = require('lodash');
 const Promise = require('bluebird');
 const MService = require('mservice');
 const path = require('path');
 const fsort = require('redis-filtered-sort');
+const merge = require('lodash/merge');
 
 const createPlan = require('./actions/plan/create');
 const statePlan = require('./actions/plan/state');
@@ -89,7 +89,7 @@ class Payments extends MService {
    * @return {Payments}
    */
   constructor(opts = {}) {
-    super(ld.merge({}, Payments.defaultOpts, opts));
+    super(merge({}, Payments.defaultOpts, opts));
 
     this.on('plugin:connect:redisCluster', (redis) => {
       fsort.attach(redis, 'fsort');

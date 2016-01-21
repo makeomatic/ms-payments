@@ -2,8 +2,9 @@ const Errors = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
-const ld = require('lodash');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
+const mapValues = require('lodash/mapValues');
+const JSONStringify = JSON.stringify.bind(JSON);
 
 function saleExecute(message) {
   const { _config, redis, amqp } = this;
@@ -23,7 +24,7 @@ function saleExecute(message) {
     return redis
       .pipeline()
       .hgetBuffer(saleKey, 'owner')
-      .hmset(saleKey, ld.mapValues({ sale, update_time: sale.update_time }, JSON.stringify, JSON))
+      .hmset(saleKey, mapValues({ sale, update_time: sale.update_time }, JSONStringify))
       .exec()
       .spread(owner => {
         return { sale, username: JSON.parse(owner[1]) };

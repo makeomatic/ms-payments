@@ -1,40 +1,39 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const ld = require('lodash');
 const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
+const map = require('lodash/map');
+const forEach = require('lodash/forEach');
 
 function planState(message) {
   const { _config, redis, log } = this;
   const { id, state } = message;
-
+  const { paypal: paypalConfig } = _config;
   const promise = Promise.bind(this);
 
   function sendRequest() {
     const request = [{
-      'op': 'replace',
-      'path': '/',
-      'value': { state },
+      op: 'replace',
+      path: '/',
+      value: { state },
     }];
 
     const ids = id.split('|');
     if (ids.length === 1) {
-      return update(ids[0], request, _config.paypal);
+      return update(ids[0], request, paypalConfig);
     }
 
-    const requests = ld.map(ids, (planId) => {
-      return update(planId, request, _config.paypal);
-    });
+    const requests = map(ids, planId => update(planId, request, paypalConfig));
 
     return Promise.all(requests);
   }
 
   function updateRedis() {
     const ids = id.split('|').concat([id]);
-    const keys = ld.map(ids, (planId) => { return key('plans-data', planId); });
+    const keys = map(ids, planId => key('plans-data', planId));
     const pipeline = redis.pipeline();
 
-    ld.forEach(keys, planId => {
+    forEach(keys, planId => {
       pipeline.hset(planId, 'state', JSON.stringify(state));
     });
 
