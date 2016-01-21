@@ -5,7 +5,7 @@ const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, { context:
 
 const omit = require('lodash/omit');
 const map = require('lodash/map');
-const mapValues = require('lodahs/mapValues');
+const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
 function planUpdate(message) {

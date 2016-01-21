@@ -7,7 +7,7 @@ const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: 
 const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
 
 const find = require('lodash/find');
-const mapValues = require('lodahs/mapValues');
+const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
 function saleCreate(message) {
