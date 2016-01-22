@@ -10,7 +10,6 @@ const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
 const setState = require('./state');
-const { parseAgreement, saveCommon } = require('../../utils/transactions');
 
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
@@ -111,11 +110,7 @@ function agreementExecute(message) {
     pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
     pipeline.sadd('agreements-index', agreement.id);
 
-    return pipeline.exec().return({ agreement, owner });
-  }
-
-  function updateCommon({ agreement, owner }) {
-    return Promise.bind(this, parseAgreement(agreement, owner)).then(saveCommon).return(agreement);
+    return pipeline.exec().return(agreement);
   }
 
   function verifyToken() {
@@ -143,7 +138,6 @@ function agreementExecute(message) {
     .then(checkAndDeleteAgreement)
     .then(updateMetadata)
     .then(updateRedis)
-    .then(updateCommon)
     .tap(cleanup);
 }
 
