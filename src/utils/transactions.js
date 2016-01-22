@@ -31,11 +31,13 @@ function saveCommon(data) {
 function parseSale(sale, owner) {
   // to catch errors automatically
   return Promise.try(() => {
+    // reasonable default?
+    const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
     return {
       id: sale.id,
       type: 0,
       owner,
-      payer: sale.payer.payer_info.email,
+      payer,
       date: convertDate(sale.create_time),
       amount: sale.transactions[0].amount.total,
       description: sale.transactions[0].description,
