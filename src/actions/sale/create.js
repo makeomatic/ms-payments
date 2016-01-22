@@ -109,8 +109,8 @@ function saleCreate(message) {
     return pipeline.exec().return(data);
   }
 
-  function updateCommon(sale) {
-    return Promise.bind(this, parseSale(sale, message.owner)).then(saveCommon).return(sale);
+  function updateCommon(data) {
+    return Promise.bind(this, parseSale(data.sale, message.owner)).then(saveCommon).return(data);
   }
 
   return promise.then(getPrice).then(sendRequest).then(saveToRedis).then(updateCommon);
