@@ -30,8 +30,8 @@ function saveCommon(data) {
 
 function parseSale(sale, owner) {
   // to catch errors automatically
-  return new Promise((resolve) => {
-    const data = {
+  return Promise.try(() => {
+    return {
       id: sale.id,
       type: 0,
       owner,
@@ -41,14 +41,12 @@ function parseSale(sale, owner) {
       description: sale.transactions[0].description,
       status: sale.status,
     };
-
-    resolve(data);
   });
 }
 
 function parseAgreement(transaction, owner) {
-  return new Promise((resolve) => {
-    const data = {
+  return Promise.try(() => {
+    return {
       id: transaction.transaction_id,
       type: 1,
       owner,
@@ -58,8 +56,6 @@ function parseAgreement(transaction, owner) {
       description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
       status: transaction.status,
     };
-
-    resolve(data);
   });
 }
 

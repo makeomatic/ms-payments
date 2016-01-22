@@ -110,7 +110,7 @@ function saleCreate(message) {
   }
 
   function updateCommon(sale) {
-    return parseSale(sale).then(saveCommon).return(sale);
+    return Promise.bind(this, parseSale(sale, message.owner)).then(saveCommon).return(sale);
   }
 
   return promise.then(getPrice).then(sendRequest).then(saveToRedis).then(updateCommon);

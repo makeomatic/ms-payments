@@ -111,11 +111,11 @@ function agreementExecute(message) {
     pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
     pipeline.sadd('agreements-index', agreement.id);
 
-    return pipeline.exec().return(agreement);
+    return pipeline.exec().return({ agreement, owner });
   }
 
-  function updateCommon(agreement) {
-    return parseAgreement(agreement).then(saveCommon).return(agreement);
+  function updateCommon({ agreement, owner }) {
+    return Promise.bind(this, parseAgreement(agreement, owner)).then(saveCommon).return(agreement);
   }
 
   function verifyToken() {
