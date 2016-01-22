@@ -27,6 +27,7 @@ function transactionSync(message) {
 
     const path = _config.users.prefix + '.' + _config.users.postfix.list;
     const getRequest = {
+      audience: _config.users.audience,
       offset: 0,
       limit: 1,
       filter: {
