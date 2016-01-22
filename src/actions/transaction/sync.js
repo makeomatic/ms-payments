@@ -31,15 +31,15 @@ function transactionSync(message) {
       offset: 0,
       limit: 1,
       filter: {
-        eq: {
-          agreement: JSON.stringify(message.id),
+        agreement: {
+          eq: JSON.stringify(message.id),
         },
       },
     };
 
     return amqp.publishAndWait(path, getRequest, { timeout: 5000 }).get('users').then((users) => {
       if (users.length > 0) {
-        owner = users[0];
+        owner = users[0].id;
         return owner;
       }
       throw new NotFoundError('Couldn\'t find user for agreement');
