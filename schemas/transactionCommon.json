@@ -1,6 +1,6 @@
 
 {
-  "id": "transaction.list",
+  "id": "transaction.common",
   "type": "object",
   "properties": {
     "offset": {
