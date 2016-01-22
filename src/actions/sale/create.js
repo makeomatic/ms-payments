@@ -11,6 +11,7 @@ const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
 const moment = require('moment');
+const { parseSale, saveCommon } = require('../../utils/transactions');
 
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
@@ -108,7 +109,11 @@ function saleCreate(message) {
     return pipeline.exec().return(data);
   }
 
-  return promise.then(getPrice).then(sendRequest).then(saveToRedis);
+  function updateCommon(sale) {
+    return parseSale(sale).then(saveCommon).return(sale);
+  }
+
+  return promise.then(getPrice).then(sendRequest).then(saveToRedis).then(updateCommon);
 }
 
 module.exports = saleCreate;
