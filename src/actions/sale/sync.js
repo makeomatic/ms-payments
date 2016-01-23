@@ -16,7 +16,7 @@ function getOwner(sale) {
   return result && result[1];
 }
 
-function transactionSync(message) {
+function transactionSync(message = {}) {
   const { _config, redis } = this;
   const { paypal: paypalConfig } = _config;
 
