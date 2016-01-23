@@ -61,7 +61,7 @@ describe('Sales suite', function SalesSuite() {
     it('Should execute approved sale', function test() {
       const cappacity = new Promise(resolve => {
         browser.on('redirect', request => {
-          if (request.url.indexOf('localhost') >= 0) {
+          if (request.url.indexOf('127.0.0.1') >= 0 || request.url.indexOf('localhost')) {
             const parsed = url.parse(request.url, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
