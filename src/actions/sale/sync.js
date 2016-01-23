@@ -10,15 +10,20 @@ const moment = require('moment');
 const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 const TRANSACTIONS_LIMIT = 20;
+const { parseSale, saveCommon } = require('../../utils/transactions');
 
 function getOwner(sale) {
   const result = FIND_OWNER_REGEXP.exec(sale.transactions[0].description);
-  return result && result[1];
+  return result && result[1] || sale.payer_info && sale.payer_info.email || null;
 }
 
 function transactionSync(message = {}) {
   const { _config, redis } = this;
   const { paypal: paypalConfig } = _config;
+
+  function updateCommon(sale, owner) {
+    return Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
+  }
 
   function getLatest() {
     const query = {
@@ -53,6 +58,7 @@ function transactionSync(message = {}) {
     }
 
     const pipeline = redis.pipeline();
+    const updates = [];
 
     function convertDate(strDate) {
       return moment(strDate).valueOf();
@@ -60,18 +66,24 @@ function transactionSync(message = {}) {
 
     forEach(data.payments, sale => {
       const saleKey = key(SALES_DATA_PREFIX, sale.id);
+      const owner = getOwner(sale);
       const saveData = {
         sale,
+        owner,
         create_time: convertDate(sale.create_time),
         update_time: convertDate(sale.update_time),
-        owner: getOwner(sale),
       };
 
       pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
       pipeline.sadd(SALES_ID_INDEX, sale.id);
+
+      updates.push(updateCommon.call(this, sale, owner));
     });
 
-    return pipeline.exec().then(() => {
+    updates.push(pipeline.exec());
+
+
+    return Promise.all(updates).then(() => {
       if (data.count < TRANSACTIONS_LIMIT) {
         return null;
       }

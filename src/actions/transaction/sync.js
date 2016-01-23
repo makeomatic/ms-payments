@@ -78,7 +78,7 @@ function transactionSync(message) {
       pipeline.hmset(transactionKey, mapValues(data, JSONStringify));
       pipeline.sadd('transaction-index', transaction.transaction_id);
 
-      updates.push(updateCommon(transaction, owner));
+      updates.push(updateCommon.call(this, transaction, owner));
     });
 
     // gather pipeline transaction
