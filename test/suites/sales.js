@@ -24,13 +24,13 @@ describe('Sales suite', function SalesSuite() {
 
   before('delay for ms-users', () => Promise.delay(2000));
 
-  before(function startService() {
+  before(() => {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
   });
 
   describe('unit tests', function UnitSuite() {
-    it('Should fail to create sale on invalid arguments', function test() {
+    it('Should fail to create sale on invalid arguments', () => {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -39,7 +39,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should create sale', function test() {
+    it('Should create sale', () => {
       return payments.router(testSaleData, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -49,7 +49,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should fail to execute unapproved sale', function test() {
+    it('Should fail to execute unapproved sale', () => {
       return payments
         .router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
         .reflect()
@@ -58,10 +58,10 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should execute approved sale', function test() {
+    it('Should execute approved sale', () => {
       const cappacity = new Promise(resolve => {
         browser.on('redirect', request => {
-          if (request.url.indexOf('127.0.0.1') >= 0 || request.url.indexOf('localhost')) {
+          if (request.url.indexOf('cappasity') >= 0) {
             const parsed = url.parse(request.url, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
@@ -90,7 +90,7 @@ describe('Sales suite', function SalesSuite() {
             browser
               .pressButton('#continue_abovefold')
               .catch(err => {
-                assert.equal(err.message, 'connect ECONNREFUSED 127.0.0.1:80');
+                assert.equal(err.message, 'unable to verify the first certificate');
                 return { success: true, err };
               }),
             cappacity

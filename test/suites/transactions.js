@@ -75,7 +75,7 @@ describe('Transactions suite', function TransactionsSuite() {
         return browser
           .pressButton('#continue')
           .catch(err => {
-            assert.equal(err.message, 'connect ECONNREFUSED 127.0.0.1:80');
+            assert.equal(err.message, 'unable to verify the first certificate');
             return { success: true, err };
           });
       })
