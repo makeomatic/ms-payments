@@ -16,11 +16,13 @@ describe('Agreements suite', function AgreementSuite() {
   const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
   const statePlanHeaders = { routingKey: 'payments.plan.state' };
 
+  const getAgreementHeaders = { routingKey: 'payments.agreement.get' };
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
   const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
   const stateAgreementHeaders = { routingKey: 'payments.agreement.state' };
   const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
   const forUserAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
+  const syncAgreementsHeaders = { routingKey: 'payments.agreement.sync' };
   // const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
 
   let billingAgreement;
@@ -133,7 +135,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then(() => {
           return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
             .reflect()
-            .then((result) => {
+            .then(result => {
               debug(result);
               assert(result.isFulfilled());
               billingAgreement.id = result.value().id;
@@ -159,6 +161,29 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
+    it('Should pull updates for an agreement', () => {
+      this.timeout(60000);
+
+      function waitForAgreementToBecomeActive() {
+        return payments.router({}, syncAgreementsHeaders)
+          .reflect()
+          .then(result => {
+            assert(result.isFulfilled());
+          })
+          .then(() => {
+            return payments.router({ id: billingAgreement.id }, getAgreementHeaders);
+          })
+          .then(agreement => {
+            if (agreement.state.toLowerCase() === 'pending') {
+              return Promise.delay(500).then(waitForAgreementToBecomeActive);
+            }
+          });
+      }
+
+      return waitForAgreementToBecomeActive();
+    });
+
+    // this test is perf
     it('Should cancel agreement', () => {
       return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
         .reflect()

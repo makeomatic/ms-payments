@@ -6,6 +6,8 @@ const merge = require('lodash/merge');
 
 const createPlan = require('./actions/plan/create');
 const statePlan = require('./actions/plan/state');
+const syncSaleTransactions = require('./actions/sale/sync.js');
+const syncAgreements = require('./actions/agreement/sync.js');
 
 /**
  * Class representing payments handling
@@ -37,7 +39,7 @@ class Payments extends MService {
       client_id: 'ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx',
       client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv', //eslint-disable-line
     },
-    validator: [__dirname + '/../schemas'],
+    validator: ['../schemas'],
     users: {
       audience: '*.localhost',
       prefix: 'users',
@@ -48,6 +50,7 @@ class Payments extends MService {
       },
     },
     defaultPlans: [{
+      id: 'free',
       alias: 'free',
       hidden: false,
       plan: {
@@ -102,9 +105,8 @@ class Payments extends MService {
   initPlans() {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
-    return Promise.map(defaultPlans, (plan) => {
-      return createPlan
-        .call(this, plan)
+    return Promise.map(defaultPlans, plan => (
+      createPlan.call(this, plan)
         .then(newPlan => {
           if (newPlan.id === 'free') {
             return newPlan;
@@ -112,8 +114,8 @@ class Payments extends MService {
 
           return statePlan.call(this, { id: newPlan.id, state: 'active' }).return(newPlan);
         })
-        .reflect();
-    })
+        .reflect()
+    ))
     .bind(this)
     .map(function iterateOverPlans(plan) {
       if (plan.isFulfilled()) {
@@ -129,6 +131,30 @@ class Payments extends MService {
       }
     });
   }
+
+  syncTransactions() {
+    this.log.info('syncing possibly missed transactions');
+
+    // init sales sync
+    syncSaleTransactions.call(this)
+      .then(() => {
+        this.log.info('completed sync of missing transactions');
+      })
+      .catch(err => {
+        this.log.error('failed to sync sale transactions', err.stack);
+      });
+
+    syncAgreements.call(this, {})
+      .then(() => {
+        this.log.info('completed sync of agreements');
+      })
+      .catch(err => {
+        this.log.error('failed to sync recurring transactions', err.stack);
+      });
+
+    return null;
+  }
+
 }
 
 module.exports = Payments;

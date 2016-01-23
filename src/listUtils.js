@@ -1,8 +1,8 @@
 const Promise = require('bluebird');
-const reduce = require('lodash/reduce');
+const { deserialize } = require('./utils/redis.js');
 
 function processResult(dataIndex, redis) {
-  return (ids) => {
+  return ids => {
     const length = +ids.pop();
     if (length === 0 || ids.length === 0) {
       return [
@@ -27,15 +27,7 @@ function processResult(dataIndex, redis) {
 
 function mapResult(offset, limit) {
   return (ids, props, length) => {
-    const items = ids.map(function remapData(_, idx) {
-      return reduce(props[idx][1], function reducer(result, val, key) {
-        if (val !== '') {
-          result[key] = JSON.parse(val);
-        }
-
-        return result;
-      }, {});
-    });
+    const items = ids.map((_, idx) => deserialize(props[idx][1]));
 
     return {
       items,

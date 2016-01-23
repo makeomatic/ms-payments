@@ -1,7 +1,7 @@
 {
   "id": "agreement",
   "type": "object",
-  "required": ["name", "description", "start_date", "payer", "plan"],
+  "required": ["name", "description", "payer", "plan"],
   "properties": {
     "id": { "type": "string", "minLength": 1 },
     "state": { "type": "string", "minLength": 1 },

@@ -4,6 +4,8 @@ const key = require('../../redisKey.js');
 const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
 const map = require('lodash/map');
 const forEach = require('lodash/forEach');
+const { PLANS_DATA } = require('../../constants.js');
+const { serialize } = require('../../utils/redis.js');
 
 function planState(message) {
   const { _config, redis, log } = this;
@@ -30,11 +32,11 @@ function planState(message) {
 
   function updateRedis() {
     const ids = id.split('|').concat([id]);
-    const keys = map(ids, planId => key('plans-data', planId));
+    const keys = map(ids, planId => key(PLANS_DATA, planId));
     const pipeline = redis.pipeline();
 
     forEach(keys, planId => {
-      pipeline.hset(planId, 'state', JSON.stringify(state));
+      pipeline.hmset(planId, serialize({ state }));
     });
 
     log.debug('updating state for ids %s to %s', ids.join(', '), state);

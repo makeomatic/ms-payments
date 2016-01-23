@@ -1,11 +1,23 @@
 {
   "id": "transaction.sync",
   "type": "object",
-  "required": ["id", "start", "end"],
+  "required": ["id"],
   "properties": {
-    "id": { "type": "string", "minLength": 1 },
-    "start": { "type": "string", "format": "date" },
-    "end": { "type": "string", "format": "date" }
+    "owner": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start": {
+      "type": "string",
+      "format": "date"
+    },
+    "end": {
+      "type": "string",
+      "format": "date"
+    }
   },
   "additionalProperties": false
 }

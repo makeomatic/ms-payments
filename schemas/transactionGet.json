@@ -1,0 +1,15 @@
+{
+  "id": "transaction.get",
+  "type": "object",
+  "required": [ "id" ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

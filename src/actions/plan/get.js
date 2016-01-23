@@ -3,10 +3,11 @@ const { hmget } = require('../../listUtils.js');
 const Errors = require('common-errors');
 const EXTRACT_FIELDS = ['plan', 'subs', 'alias', 'hidden'];
 const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON);
+const { PLANS_DATA } = require('../../constants.js');
 
 function planGet(id) {
   const { redis } = this;
-  const planKey = key('plans-data', id);
+  const planKey = key(PLANS_DATA, id);
 
   return redis
     .exists(planKey)

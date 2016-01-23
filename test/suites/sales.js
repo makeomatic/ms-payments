@@ -24,13 +24,13 @@ describe('Sales suite', function SalesSuite() {
 
   before('delay for ms-users', () => Promise.delay(2000));
 
-  before(function startService() {
+  before(() => {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
   });
 
   describe('unit tests', function UnitSuite() {
-    it('Should fail to create sale on invalid arguments', function test() {
+    it('Should fail to create sale on invalid arguments', () => {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -39,7 +39,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should create sale', function test() {
+    it('Should create sale', () => {
       return payments.router(testSaleData, createSaleHeaders)
         .reflect()
         .then((result) => {
@@ -49,7 +49,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should fail to execute unapproved sale', function test() {
+    it('Should fail to execute unapproved sale', () => {
       return payments
         .router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
         .reflect()
@@ -58,7 +58,7 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should execute approved sale', function test() {
+    it('Should execute approved sale', () => {
       const cappacity = new Promise(resolve => {
         browser.on('redirect', request => {
           if (request.url.indexOf('cappasity') >= 0) {
@@ -78,15 +78,15 @@ describe('Sales suite', function SalesSuite() {
           assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
           return { success: true, err };
         })
-        .then(() => {
-          return browser
+        .then(() => (
+          browser
             .fill('#login_email', 'test@cappacity.com')
             .fill('#login_password', '12345678')
-            .pressButton('#submitLogin');
-        })
-        .then(() => {
+            .pressButton('#submitLogin')
+        ))
+        .then(() => (
           // TypeError: unable to verify the first certificate
-          return Promise.join(
+          Promise.join(
             browser
               .pressButton('#continue_abovefold')
               .catch(err => {
@@ -95,24 +95,24 @@ describe('Sales suite', function SalesSuite() {
               }),
             cappacity
           )
-          .then(data => data[1]);
-        })
-        .then((query) => {
-          return payments.router(query, executeSaleHeaders)
+          .then(data => data[1])
+        ))
+        .then(query => (
+          payments.router(query, executeSaleHeaders)
             .reflect()
             .then(result => {
               debug(result);
               assert(result.isFulfilled());
-            });
-        });
+            })
+        ));
     });
 
-    it('Should list all sales', () => {
-      return payments.router({}, listSaleHeaders)
+    it('Should list all sales', () => (
+      payments.router({}, listSaleHeaders)
         .reflect()
-        .then(result => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        });
-    });
+        .then(result => (
+          result.isFulfilled() ? result.value() : Promise.reject(result.reason())
+        ))
+    ));
   });
 });

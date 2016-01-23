@@ -3,37 +3,66 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
+
+const { serialize } = require('../../utils/redis.js');
+const { SALES_DATA_PREFIX } = require('../../constants.js');
+const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
 function saleExecute(message) {
   const { _config, redis, amqp } = this;
-  const promise = Promise.bind(this);
+  const { users: { prefix, postfix } } = _config;
 
   function sendRequest() {
-    return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, _config.paypal);
+    return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, _config.paypal)
+      .catch(err => {
+        this.log.warn('failed to bill payment', err.response);
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      });
   }
 
   function updateRedis(sale) {
-    if (sale.state !== 'approved') {
+    const { state } = sale;
+    if (state !== 'approved') {
       throw new Errors.HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
     }
 
-    const saleKey = key('sales-data', sale.id);
+    const { id } = sale;
+    const saleKey = key(SALES_DATA_PREFIX, id);
+    const payer = sale.payer.payer_info.email && sale.payer.payer_info.email;
+    const owner = getOwner(sale);
 
-    return redis
+    const updateData = {
+      sale,
+      create_time: new Date(sale.create_time).getTime(),
+      update_time: new Date(sale.update_time).getTime(),
+    };
+
+    if (payer) {
+      updateData.payer = payer;
+    }
+
+    if (owner) {
+      updateData.owner = owner;
+    }
+
+    const updateTransaction = redis
       .pipeline()
       .hgetBuffer(saleKey, 'owner')
-      .hmset(saleKey, mapValues({ sale, update_time: sale.update_time }, JSONStringify))
+      .hmset(saleKey, serialize(updateData))
       .exec()
-      .spread(owner => {
-        return { sale, username: JSON.parse(owner[1]) };
-      });
+      .spread(recordedOwner => ({
+        sale,
+        username: recordedOwner[1] && JSON.parse(recordedOwner[1]) || owner,
+      }));
+
+    const updateCommon = Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
+
+    return Promise.join(updateTransaction, updateCommon).get(0);
   }
 
   function updateMetadata({ sale, username }) {
     const models = sale.transactions[0].item_list.items[0].quantity;
-    const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
+    const path = `${prefix}.${postfix.updateMetadata}`;
 
     const updateRequest = {
       username,
@@ -50,7 +79,7 @@ function saleExecute(message) {
       .return(sale);
   }
 
-  return promise.then(sendRequest).then(updateRedis).then(updateMetadata);
+  return Promise.bind(this).then(sendRequest).then(updateRedis).then(updateMetadata);
 }
 
 module.exports = saleExecute;

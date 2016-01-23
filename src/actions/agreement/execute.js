@@ -1,24 +1,29 @@
 const Errors = require('common-errors');
 const Promise = require('bluebird');
+const moment = require('moment');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
 const getPlan = require('../plan/get');
-const moment = require('moment');
 const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 
+const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
+const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants.js');
+const { serialize } = require('../../utils/redis.js');
 
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
-  const promise = Promise.bind(this);
+  const { users: { prefix, postfix, audience } } = _config;
   const { token } = message;
   const tokenKey = key('subscription-token', token);
 
   function sendRequest() {
-    return billingAgreement.executeAsync(token, {}, _config.paypal).get('id');
+    return billingAgreement.executeAsync(token, {}, _config.paypal)
+      .catch(err => {
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      })
+      .get('id');
   }
 
   function fetchUpdatedAgreement(id) {
@@ -35,49 +40,67 @@ function agreementExecute(message) {
     const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
     return getPlan.call(this, planId).then((plan) => {
-      const subscription = find(plan.subs, ['name', subscriptionName]);
+      const subscription = find(plan.subs, { name: subscriptionName });
       return { agreement, subscription, planId, owner };
     });
   }
 
   function getCurrentAgreement(data) {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const audience = _config.users.audience;
+    const path = `${prefix}.${postfix.getMetadata}`;
     const getRequest = {
       username: data.owner,
       audience,
     };
 
-    return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+    return amqp
+      .publishAndWait(path, getRequest, { timeout: 5000 })
       .get(audience)
-      .get('agreement')
-      .then((agreement) => {
-        return { data, oldAgreement: agreement };
-      });
+      .then(metadata => ({
+        data,
+        oldAgreement: metadata.agreement,
+        subscriptionInterval: metadata.subscriptionInterval,
+      }));
   }
 
-  function checkAndDeleteAgreement(data) {
-    if (data.data.agreement.id !== data.oldAgreement && data.oldAgreement !== 'free') {
+  function syncTransactions({ agreement, owner, subscriptionInterval }) {
+    return pullTransactionsData
+      .call(this, {
+        id: agreement.id,
+        owner,
+        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+        end: moment().add(1, 'day').format('YYYY-MM-DD'),
+      })
+      .return(agreement);
+  }
+
+  function checkAndDeleteAgreement(input) {
+    const { data, oldAgreement } = input;
+    if (data.agreement.id !== oldAgreement && oldAgreement !== 'free' && oldAgreement) {
       // remove old agreement if setting new one
-      return setState.call(this, { owner: data.data.owner, status: 'cancel' }).return(data.data);
+      return setState
+        .call(this, {
+          owner: data.owner,
+          state: 'cancel',
+        })
+        .catch({ statusCode: 400 }, err => {
+          this.log.warn('oldAgreement was already cancelled', err);
+        })
+        .return(input);
     }
-    return data.data;
+
+    return input;
   }
 
-  function updateMetadata(data) {
+  function updateMetadata({ data, subscriptionInterval }) {
     const { subscription, agreement, planId, owner } = data;
-
-    const period = subscription.definition.frequency.toLowerCase();
-    const nextCycle = moment().add(1, period);
-
-    const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
+    const path = `${prefix}.${postfix.updateMetadata}`;
 
     const updateRequest = {
       username: owner,
-      audience: _config.users.audience,
+      audience,
       metadata: {
         $set: {
-          nextCycle: nextCycle.valueOf(),
+          nextCycle: moment(agreement.start_date).valueOf(),
           agreement: agreement.id,
           plan: planId,
           modelPrice: subscription.price,
@@ -92,11 +115,12 @@ function agreementExecute(message) {
 
     return amqp
       .publishAndWait(path, updateRequest, { timeout: 5000 })
-      .return({ agreement, owner, planId });
+      .return({ agreement, owner, planId, subscriptionInterval });
   }
 
-  function updateRedis({ agreement, owner, planId }) {
-    const agreementKey = key('agreements-data', agreement.id);
+  function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
+    const agreementKey = key(AGREEMENT_DATA, agreement.id);
+    const userAgreementIndex = key(AGREEMENT_INDEX, owner);
     const pipeline = redis.pipeline();
 
     const data = {
@@ -107,10 +131,11 @@ function agreementExecute(message) {
       owner,
     };
 
-    pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
-    pipeline.sadd('agreements-index', agreement.id);
+    pipeline.hmset(agreementKey, serialize(data));
+    pipeline.sadd(AGREEMENT_INDEX, agreement.id);
+    pipeline.sadd(userAgreementIndex, agreement.id);
 
-    return pipeline.exec().return(agreement);
+    return pipeline.exec().return({ agreement, owner, subscriptionInterval });
   }
 
   function verifyToken() {
@@ -128,7 +153,8 @@ function agreementExecute(message) {
     return redis.del(tokenKey);
   }
 
-  return promise
+  return Promise
+    .bind(this)
     .then(verifyToken)
     .then(sendRequest)
     .then(fetchUpdatedAgreement)
@@ -138,7 +164,8 @@ function agreementExecute(message) {
     .then(checkAndDeleteAgreement)
     .then(updateMetadata)
     .then(updateRedis)
-    .tap(cleanup);
+    .tap(cleanup)
+    .then(syncTransactions);
 }
 
 module.exports = agreementExecute;

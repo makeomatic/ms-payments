@@ -1,21 +1,22 @@
 const { NotSupportedError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
+const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
 const key = require('../../redisKey.js');
 const url = require('url');
-const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
-const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
-
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 
-const moment = require('moment');
+const { serialize } = require('../../utils/redis.js');
 const { parseSale, saveCommon } = require('../../utils/transactions');
+const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
+
+const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
 
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = _config;
   const promise = Promise.bind(this);
+  const path = `${prefix}.${postfix.getMetadata}`;
 
   // convert request to sale object
   const sale = {
@@ -28,7 +29,6 @@ function saleCreate(message) {
         total: message.amount,
         currency: 'USD',
       },
-      description: `Buy ${message.amount} models for [${message.owner}]`,
       notify_url: _config.urls.sale_notify,
     }],
     redirect_urls: {
@@ -38,8 +38,6 @@ function saleCreate(message) {
   };
 
   function getPrice() {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const audience = _config.users.audience;
     const getRequest = {
       username: message.owner,
       audience,
@@ -47,7 +45,7 @@ function saleCreate(message) {
 
     return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
       .get(audience)
-      .then(function buildMetadata(metadata) {
+      .then(metadata => {
         if (metadata.modelPrice) {
           // paypal requires stupid formatting
           const price = metadata.modelPrice.toFixed(2).replace(PRICE_REGEXP, '$1,');
@@ -56,7 +54,8 @@ function saleCreate(message) {
           sale.transactions[0].amount.total = total.toFixed(2).replace(PRICE_REGEXP, '$1,');
           sale.transactions[0].item_list = {
             items: [{
-              name: 'Model',
+              // limit of 127. Only thing that's kept during transactions sync
+              name: `Client [${message.owner}]. Cappasity 3D models`.slice(0, 127),
               price,
               quantity: message.amount,
               currency: 'USD',
@@ -86,25 +85,21 @@ function saleCreate(message) {
   }
 
   function saveToRedis(data) {
-    const saleKey = key('sales-data', data.sale.id);
+    const saleKey = key(SALES_DATA_PREFIX, data.sale.id);
     const pipeline = redis.pipeline();
 
     // adjust state
     sale.hidden = message.hidden;
 
-    function convertDate(strDate) {
-      return moment(strDate).valueOf();
-    }
-
     const saveData = {
       sale: data.sale,
-      create_time: convertDate(data.sale.create_time),
-      update_time: convertDate(data.sale.update_time),
+      create_time: new Date(data.sale.create_time).getTime(),
+      update_time: new Date(data.sale.update_time).getTime(),
       owner: message.owner,
     };
 
-    pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
-    pipeline.sadd('sales-index', data.sale.id);
+    pipeline.hmset(saleKey, serialize(saveData));
+    pipeline.sadd(SALES_ID_INDEX, data.sale.id);
 
     return pipeline.exec().return(data);
   }

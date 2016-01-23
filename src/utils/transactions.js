@@ -1,31 +1,77 @@
-const moment = require('moment');
-const key = require('../redisKey.js');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 const Promise = require('bluebird');
+const getPath = require('lodash/get');
 
-function convertDate(strDate) {
-  return moment(strDate).valueOf();
+const { serialize } = require('./redis.js');
+const key = require('../redisKey.js');
+const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
+const {
+  TRANSACTION_TYPE_RECURRING,
+  TRANSACTION_TYPE_SALE,
+  TRANSACTIONS_INDEX,
+  TRANSACTIONS_COMMON_DATA,
+} = require('../constants.js');
+
+function getTransactionType(type) {
+  switch (type) {
+    case TRANSACTION_TYPE_RECURRING:
+      return 'subscription';
+    case TRANSACTION_TYPE_SALE:
+      return 'sale';
+    default:
+      throw new Error('unsupported transaction type');
+  }
 }
 
+// required:
+// 1. type {Number}
+// 2. id {String}
 function saveCommon(data) {
   const { redis } = this;
-  const prefix = (data.type === 0) && 'sale' || 'subscription';
-  const transactionKey = `${prefix}-${data.id}`;
-  const dataKey = key('all-transactions', transactionKey);
-  const userIndex = key(data.owner, 'transactions');
-  const allIndex = 'all-transactions';
+  const transactionType = getTransactionType(data.type);
 
+  // 1. add to common index
+  // 2. add to transaction type index
+  // 3. add to user type index
+  // 4. add to user+transaction type index
+
+  const { id } = data;
   const pipeline = redis.pipeline();
+  const transactionTypeIndex = key(TRANSACTIONS_INDEX, transactionType);
+  const userIndex = data.owner && key(TRANSACTIONS_INDEX, data.owner);
+  const userTransactionTypeIndex = userIndex && key(userIndex, transactionType);
 
-  // set main data
-  pipeline.hmset(dataKey, mapValues(data, JSONStringify));
+  // 5. store metadata data at this prefix
+  const dataKey = key(TRANSACTIONS_COMMON_DATA, id);
 
-  // add id to indexes
-  pipeline.sadd(allIndex, transactionKey);
-  pipeline.sadd(userIndex, transactionKey);
+  pipeline.sadd(TRANSACTIONS_INDEX, id);
+  pipeline.sadd(transactionTypeIndex, id);
+  pipeline.hmset(dataKey, serialize(data));
+
+  if (userIndex) {
+    pipeline.sadd(userIndex, id);
+    pipeline.sadd(userTransactionTypeIndex, id);
+  }
 
   return pipeline.exec().return(data);
+}
+
+function formatItemList({ items }) {
+  return items.map(({ name, price, quantity, currency }) => (
+    `${name} x${quantity} for ${parseFloat(price) * quantity} ${currency}.`
+  )).join('\n');
+}
+
+function prepareDescription(amount, owner, state) {
+  if (!amount) {
+    return `${state} agreement with ${owner}`;
+  }
+
+  return `Recurring payment of ${amount.value} USD for ${owner}`;
+}
+
+// FIXME: retarded paypal bug, hopefully it is fixed in the future
+function remapState(state) {
+  return state === 'approved_symphony' ? 'approved' : state;
 }
 
 function parseSale(sale, owner) {
@@ -33,36 +79,49 @@ function parseSale(sale, owner) {
   return Promise.try(() => {
     // reasonable default?
     const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
+    const [transaction] = sale.transactions;
+
     return {
       id: sale.id,
-      type: 0,
+      type: TRANSACTION_TYPE_SALE,
       owner,
       payer,
-      date: convertDate(sale.create_time),
-      amount: sale.transactions[0].amount.total,
-      description: sale.transactions[0].description,
-      status: sale.status,
+      date: new Date(sale.create_time).getTime(),
+      update_time: new Date(sale.update_time || sale.create_time).getTime(),
+      amount: transaction.amount.total,
+      currency: transaction.amount.currency,
+      description: formatItemList(transaction.item_list),
+      // Payment state. Must be set to one of the one of the following: created; approved; failed; canceled; expired; pending.
+      // Value assigned by PayPal.
+      status: remapState(sale.state),
     };
   });
 }
 
-function parseAgreement(transaction, owner) {
-  return Promise.try(() => {
-    return {
-      id: transaction.transaction_id,
-      type: 1,
-      owner,
-      payer: transaction.payer_email,
-      date: convertDate(transaction.time_stamp),
-      amount: transaction.amount.value,
-      description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
-      status: transaction.status,
-    };
-  });
+function parseAgreementTransaction(transaction, owner, agreementId) {
+  return Promise.try(() => ({
+    id: transaction.transaction_id,
+    type: TRANSACTION_TYPE_RECURRING,
+    owner,
+    agreementId,
+    payer: transaction.payer_email || undefined,
+    date: new Date(transaction.time_stamp).getTime(),
+    amount: transaction.amount && transaction.amount.value || '0.00',
+    description: prepareDescription(transaction.amount, owner, transaction.status),
+    status: transaction.status,
+  }));
+}
+
+function getOwner(sale) {
+  const description = getPath(sale, 'transactions[0].item_list.items[0].name', false);
+  const result = description && FIND_OWNER_REGEXP.exec(description);
+  return result && result[1] || sale.payer_info && sale.payer_info.email || null;
 }
 
 module.exports = exports = {
+  getOwner,
   saveCommon,
   parseSale,
-  parseAgreement,
+  parseAgreementTransaction,
+  remapState,
 };

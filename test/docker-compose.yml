@@ -73,7 +73,8 @@ tester:
   volumes:
     - ${PWD}:/src
   environment:
-    NODE_ENV: "docker"
+    NODE_ENV: ${NODE_ENV}
     DEBUG: ${DEBUG}
     BLUEBIRD_DEBUG: ${B_DEBUG}
+    MS_PAYMENTS__LOGGER: 'true'
   command: "true"
