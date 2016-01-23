@@ -3,6 +3,7 @@ const key = require('../redisKey.js');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 const Promise = require('bluebird');
+const { TRANSACTION_TYPE_RECURRING, TRANSACTION_TYPE_SALE } = require('../constants.js');
 
 function convertDate(strDate) {
   return moment(strDate).valueOf();
@@ -35,7 +36,7 @@ function parseSale(sale, owner) {
     const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
     return {
       id: sale.id,
-      type: 0,
+      type: TRANSACTION_TYPE_SALE,
       owner,
       payer,
       date: convertDate(sale.create_time),
@@ -47,18 +48,16 @@ function parseSale(sale, owner) {
 }
 
 function parseAgreement(transaction, owner) {
-  return Promise.try(() => {
-    return {
-      id: transaction.transaction_id,
-      type: 1,
-      owner,
-      payer: transaction.payer_email,
-      date: convertDate(transaction.time_stamp),
-      amount: transaction.amount.value,
-      description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
-      status: transaction.status,
-    };
-  });
+  return Promise.try(() => ({
+    id: transaction.transaction_id,
+    type: TRANSACTION_TYPE_RECURRING,
+    owner,
+    payer: transaction.payer_email,
+    date: convertDate(transaction.time_stamp),
+    amount: transaction.amount.value,
+    description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
+    status: transaction.status,
+  }));
 }
 
 module.exports = exports = {
