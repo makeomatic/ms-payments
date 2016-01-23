@@ -90,7 +90,7 @@ describe('Sales suite', function SalesSuite() {
             browser
               .pressButton('#continue_abovefold')
               .catch(err => {
-                assert.equal(err.message, 'unable to verify the first certificate');
+                assert.equal(err.message, 'connect ECONNREFUSED 127.0.0.1:80');
                 return { success: true, err };
               }),
             cappacity

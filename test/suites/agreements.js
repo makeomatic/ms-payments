@@ -126,7 +126,7 @@ describe('Agreements suite', function AgreementSuite() {
           return browser
             .pressButton('#continue')
             .catch(err => {
-              assert.equal(err.message, 'unable to verify the first certificate');
+              assert.equal(err.message, 'connect ECONNREFUSED 127.0.0.1:80');
               return { success: true, err };
             });
         })
