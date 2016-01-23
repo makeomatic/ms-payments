@@ -5,10 +5,10 @@ const forEach = require('lodash/forEach');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment }); // eslint-disable-line
-const list = require('./list');
+const salelist = require('./list');
 const moment = require('moment');
 const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
-const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
+const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 
 function getOwner(sale) {
   const result = FIND_OWNER_REGEXP.exec(sale.transactions[0].description);
@@ -18,7 +18,6 @@ function getOwner(sale) {
 function transactionSync() {
   const { _config, redis } = this;
   const { paypal: paypalConfig } = _config;
-  const promise = Promise.bind(this);
 
   function getLatest() {
     const query = {
@@ -28,7 +27,7 @@ function transactionSync() {
       limit: 1,
     };
 
-    return list(query).get('items');
+    return salelist.call(this, query).get('items');
   }
 
   function sendRequest(items) {
@@ -37,7 +36,7 @@ function transactionSync() {
     };
 
     if (items.length > 0) {
-      query.start_time = moment(items[0].start_time).format('YYYY-MM-DD[T]HH:mm:ss[Z]');
+      query.start_time = moment(items[0].start_time).format(PAYPAL_DATE_FORMAT);
     }
 
     return listTransactions(query, paypalConfig);
@@ -73,7 +72,7 @@ function transactionSync() {
     });
   }
 
-  return promise.then(getLatest).then(sendRequest).then(saveToRedis);
+  return Promise.bind(this).then(getLatest).then(sendRequest).then(saveToRedis);
 }
 
 module.exports = transactionSync;

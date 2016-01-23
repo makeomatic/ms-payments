@@ -21,6 +21,9 @@ service.connect()
     service.log.info('Started service');
     return service.initPlans();
   })
+  .then(function syncTransactions() {
+    return service.syncTransactions();
+  })
   .catch(function serviceCrashed(err) {
     service.log.fatal('Failed to start service', err);
     setImmediate(function escapeTryCatch() {

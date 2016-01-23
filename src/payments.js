@@ -6,6 +6,7 @@ const merge = require('lodash/merge');
 
 const createPlan = require('./actions/plan/create');
 const statePlan = require('./actions/plan/state');
+const syncSaleTransactions = require('./actions/sale/sync.js');
 
 /**
  * Class representing payments handling
@@ -37,7 +38,7 @@ class Payments extends MService {
       client_id: 'ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx',
       client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv', //eslint-disable-line
     },
-    validator: [__dirname + '/../schemas'],
+    validator: ['../schemas'],
     users: {
       audience: '*.localhost',
       prefix: 'users',
@@ -74,12 +75,12 @@ class Payments extends MService {
       }],
     }],
     urls: {
-      plan_return: 'http://api-sandbox.cappasity.matic.ninja/paypal-subscription-return',
-      plan_cancel: 'http://api-sandbox.cappasity.matic.ninja/paypal-subscription-cancel',
-      plan_notify: 'http://api-sandbox.cappasity.matic.ninja/paypal-subscription-notify',
-      sale_return: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-return',
-      sale_cancel: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-cancel',
-      sale_notify: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-notify',
+      plan_return: 'http://localhost/paypal-subscription-return',
+      plan_cancel: 'http://localhost/paypal-subscription-cancel',
+      plan_notify: 'http://localhost/paypal-subscription-notify',
+      sale_return: 'http://localhost/paypal-sale-return',
+      sale_cancel: 'http://localhost/paypal-sale-cancel',
+      sale_notify: 'http://localhost/paypal-sale-notify',
     },
   };
 
@@ -102,7 +103,7 @@ class Payments extends MService {
   initPlans() {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
-    return Promise.map(defaultPlans, (plan) => {
+    return Promise.map(defaultPlans, plan => { // eslint-disable-line arrow-body-style
       return createPlan
         .call(this, plan)
         .then(newPlan => {
@@ -129,6 +130,18 @@ class Payments extends MService {
       }
     });
   }
+
+  syncTransactions() {
+    this.log.info('syncing possibly missed transactions');
+
+    // init sales sync
+    syncSaleTransactions.call(this).catch(err => {
+      this.log.error('failed to sync sale transactions', err.stack);
+    });
+
+    return null;
+  }
+
 }
 
 module.exports = Payments;

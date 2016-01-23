@@ -6,4 +6,5 @@ module.exports = {
   SALES_DATA_PREFIX: 'sales-data',
   TRANSACTION_TYPE_RECURRING: 0,
   TRANSACTION_TYPE_SALE: 1,
+  PAYPAL_DATE_FORMAT: 'YYYY-MM-DD[T]HH:mm:ss[Z]',
 };
