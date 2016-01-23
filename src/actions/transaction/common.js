@@ -9,7 +9,7 @@ const key = require('../../redisKey.js');
  */
 module.exports = function listCommonTransactions(opts) {
   const { redis } = this;
-  const { owner, filter } = opts;
+  const { owner, type, filter } = opts;
   const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
@@ -18,8 +18,15 @@ module.exports = function listCommonTransactions(opts) {
 
   // choose which set to use
   let index = TRANSACTIONS_INDEX;
+
+  // we have separate index for owners
   if (owner) {
     index = key(index, owner);
+  }
+
+  // we have a separate index for types and owner:type
+  if (type) {
+    index = key(index, type);
   }
 
   return redis

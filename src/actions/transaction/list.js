@@ -6,7 +6,7 @@ const { AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('.
 function planList(opts) {
   const { redis } = this;
   const { filter } = opts;
-  const criteria = opts.criteria || 'startedAt';
+  const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;
