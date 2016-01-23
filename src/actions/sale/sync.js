@@ -26,6 +26,10 @@ function transactionSync(message = {}) {
   }
 
   function getLatest() {
+    if (message.next_id) {
+      return null;
+    }
+
     const query = {
       order: 'DESC',
       criteria: 'create_time',
@@ -41,12 +45,10 @@ function transactionSync(message = {}) {
       count: TRANSACTIONS_LIMIT,
     };
 
-    if (items.length > 0) {
-      query.start_time = moment(items[0].start_time).format(PAYPAL_DATE_FORMAT);
-    }
-
     if (message.next_id) {
       query.start_id = message.next_id;
+    } else if (items.length > 0) {
+      query.start_time = moment(items[0].start_time).format(PAYPAL_DATE_FORMAT);
     }
 
     return listTransactions(query, paypalConfig);
