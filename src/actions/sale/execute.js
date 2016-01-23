@@ -8,10 +8,14 @@ const JSONStringify = JSON.stringify.bind(JSON);
 
 function saleExecute(message) {
   const { _config, redis, amqp } = this;
-  const promise = Promise.bind(this);
+  const { users: { prefix, postfix } } = _config;
 
   function sendRequest() {
-    return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, _config.paypal);
+    return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, _config.paypal)
+      .catch(err => {
+        this.log.warn('failed to bill payment', err.response);
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      });
   }
 
   function updateRedis(sale) {
@@ -20,20 +24,30 @@ function saleExecute(message) {
     }
 
     const saleKey = key('sales-data', sale.id);
+    const payer = sale.payer.payer_info.email && sale.payer.payer_info.email;
+    const updateData = {
+      sale,
+      update_time: sale.update_time,
+    };
+
+    if (payer) {
+      updateData.payer = payer;
+    }
 
     return redis
       .pipeline()
       .hgetBuffer(saleKey, 'owner')
-      .hmset(saleKey, mapValues({ sale, update_time: sale.update_time }, JSONStringify))
+      .hmset(saleKey, mapValues(updateData, JSONStringify))
       .exec()
-      .spread(owner => {
-        return { sale, username: JSON.parse(owner[1]) };
-      });
+      .spread(owner => ({
+        sale,
+        username: JSON.parse(owner[1]),
+      }));
   }
 
   function updateMetadata({ sale, username }) {
     const models = sale.transactions[0].item_list.items[0].quantity;
-    const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
+    const path = `${prefix}.${postfix.updateMetadata}`;
 
     const updateRequest = {
       username,
@@ -50,7 +64,7 @@ function saleExecute(message) {
       .return(sale);
   }
 
-  return promise.then(sendRequest).then(updateRedis).then(updateMetadata);
+  return Promise.bind(this).then(sendRequest).then(updateRedis).then(updateMetadata);
 }
 
 module.exports = saleExecute;

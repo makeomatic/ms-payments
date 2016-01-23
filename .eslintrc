@@ -8,6 +8,7 @@
     "mocha": true
   },
   "rules": {
-    "no-param-reassign": [2, {"props": false}]
+    "no-param-reassign": [2, {"props": false}],
+    "max-len": [2, 150]
   }
 }
