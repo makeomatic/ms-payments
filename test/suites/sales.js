@@ -61,7 +61,7 @@ describe('Sales suite', function SalesSuite() {
     it('Should execute approved sale', function test() {
       const cappacity = new Promise(resolve => {
         browser.on('redirect', request => {
-          if (request.url.indexOf('cappasity') >= 0) {
+          if (request.url.indexOf('localhost') >= 0) {
             const parsed = url.parse(request.url, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
@@ -78,15 +78,15 @@ describe('Sales suite', function SalesSuite() {
           assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
           return { success: true, err };
         })
-        .then(() => {
-          return browser
+        .then(() => (
+          browser
             .fill('#login_email', 'test@cappacity.com')
             .fill('#login_password', '12345678')
-            .pressButton('#submitLogin');
-        })
-        .then(() => {
+            .pressButton('#submitLogin')
+        ))
+        .then(() => (
           // TypeError: unable to verify the first certificate
-          return Promise.join(
+          Promise.join(
             browser
               .pressButton('#continue_abovefold')
               .catch(err => {
@@ -95,24 +95,24 @@ describe('Sales suite', function SalesSuite() {
               }),
             cappacity
           )
-          .then(data => data[1]);
-        })
-        .then((query) => {
-          return payments.router(query, executeSaleHeaders)
+          .then(data => data[1])
+        ))
+        .then(query => (
+          payments.router(query, executeSaleHeaders)
             .reflect()
             .then(result => {
               debug(result);
               assert(result.isFulfilled());
-            });
-        });
+            })
+        ));
     });
 
-    it('Should list all sales', () => {
-      return payments.router({}, listSaleHeaders)
+    it('Should list all sales', () => (
+      payments.router({}, listSaleHeaders)
         .reflect()
-        .then(result => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        });
-    });
+        .then(result => (
+          result.isFulfilled() ? result.value() : Promise.reject(result.reason())
+        ))
+    ));
   });
 });
