@@ -3,28 +3,54 @@ const key = require('../redisKey.js');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 const Promise = require('bluebird');
-const { TRANSACTION_TYPE_RECURRING, TRANSACTION_TYPE_SALE } = require('../constants.js');
+const {
+  TRANSACTION_TYPE_RECURRING,
+  TRANSACTION_TYPE_SALE,
+  TRANSACTIONS_INDEX,
+  TRANSACTIONS_COMMON_DATA,
+} = require('../constants.js');
 
 function convertDate(strDate) {
   return moment(strDate).valueOf();
 }
 
+function getTransactionType(type) {
+  switch (type) {
+    case TRANSACTION_TYPE_RECURRING:
+      return 'subscription';
+    case TRANSACTION_TYPE_SALE:
+      return 'sale';
+    default:
+      throw new Error('unsupported transaction type');
+  }
+}
+
 function saveCommon(data) {
   const { redis } = this;
-  const prefix = (data.type === 0) && 'sale' || 'subscription';
-  const transactionKey = `${prefix}-${data.id}`;
-  const dataKey = key('all-transactions', transactionKey);
-  const userIndex = key(data.owner, 'transactions');
-  const allIndex = 'all-transactions';
+  const transactionType = getTransactionType(data.type);
 
+  // 1. add to common index
+  // 2. add to transaction type index
+  // 3. add to user type index
+  // 4. add to user+transaction type index
+
+  const { id } = data;
   const pipeline = redis.pipeline();
+  const transactionTypeIndex = key(TRANSACTIONS_INDEX, transactionType);
+  const userIndex = data.owner && key(TRANSACTIONS_INDEX, data.owner);
+  const userTransactionTypeIndex = userIndex && key(userIndex, transactionType);
 
-  // set main data
+  // 5. store metadata data at this prefix
+  const dataKey = key(TRANSACTIONS_COMMON_DATA, id);
+
+  pipeline.sadd(TRANSACTIONS_INDEX, id);
+  pipeline.sadd(transactionTypeIndex, id);
   pipeline.hmset(dataKey, mapValues(data, JSONStringify));
 
-  // add id to indexes
-  pipeline.sadd(allIndex, transactionKey);
-  pipeline.sadd(userIndex, transactionKey);
+  if (userIndex) {
+    pipeline.sadd(userIndex, id);
+    pipeline.sadd(userTransactionTypeIndex, id);
+  }
 
   return pipeline.exec().return(data);
 }

@@ -7,6 +7,7 @@ const JSONStringify = JSON.stringify.bind(JSON);
 const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement }); // eslint-disable-line
 const { parseAgreement, saveCommon } = require('../../utils/transactions');
 const { NotFoundError } = require('common-errors');
+const { AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
 
 function transactionSync(message) {
   const { _config, redis, amqp, log } = this;
@@ -63,7 +64,7 @@ function transactionSync(message) {
 
     // gather updates
     forEach(transactions, transaction => {
-      const transactionKey = key('transaction-data', transaction.transaction_id);
+      const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
       const data = {
         transaction,
         owner,
@@ -76,7 +77,7 @@ function transactionSync(message) {
       };
 
       pipeline.hmset(transactionKey, mapValues(data, JSONStringify));
-      pipeline.sadd('transaction-index', transaction.transaction_id);
+      pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
 
       updates.push(updateCommon.call(this, transaction, owner));
     });

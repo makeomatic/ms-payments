@@ -1,5 +1,7 @@
 const { processResult, mapResult } = require('../../listUtils');
 const fsort = require('redis-filtered-sort');
+const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
+const key = require('../../redisKey.js');
 
 /**
  * List files
@@ -15,15 +17,13 @@ module.exports = function listCommonTransactions(opts) {
   const limit = opts.limit || 10;
 
   // choose which set to use
-  let index;
+  let index = TRANSACTIONS_INDEX;
   if (owner) {
-    index = `${owner}:transactions`;
-  } else {
-    index = 'all-transactions';
+    index = key(index, owner);
   }
 
   return redis
-    .fsort(index, 'all-transactions:*', criteria, order, strFilter, offset, limit)
-    .then(processResult('transaction-data', redis))
+    .fsort(index, key(TRANSACTIONS_COMMON_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .then(processResult(TRANSACTIONS_COMMON_DATA, redis))
     .spread(mapResult(offset, limit));
 };

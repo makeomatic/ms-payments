@@ -1,21 +1,24 @@
 const { NotSupportedError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
+const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
 const key = require('../../redisKey.js');
 const url = require('url');
-const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
-const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
-
+const moment = require('moment');
 const find = require('lodash/find');
 const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 
-const moment = require('moment');
 const { parseSale, saveCommon } = require('../../utils/transactions');
+const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
+
+const JSONStringify = JSON.stringify.bind(JSON);
+const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
 
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = _config;
   const promise = Promise.bind(this);
+  const path = `${prefix}.${postfix.getMetadata}`;
 
   // convert request to sale object
   const sale = {
@@ -38,8 +41,6 @@ function saleCreate(message) {
   };
 
   function getPrice() {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const audience = _config.users.audience;
     const getRequest = {
       username: message.owner,
       audience,
@@ -47,7 +48,7 @@ function saleCreate(message) {
 
     return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
       .get(audience)
-      .then(function buildMetadata(metadata) {
+      .then(metadata => {
         if (metadata.modelPrice) {
           // paypal requires stupid formatting
           const price = metadata.modelPrice.toFixed(2).replace(PRICE_REGEXP, '$1,');
@@ -86,7 +87,7 @@ function saleCreate(message) {
   }
 
   function saveToRedis(data) {
-    const saleKey = key('sales-data', data.sale.id);
+    const saleKey = key(SALES_DATA_PREFIX, data.sale.id);
     const pipeline = redis.pipeline();
 
     // adjust state
@@ -104,7 +105,7 @@ function saleCreate(message) {
     };
 
     pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
-    pipeline.sadd('sales-index', data.sale.id);
+    pipeline.sadd(SALES_ID_INDEX, data.sale.id);
 
     return pipeline.exec().return(data);
   }
