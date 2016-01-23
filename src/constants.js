@@ -2,6 +2,8 @@
 // app
 
 module.exports = {
+  SALES_ID_INDEX: 'sales-index',
+  SALES_DATA_PREFIX: 'sales-data',
   TRANSACTION_TYPE_RECURRING: 0,
   TRANSACTION_TYPE_SALE: 1,
 };
