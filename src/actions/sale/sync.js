@@ -9,13 +9,14 @@ const salelist = require('./list');
 const moment = require('moment');
 const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
+const TRANSACTIONS_LIMIT = 20;
 
 function getOwner(sale) {
   const result = FIND_OWNER_REGEXP.exec(sale.transactions[0].description);
   return result && result[1];
 }
 
-function transactionSync() {
+function transactionSync(message) {
   const { _config, redis } = this;
   const { paypal: paypalConfig } = _config;
 
@@ -32,24 +33,32 @@ function transactionSync() {
 
   function sendRequest(items) {
     const query = {
-      count: 20,
+      count: TRANSACTIONS_LIMIT,
     };
 
     if (items.length > 0) {
       query.start_time = moment(items[0].start_time).format(PAYPAL_DATE_FORMAT);
     }
 
+    if (message.next_id) {
+      query.start_id = message.next_id;
+    }
+
     return listTransactions(query, paypalConfig);
   }
 
   function saveToRedis(data) {
+    if (data.count === 0) {
+      return null;
+    }
+
     const pipeline = redis.pipeline();
 
     function convertDate(strDate) {
       return moment(strDate).valueOf();
     }
 
-    forEach(data, sale => {
+    forEach(data.payments, sale => {
       const saleKey = key(SALES_DATA_PREFIX, sale.id);
       const saveData = {
         sale,
@@ -63,12 +72,12 @@ function transactionSync() {
     });
 
     return pipeline.exec().then(() => {
-      if (data.length < 20) {
+      if (data.count < TRANSACTIONS_LIMIT) {
         return null;
       }
 
       // recursively sync until we are done
-      return transactionSync.call(this);
+      return transactionSync.call(this, { next_id: data.next_id });
     });
   }
 

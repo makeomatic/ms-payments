@@ -135,9 +135,13 @@ class Payments extends MService {
     this.log.info('syncing possibly missed transactions');
 
     // init sales sync
-    syncSaleTransactions.call(this).catch(err => {
-      this.log.error('failed to sync sale transactions', err.stack);
-    });
+    syncSaleTransactions.call(this)
+      .then(() => {
+        this.log.info('completed sync of missing transactions');
+      })
+      .catch(err => {
+        this.log.error('failed to sync sale transactions', err.stack);
+      });
 
     return null;
   }
