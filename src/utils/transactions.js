@@ -25,6 +25,9 @@ function getTransactionType(type) {
   }
 }
 
+// required:
+// 1. type {Number}
+// 2. id {String}
 function saveCommon(data) {
   const { redis } = this;
   const transactionType = getTransactionType(data.type);
@@ -68,7 +71,7 @@ function parseSale(sale, owner) {
       date: convertDate(sale.create_time),
       amount: sale.transactions[0].amount.total,
       description: sale.transactions[0].description,
-      status: sale.status,
+      status: sale.state,
     };
   });
 }
@@ -82,7 +85,7 @@ function parseAgreement(transaction, owner) {
     date: convertDate(transaction.time_stamp),
     amount: transaction.amount.value,
     description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
-    status: transaction.status,
+    status: transaction.state,
   }));
 }
 
