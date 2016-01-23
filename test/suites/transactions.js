@@ -29,21 +29,21 @@ describe('Transactions suite', function TransactionsSuite() {
 
   before('delay for ms-users', () => Promise.delay(2000));
 
-  before(function startService() {
+  before(() => {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
   });
 
-  before(function initPlan() {
-    return payments.router(testPlanData, createPlanHeaders).then(plan => {
+  before('initPlan', () => (
+    payments.router(testPlanData, createPlanHeaders).then(plan => {
       const id = plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = id;
       return payments.router({ id, state: 'active' }, statePlanHeaders);
-    });
-  });
+    })
+  ));
 
-  before(function createAgreement() {
+  before('createAgreement', () => {
     const data = {
       agreement: testAgreementData,
       owner: 'test@test.ru',
@@ -58,79 +58,75 @@ describe('Transactions suite', function TransactionsSuite() {
       });
   });
 
-  before(function executeAgreement() {
-    return browser.visit(agreement.url)
+  before('executeAgreement', () => (
+    browser.visit(agreement.url)
       .then(() => {
         browser.assert.success();
         return browser.pressButton('#loadLogin');
       })
-      .then(() => {
-        return browser
+      .then(() => (
+        browser
           .fill('#login_email', 'test@cappacity.com')
           .fill('#login_password', '12345678')
-          .pressButton('#submitLogin');
-      })
-      .then(() => {
+          .pressButton('#submitLogin')
+      ))
+      .then(() => (
         // TypeError: unable to verify the first certificate
-        return browser
+        browser
           .pressButton('#continue')
           .catch(err => {
             assert.equal(err.message, 'unable to verify the first certificate');
             return { success: true, err };
-          });
-      })
-      .then(() => {
-        return payments.router({ token: agreement.token }, executeAgreementHeaders)
+          })
+      ))
+      .then(() => (
+        payments.router({ token: agreement.token }, executeAgreementHeaders)
           .reflect()
           .then((result) => {
             debug(result);
             assert(result.isFulfilled());
             agreement = result.value();
-          });
-      });
-  });
+          })
+      ))
+  ));
 
-  before(function getAgreement() {
-    return payments.router({ user: 'test@test.ru' }, getAgreementHeaders)
+  before('getAgreement', () => (
+    payments.router({ user: 'test@test.ru' }, getAgreementHeaders)
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
-      });
-  });
+      })
+  ));
 
-  after(function cleanUp() {
-    return Promise.all([
-      payments.router(planId, deletePlanHeaders),
-    ]);
-  });
+  after('cleanUp', () => Promise.all([payments.router(planId, deletePlanHeaders)]));
 
-  describe('unit tests', function UnitSuite() {
-    it('Should not sync transaction on invalid data', function test() {
-      return payments.router({ wrong: 'data' }, syncTransactionHeaders)
+  describe('unit tests', () => {
+    it('Should not sync transaction on invalid data', () => (
+      payments.router({ wrong: 'data' }, syncTransactionHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
-        });
-    });
+        })
+    ));
 
-    it('Should sync transactions', function test() {
+    it('Should sync transactions', () => {
       const start = '2015-01-01';
       const end = '2016-12-31';
       return payments.router({ id: agreement.id, start, end }, syncTransactionHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           debug(result);
           assert(result.isFulfilled());
         });
     });
 
-    it('Should list all transactions', () => {
-      return payments.router({}, listTransactionHeaders)
+    it('Should list all transactions', () => (
+      payments.router({}, listTransactionHeaders)
         .reflect()
-        .then(result => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        });
-    });
+        .then(result => (
+          result.isFulfilled() ? result.value() : Promise.reject(result.reason())
+        ))
+    ));
   });
 });
