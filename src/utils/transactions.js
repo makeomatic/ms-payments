@@ -1,18 +1,15 @@
-const moment = require('moment');
 const key = require('../redisKey.js');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 const Promise = require('bluebird');
+const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
+const getPath = require('lodash/get');
 const {
   TRANSACTION_TYPE_RECURRING,
   TRANSACTION_TYPE_SALE,
   TRANSACTIONS_INDEX,
   TRANSACTIONS_COMMON_DATA,
 } = require('../constants.js');
-
-function convertDate(strDate) {
-  return moment(strDate).valueOf();
-}
 
 function getTransactionType(type) {
   switch (type) {
@@ -58,20 +55,37 @@ function saveCommon(data) {
   return pipeline.exec().return(data);
 }
 
+function formatItemList({ items }) {
+  return items.map(({ name, price, quantity, currency }) => (
+    `${name} x${quantity} for ${parseFloat(price) * quantity} ${currency}.`
+  )).join('\n');
+}
+
+// FIXME: retarded paypal bug, hopefully it is fixed in the future
+function remapState(state) {
+  return state === 'approved_symphony' ? 'approved' : state;
+}
+
 function parseSale(sale, owner) {
   // to catch errors automatically
   return Promise.try(() => {
     // reasonable default?
     const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
+    const [transaction] = sale.transactions;
+
     return {
       id: sale.id,
       type: TRANSACTION_TYPE_SALE,
       owner,
       payer,
-      date: convertDate(sale.create_time),
-      amount: sale.transactions[0].amount.total,
-      description: sale.transactions[0].description,
-      status: sale.state,
+      date: new Date(sale.create_time).getTime(),
+      update_time: new Date(sale.update_time || sale.create_time).getTime(),
+      amount: transaction.amount.total,
+      currency: transaction.amount.currency,
+      description: formatItemList(transaction.item_list),
+      // Payment state. Must be set to one of the one of the following: created; approved; failed; canceled; expired; pending.
+      // Value assigned by PayPal.
+      status: remapState(sale.state),
     };
   });
 }
@@ -82,14 +96,21 @@ function parseAgreement(transaction, owner) {
     type: TRANSACTION_TYPE_RECURRING,
     owner,
     payer: transaction.payer_email,
-    date: convertDate(transaction.time_stamp),
+    date: new Date(transaction.time_stamp).getTime(),
     amount: transaction.amount.value,
     description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
-    status: transaction.state,
+    status: remapState(transaction.state),
   }));
 }
 
+function getOwner(sale) {
+  const description = getPath(sale, 'transactions[0].item_list.items[0].name', false);
+  const result = description && FIND_OWNER_REGEXP.exec(description);
+  return result && result[1] || sale.payer_info && sale.payer_info.email || null;
+}
+
 module.exports = exports = {
+  getOwner,
   saveCommon,
   parseSale,
   parseAgreement,

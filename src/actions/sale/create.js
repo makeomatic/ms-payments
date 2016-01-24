@@ -4,7 +4,6 @@ const paypal = require('paypal-rest-sdk');
 const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
 const key = require('../../redisKey.js');
 const url = require('url');
-const moment = require('moment');
 const find = require('lodash/find');
 const mapValues = require('lodash/mapValues');
 
@@ -31,7 +30,6 @@ function saleCreate(message) {
         total: message.amount,
         currency: 'USD',
       },
-      description: `Buy ${message.amount} models for [${message.owner}]`,
       notify_url: _config.urls.sale_notify,
     }],
     redirect_urls: {
@@ -57,7 +55,8 @@ function saleCreate(message) {
           sale.transactions[0].amount.total = total.toFixed(2).replace(PRICE_REGEXP, '$1,');
           sale.transactions[0].item_list = {
             items: [{
-              name: 'Model',
+              // limit of 127. Only thing that's kept during transactions sync
+              name: `Client [${message.owner}]. Cappasity 3D models`.slice(0, 127),
               price,
               quantity: message.amount,
               currency: 'USD',
@@ -93,14 +92,10 @@ function saleCreate(message) {
     // adjust state
     sale.hidden = message.hidden;
 
-    function convertDate(strDate) {
-      return moment(strDate).valueOf();
-    }
-
     const saveData = {
       sale: data.sale,
-      create_time: convertDate(data.sale.create_time),
-      update_time: convertDate(data.sale.update_time),
+      create_time: new Date(data.sale.create_time).getTime(),
+      update_time: new Date(data.sale.update_time).getTime(),
       owner: message.owner,
     };
 

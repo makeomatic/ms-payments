@@ -5,8 +5,8 @@ const key = require('../../redisKey');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
-const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE } = require('../../constants.js');
-const { saveCommon } = require('../../utils/transactions.js');
+const { SALES_DATA_PREFIX } = require('../../constants.js');
+const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
 function saleExecute(message) {
   const { _config, redis, amqp } = this;
@@ -29,21 +29,20 @@ function saleExecute(message) {
     const { id } = sale;
     const saleKey = key(SALES_DATA_PREFIX, id);
     const payer = sale.payer.payer_info.email && sale.payer.payer_info.email;
-
-    const commonData = {
-      id,
-      status: state,
-      type: TRANSACTION_TYPE_SALE,
-    };
+    const owner = getOwner(sale);
 
     const updateData = {
       sale,
-      update_time: sale.update_time,
+      create_time: new Date(sale.create_time).getTime(),
+      update_time: new Date(sale.update_time).getTime(),
     };
 
     if (payer) {
       updateData.payer = payer;
-      commonData.payer = payer;
+    }
+
+    if (owner) {
+      updateData.owner = owner;
     }
 
     const updateTransaction = redis
@@ -51,12 +50,12 @@ function saleExecute(message) {
       .hgetBuffer(saleKey, 'owner')
       .hmset(saleKey, mapValues(updateData, JSONStringify))
       .exec()
-      .spread(owner => ({
+      .spread(recordedOwner => ({
         sale,
-        username: JSON.parse(owner[1]),
+        username: recordedOwner[1] && JSON.parse(recordedOwner[1]) || owner,
       }));
 
-    const updateCommon = saveCommon.call(this, commonData);
+    const updateCommon = Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
 
     return Promise.join(updateTransaction, updateCommon).get(0);
   }

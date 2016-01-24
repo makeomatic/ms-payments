@@ -7,15 +7,9 @@ const JSONStringify = JSON.stringify.bind(JSON);
 const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment }); // eslint-disable-line
 const salelist = require('./list');
 const moment = require('moment');
-const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 const TRANSACTIONS_LIMIT = 20;
-const { parseSale, saveCommon } = require('../../utils/transactions');
-
-function getOwner(sale) {
-  const result = FIND_OWNER_REGEXP.exec(sale.transactions[0].description);
-  return result && result[1] || sale.payer_info && sale.payer_info.email || null;
-}
+const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
 
 function transactionSync(message = {}) {
   const { _config, redis } = this;
