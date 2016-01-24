@@ -19,6 +19,7 @@ const { PLANS_DATA } = require('../../constants.js');
 
 function agreementBill(id) {
   const { _config, redis, amqp } = this;
+  const { users: { prefix, postfix } } = _config;
   const start = moment().subtract(1, 'day').format('YYYY-MM-DD');
   const end = moment().format('YYYY-MM-DD');
   const promise = Promise.bind(this);
@@ -43,13 +44,11 @@ function agreementBill(id) {
     return redis
       .hmget(planKey, PLAN_KEYS)
       .then(planParser)
-      .then(({ plan, subs }) => {
-        return {
-          agreement,
-          plan,
-          subscriptions: subs,
-        };
-      });
+      .then(({ plan, subs }) => ({
+        agreement,
+        plan,
+        subscriptions: subs,
+      }));
   }
 
   function getTransactions(data) {
@@ -57,10 +56,9 @@ function agreementBill(id) {
       return Promise.resolve(data);
     }
 
-    return sync({ id, start, end }).then(transactions => {
-      // TODO: maybe assign is enough?
-      return merge(data, { transactions });
-    });
+    return sync({ id, start, end }).then(transactions => (
+      merge(data, { transactions })
+    ));
   }
 
   function checkData(data) {
@@ -107,7 +105,7 @@ function agreementBill(id) {
   }
 
   function saveToRedis(data) {
-    const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
+    const path = `${prefix}.${postfix.updateMetadata}`;
     const planFreq = data.agreement.plan.payment_definitions[0].frequency.toLowerCase();
     const sub = find(data.subs, ['name', planFreq]);
     const updateRequest = {

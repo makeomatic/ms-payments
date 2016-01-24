@@ -56,18 +56,14 @@ function transactionSync(message = {}) {
     const pipeline = redis.pipeline();
     const updates = [];
 
-    function convertDate(strDate) {
-      return moment(strDate).valueOf();
-    }
-
     forEach(data.payments, sale => {
       const saleKey = key(SALES_DATA_PREFIX, sale.id);
       const owner = getOwner(sale);
       const saveData = {
         sale,
         owner,
-        create_time: convertDate(sale.create_time),
-        update_time: convertDate(sale.update_time),
+        create_time: new Date(sale.create_time).getTime(),
+        update_time: new Date(sale.update_time).getTime(),
       };
 
       pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));

@@ -114,4 +114,5 @@ module.exports = exports = {
   saveCommon,
   parseSale,
   parseAgreement,
+  remapState,
 };
