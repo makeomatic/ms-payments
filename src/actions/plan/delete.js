@@ -1,18 +1,19 @@
 const state = require('./state.js');
 const key = require('../../redisKey.js');
 const Promise = require('bluebird');
+const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
 
 function deleteFromRedis(id, redis) {
   // and delete plan from redis
-  const planKey = key('plans-data', id);
+  const planKey = key(PLANS_DATA, id);
   const pipeline = redis.pipeline();
 
-  return redis.hget(planKey, 'alias').then(function(alias) {
+  return redis.hget(planKey, 'alias').then(alias => {
     const aliasedId = alias && JSON.parse(alias) || id;
 
     pipeline.del(planKey);
-    pipeline.srem('plans-index', aliasedId);
-    pipeline.smembers('plans-index');
+    pipeline.srem(PLANS_INDEX, aliasedId);
+    pipeline.smembers(PLANS_INDEX);
 
     return pipeline.exec();
   });
@@ -24,10 +25,8 @@ function actualDelete(id) {
     return deleteFromRedis(id, redis);
   }
   return state
-    .call(this, {id, state: 'deleted'})
-    .then(function() {
-      return deleteFromRedis(id, redis);
-    });
+    .call(this, { id, state: 'deleted' })
+    .then(() => deleteFromRedis(id, redis));
 }
 
 function planDelete(id) {

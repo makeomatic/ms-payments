@@ -7,6 +7,7 @@ const omit = require('lodash/omit');
 const map = require('lodash/map');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
+const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
 
 function planUpdate(message) {
   const { _config, redis } = this;
@@ -36,7 +37,7 @@ function planUpdate(message) {
   }
 
   function updateRedis() {
-    const planKey = key('plans-data', id);
+    const planKey = key(PLANS_DATA, id);
     const pipeline = redis.pipeline();
 
     const data = {
@@ -52,7 +53,7 @@ function planUpdate(message) {
     }
 
     pipeline.hmset(planKey, mapValues(data, JSONStringify));
-    pipeline.sadd('plans-index', id);
+    pipeline.sadd(PLANS_INDEX, id);
 
     return pipeline.exec().return(plan);
   }

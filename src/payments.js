@@ -103,9 +103,8 @@ class Payments extends MService {
   initPlans() {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
-    return Promise.map(defaultPlans, plan => { // eslint-disable-line arrow-body-style
-      return createPlan
-        .call(this, plan)
+    return Promise.map(defaultPlans, plan => (
+      createPlan.call(this, plan)
         .then(newPlan => {
           if (newPlan.id === 'free') {
             return newPlan;
@@ -113,8 +112,8 @@ class Payments extends MService {
 
           return statePlan.call(this, { id: newPlan.id, state: 'active' }).return(newPlan);
         })
-        .reflect();
-    })
+        .reflect()
+    ))
     .bind(this)
     .map(function iterateOverPlans(plan) {
       if (plan.isFulfilled()) {

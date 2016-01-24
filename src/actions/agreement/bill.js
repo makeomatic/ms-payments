@@ -15,6 +15,8 @@ const findIndex = require('lodash/findIndex');
 const find = require('lodash/find');
 const merge = require('lodash/merge');
 
+const { PLANS_DATA } = require('../../constants.js');
+
 function agreementBill(id) {
   const { _config, redis, amqp } = this;
   const start = moment().subtract(1, 'day').format('YYYY-MM-DD');
@@ -36,7 +38,7 @@ function agreementBill(id) {
   }
 
   function getPlan(agreement) {
-    const planKey = key('plans-data', agreement.plan.id);
+    const planKey = key(PLANS_DATA, agreement.plan.id);
 
     return redis
       .hmget(planKey, PLAN_KEYS)
