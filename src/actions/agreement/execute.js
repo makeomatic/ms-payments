@@ -9,6 +9,7 @@ const find = require('lodash/find');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
 
+const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
 
 function agreementExecute(message) {
@@ -67,8 +68,8 @@ function agreementExecute(message) {
   function updateMetadata(data) {
     const { subscription, agreement, planId, owner } = data;
 
-    const period = subscription.definition.frequency.toLowerCase();
-    const nextCycle = moment().add(1, period);
+    // const period = subscription.definition.frequency.toLowerCase();
+    // const nextCycle = moment().add(1, period);
 
     const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
 
@@ -77,7 +78,7 @@ function agreementExecute(message) {
       audience: _config.users.audience,
       metadata: {
         $set: {
-          nextCycle: nextCycle.valueOf(),
+          nextCycle: Date.now(),
           agreement: agreement.id,
           plan: planId,
           modelPrice: subscription.price,
@@ -110,7 +111,13 @@ function agreementExecute(message) {
     pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
     pipeline.sadd('agreements-index', agreement.id);
 
-    return pipeline.exec().return(agreement);
+    return pipeline.exec().return({ agreement, owner });
+  }
+
+  function syncTransaction({ agreement, owner }) {
+    return pullTransactionsData
+      .call(this, { id: agreement.id, owner })
+      .return(agreement);
   }
 
   function verifyToken() {
@@ -138,7 +145,8 @@ function agreementExecute(message) {
     .then(checkAndDeleteAgreement)
     .then(updateMetadata)
     .then(updateRedis)
-    .tap(cleanup);
+    .tap(cleanup)
+    .then(syncTransaction);
 }
 
 module.exports = agreementExecute;

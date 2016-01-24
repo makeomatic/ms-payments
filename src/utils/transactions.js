@@ -61,6 +61,14 @@ function formatItemList({ items }) {
   )).join('\n');
 }
 
+function prepareDescription(amount, owner) {
+  if (!amount) {
+    return `Signed agreement with ${owner}`;
+  }
+
+  return `Recurring payment of ${amount.value} USD for ${owner}`;
+}
+
 // FIXME: retarded paypal bug, hopefully it is fixed in the future
 function remapState(state) {
   return state === 'approved_symphony' ? 'approved' : state;
@@ -90,16 +98,16 @@ function parseSale(sale, owner) {
   });
 }
 
-function parseAgreement(transaction, owner) {
+function parseAgreementTransaction(transaction, owner) {
   return Promise.try(() => ({
     id: transaction.transaction_id,
     type: TRANSACTION_TYPE_RECURRING,
     owner,
-    payer: transaction.payer_email,
+    payer: transaction.payer_email || undefined,
     date: new Date(transaction.time_stamp).getTime(),
-    amount: transaction.amount.value,
-    description: `Recurring payment of ${transaction.amount.value} USD for [${owner}]`,
-    status: remapState(transaction.state),
+    amount: transaction.amount && transaction.amount.value || '0.00',
+    description: prepareDescription(transaction.amount, owner),
+    status: transaction.status,
   }));
 }
 
@@ -113,6 +121,6 @@ module.exports = exports = {
   getOwner,
   saveCommon,
   parseSale,
-  parseAgreement,
+  parseAgreementTransaction,
   remapState,
 };

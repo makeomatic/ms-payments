@@ -7,6 +7,7 @@ const merge = require('lodash/merge');
 const createPlan = require('./actions/plan/create');
 const statePlan = require('./actions/plan/state');
 const syncSaleTransactions = require('./actions/sale/sync.js');
+const syncAgreements = require('./actions/agreement/sync.js');
 
 /**
  * Class representing payments handling
@@ -140,6 +141,14 @@ class Payments extends MService {
       })
       .catch(err => {
         this.log.error('failed to sync sale transactions', err.stack);
+      });
+
+    syncAgreements.call(this, {})
+      .then(() => {
+        this.log.info('completed sync of agreements');
+      })
+      .catch(err => {
+        this.log.error('failed to sync recurring transactions', err.stack);
       });
 
     return null;

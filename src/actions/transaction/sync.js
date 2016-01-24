@@ -4,8 +4,9 @@ const key = require('../../redisKey.js');
 const forEach = require('lodash/forEach');
 const mapValues = require('lodash/mapValues');
 const JSONStringify = JSON.stringify.bind(JSON);
-const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement }); // eslint-disable-line
-const { parseAgreement, saveCommon } = require('../../utils/transactions');
+const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement });
+const getAgreement = Promise.promisify(paypal.billingAgreement.get, { context: paypal.billingAgreement });
+const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
 const { NotFoundError } = require('common-errors');
 const { AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
 
@@ -18,11 +19,18 @@ function transactionSync(message) {
 
   // perform search of transactions
   function sendRequest() {
-    return searchTransactions(message.id, message.start || '', message.end || '', paypalConfig);
+    return Promise.props({
+      agreement: getAgreement(agreementId, paypalConfig),
+      transactions: searchTransactions(agreementId, message.start || '', message.end || '', paypalConfig).get('agreement_transaction_list'),
+    });
   }
 
   // find owner of transaction by asking users.list
   function findOwner() {
+    if (message.owner) {
+      return message.owner;
+    }
+
     const getRequest = {
       audience,
       offset: 0,
@@ -47,18 +55,18 @@ function transactionSync(message) {
   }
 
   // insert data about transaction into common list of sales and
-  function updateCommon(agreement, owner) {
+  function updateCommon(transaction, owner) {
     return Promise
-      .bind(this, parseAgreement(agreement, owner))
+      .bind(this, parseAgreementTransaction(transaction, owner))
       .then(saveCommon)
       .catch(err => {
         log.error('failed to insert common transaction data', err);
       })
-      .return(agreement);
+      .return(transaction);
   }
 
   // save transaction's data to redis
-  function saveToRedis(owner, transactions) {
+  function saveToRedis(owner, { agreement, transactions }) {
     const pipeline = redis.pipeline();
     const updates = [];
 
@@ -68,12 +76,11 @@ function transactionSync(message) {
       const data = {
         transaction,
         owner,
-        agreement: message.id,
+        agreement: agreementId,
         status: transaction.status,
         transaction_type: transaction.transaction_type,
-        payer_email: transaction.payer_email,
-        time_stamp: transaction.time_stamp,
-        time_zone: transaction.time_zone,
+        payer_email: transaction.payer_email || undefined,
+        time_stamp: new Date(transaction.time_stamp).getTime(),
       };
 
       pipeline.hmset(transactionKey, mapValues(data, JSONStringify));
@@ -85,15 +92,13 @@ function transactionSync(message) {
     // gather pipeline transaction
     updates.push(pipeline.exec());
 
-    return Promise.all(updates).return(transactions);
+    return Promise.all(updates).return({ agreement, transactions });
   }
 
-  return Promise.join(
-    findOwner(),
-    sendRequest()
-  )
-  .bind(this)
-  .spread(saveToRedis);
+  return Promise
+    .join(findOwner(), sendRequest())
+    .bind(this)
+    .spread(saveToRedis);
 }
 
 module.exports = transactionSync;
