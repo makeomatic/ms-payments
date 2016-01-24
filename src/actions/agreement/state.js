@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
+const syncTransactions = require('../transaction/sync.js');
 const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   ops[op] = Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
   return ops;
@@ -9,14 +10,14 @@ const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
 
 function agreementState(message) {
   const { _config, redis, log, amqp } = this;
+  const { users: { prefix, postfix, audience } } = _config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
 
   const promise = Promise.bind(this);
 
   function getId() {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const audience = _config.users.audience;
+    const path = `${prefix}.${postfix.getMetadata}`;
     const getRequest = {
       username: owner,
       audience,
@@ -32,11 +33,13 @@ function agreementState(message) {
     if (id === 'free') {
       throw new Errors.NotPermittedError('User has free plan/agreement');
     }
-    return operations[state].call(this, id, { note }, _config.paypal)
+
+    return operations[state]
+      .call(this, id, { note }, _config.paypal)
       .catch(err => {
-        log.error('paypal err:', err);
-        throw err;
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       })
+      .tap(() => syncTransactions.call(this, { id, owner }))
       .return(id);
   }
 
@@ -45,15 +48,17 @@ function agreementState(message) {
 
     if (state === 'cancel') {
       // delete agreement and set user to 'free' agreement
-      return redis.del(agreementKey).then(function() {
-        const path = _config.users.prefix + '.' + _config.users.postfix.updateMetadata;
+      return redis.del(agreementKey).then(() => {
+        const path = `${prefix}.${postfix.updateMetadata}`;
 
         const updateRequest = {
           username: owner,
-          audience: _config.users.audience,
+          audience,
           metadata: {
             $set: {
               agreement: 'free',
+              subscriptionPrice: '0.00',
+              subscriptionInterval: 'month',
             },
           },
         };

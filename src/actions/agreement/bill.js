@@ -94,7 +94,7 @@ function agreementBill(id) {
 
   function billPaidCycle(data) {
     // agreement nextCycle date
-    const nextCycle = moment(data.details.agreement.next_billing_date);
+    const nextCycle = moment(data.details.agreement.agreement_details.next_billing_date);
     const { transactions } = data.details;
 
     // determine how many cycles and next billing date

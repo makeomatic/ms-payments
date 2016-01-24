@@ -1,4 +1,5 @@
 const Promise = require('bluebird');
+const Errors = require('common-errors');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const forEach = require('lodash/forEach');
@@ -22,6 +23,9 @@ function transactionSync(message) {
     return Promise.props({
       agreement: getAgreement(agreementId, paypalConfig),
       transactions: searchTransactions(agreementId, message.start || '', message.end || '', paypalConfig).get('agreement_transaction_list'),
+    })
+    .catch(err => {
+      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
     });
   }
 

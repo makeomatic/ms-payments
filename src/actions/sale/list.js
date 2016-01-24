@@ -6,7 +6,7 @@ const key = require('../../redisKey.js');
 function saleList(opts) {
   const { redis } = this;
   const { filter } = opts;
-  const criteria = opts.criteria || 'startedAt';
+  const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;

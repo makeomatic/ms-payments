@@ -7,19 +7,20 @@ const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON);
 
 function forUser(message) {
   const { _config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = _config;
   const { user } = message;
 
-  const promise = Promise.bind(this);
-
   function getId() {
-    const path = _config.users.prefix + '.' + _config.users.postfix.getMetadata;
-    const audience = _config.users.audience;
+    const path = `${prefix}.${postfix.getMetadata}`;
     const getRequest = {
       username: user,
       audience,
     };
 
-    return amqp.publishAndWait(path, getRequest, { timeout: 5000 }).get(audience).get('agreement');
+    return amqp
+      .publishAndWait(path, getRequest, { timeout: 5000 })
+      .get(audience)
+      .get('agreement');
   }
 
   function getAgreement(id) {
@@ -31,7 +32,7 @@ function forUser(message) {
 
     return redis
       .exists(agreementKey)
-      .then((exists) => {
+      .then(exists => {
         if (!exists) {
           throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
         }
@@ -41,7 +42,7 @@ function forUser(message) {
       .then(responseParser);
   }
 
-  return promise.then(getId).then(getAgreement);
+  return Promise.bind(this).then(getId).then(getAgreement);
 }
 
 module.exports = forUser;
