@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
+const moment = require('moment');
 const syncTransactions = require('../transaction/sync.js');
 const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   ops[op] = Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
@@ -9,7 +10,7 @@ const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
 }, {});
 
 function agreementState(message) {
-  const { _config, redis, log, amqp } = this;
+  const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
@@ -39,7 +40,12 @@ function agreementState(message) {
       .catch(err => {
         throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       })
-      .tap(() => syncTransactions.call(this, { id, owner }))
+      .tap(() => syncTransactions.call(this, {
+        id,
+        owner,
+        start: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+        end: moment().add(1, 'day').format('YYYY-MM-DD'),
+      }))
       .return(id);
   }
 

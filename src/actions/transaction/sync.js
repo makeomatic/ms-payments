@@ -9,7 +9,7 @@ const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTrans
 const getAgreement = Promise.promisify(paypal.billingAgreement.get, { context: paypal.billingAgreement });
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
 const { NotFoundError } = require('common-errors');
-const { AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
+const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
 
 function transactionSync(message) {
   const { _config, redis, amqp, log } = this;
@@ -73,6 +73,10 @@ function transactionSync(message) {
   function saveToRedis(owner, { agreement, transactions }) {
     const pipeline = redis.pipeline();
     const updates = [];
+    const agreementKey = key(AGREEMENT_DATA, agreement.id);
+
+    // update current agreement details
+    pipeline.hmset(agreementKey, mapValues({ agreement, state: agreement.state }, JSONStringify));
 
     // gather updates
     forEach(transactions, transaction => {

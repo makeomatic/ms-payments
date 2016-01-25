@@ -14,26 +14,25 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 const find = require('lodash/find');
 const assign = require('lodash/assign');
 
-const { PLANS_DATA } = require('../../constants.js');
+const { PLANS_DATA, AGREEMENT_DATA } = require('../../constants.js');
 
 // check agreement bill
 function agreementBill(id) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const start = moment().subtract(1, 'day').format('YYYY-MM-DD');
-  const end = moment().format('YYYY-MM-DD');
-  const promise = Promise.bind(this);
+  const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
   // pull agreement data
   function getAgreement() {
-    const agreementKey = key('agreements-data', id);
+    const agreementKey = key(AGREEMENT_DATA, id);
 
     return redis
       .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
       .then(data => {
         const { agreement, plan, owner, state } = agreementParser(data);
-        if (state.toLowerCase() !== 'active') {
-          throw new Errors.NotPermitted('Operation not permitted on non-active agreements.');
+        if (state.toLowerCase() === 'cancelled') {
+          throw new Errors.NotPermitted('Operation not permitted on cancelled agreements.');
         }
 
         agreement.owner = owner;
@@ -78,11 +77,12 @@ function agreementBill(id) {
         const nextCycle = moment(metadata.nextCycle);
         const current = moment();
 
-        data.shouldUpdate = nextCycle.isBefore(current);
+        // 0 or 1
+        data.cyclesBilled = Number(nextCycle.isBefore(current));
         data.nextCycle = nextCycle;
 
         // if we missed many cycles
-        if (data.shouldUpdate) {
+        if (data.cyclesBilled) {
           while (nextCycle.isBefore(current)) {
             nextCycle.add(1, 'month');
           }
@@ -99,7 +99,7 @@ function agreementBill(id) {
 
     // determine how many cycles and next billing date
     data.nextCycle = nextCycle;
-    data.shouldUpdate = transactions.reduce((acc, it) => {
+    data.cyclesBilled = transactions.reduce((acc, it) => {
       if (it.status === 'Completed') {
         acc += 1; // eslint-disable-line no-param-reassign
       }
@@ -126,14 +126,10 @@ function agreementBill(id) {
   }
 
   function saveToRedis(data) {
-    if (!data.shouldUpdate) {
-      return data;
-    }
-
     const path = `${prefix}.${postfix.updateMetadata}`;
     const planFreq = data.agreement.plan.payment_definitions[0].frequency.toLowerCase();
     const sub = find(data.subs, { name: planFreq });
-    const models = sub.models * data.shouldUpdate;
+    const models = sub.models * data.cyclesBilled;
 
     const updateRequest = {
       username: data.agreement.owner,
@@ -151,7 +147,8 @@ function agreementBill(id) {
     return amqp.publishAndWait(path, updateRequest, { timeout: 5000 }).return(data);
   }
 
-  return promise
+  return Promise
+    .bind(this)
     .then(getAgreement)
     .then(getPlan)
     .then(getTransactions)

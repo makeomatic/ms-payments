@@ -61,9 +61,9 @@ function formatItemList({ items }) {
   )).join('\n');
 }
 
-function prepareDescription(amount, owner) {
+function prepareDescription(amount, owner, state) {
   if (!amount) {
-    return `Signed agreement with ${owner}`;
+    return `${state} agreement with ${owner}`;
   }
 
   return `Recurring payment of ${amount.value} USD for ${owner}`;
@@ -106,7 +106,7 @@ function parseAgreementTransaction(transaction, owner) {
     payer: transaction.payer_email || undefined,
     date: new Date(transaction.time_stamp).getTime(),
     amount: transaction.amount && transaction.amount.value || '0.00',
-    description: prepareDescription(transaction.amount, owner),
+    description: prepareDescription(transaction.amount, owner, transaction.status),
     status: transaction.status,
   }));
 }

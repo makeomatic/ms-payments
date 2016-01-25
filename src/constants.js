@@ -6,6 +6,8 @@ module.exports = {
   SALES_DATA_PREFIX: 'sales-data',
   TRANSACTIONS_INDEX: 'all-transactions',
   TRANSACTIONS_COMMON_DATA: 'all-transactions:meta',
+  AGREEMENT_INDEX: 'agreements-index',
+  AGREEMENT_DATA: 'agreements-data',
   AGREEMENT_TRANSACTIONS_INDEX: 'transactions',
   AGREEMENT_TRANSACTIONS_DATA: 'transactions:meta',
   TRANSACTION_TYPE_RECURRING: 0,

@@ -1,34 +1,60 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const paypal = require('paypal-rest-sdk');
+const moment = require('moment');
 const url = require('url');
 const key = require('../../redisKey.js');
 const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
+const mapValues = require('lodash/mapValues');
+const JSONParse = JSON.parse.bind(JSON);
+const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants.js');
 
 function agreementCreate(message) {
   const { _config, redis } = this;
-  const promise = Promise.bind(this);
+  const planId = message.agreement.plan.id;
 
-  function sendRequest() {
-    return billingAgreementCreate(message.agreement, _config.paypal)
-      .then(newAgreement => {
-        const approval = find(newAgreement.links, ['rel', 'approval_url']);
-        if (approval === null) {
-          throw new Errors.NotSupportedError('Unexpected PayPal response!');
+  function fetchPlan() {
+    return redis
+      .hgetallBuffer(key(PLANS_DATA, planId))
+      .then(data => {
+        if (!data) {
+          throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
         }
 
-        const token = url.parse(approval.href, true).query.token;
-        return {
-          token,
-          url: approval.href,
-          agreement: newAgreement,
-        };
+        return mapValues(data, JSONParse);
+      })
+      .tap(data => {
+        if (data.state !== 'active') {
+          throw new Errors.HttpStatusError(412, 'plan ${planId} is inactive');
+        }
       });
   }
 
+  function sendRequest(plan) {
+    return billingAgreementCreate({
+      ...message.agreement,
+      start_date: moment().add(1, plan.subs[0].name).format(PAYPAL_DATE_FORMAT),
+      override_merchant_preferences: {
+        setup_fee: plan.subs[0].definition.amount,
+      },
+    }, _config.paypal)
+    .then(newAgreement => {
+      const approval = find(newAgreement.links, { rel: 'approval_url' });
+      if (approval === null) {
+        throw new Errors.NotSupportedError('Unexpected PayPal response!');
+      }
+
+      const token = url.parse(approval.href, true).query.token;
+      return {
+        token,
+        url: approval.href,
+        agreement: newAgreement,
+      };
+    });
+  }
+
   function setToken(response) {
-    const planId = response.agreement.plan.id;
     const owner = message.owner;
     const tokenKey = key('subscription-token', response.token);
 
@@ -40,29 +66,9 @@ function agreementCreate(message) {
       .return(response);
   }
 
-  /* return back after PayPal fixes it's api
-  function saveToRedis(response) {
-    const agreement = response.agreement;
-    const agreementKey = key('agreements-data', agreement.id);
-    const pipeline = redis.pipeline();
-
-    const data = {
-      agreement,
-      state: agreement.state,
-      name: agreement.name,
-      token: agreement.token,
-      plan: agreement.plan.id,
-      owner: message.owner,
-    };
-
-    pipeline.hmset(agreementKey, ld.mapValues(data, JSON.stringify, JSON));
-    pipeline.sadd('agreements-index', agreement.id);
-
-    return pipeline.exec().return(response);
-  }
-  */
-
-  return promise
+  return Promise
+    .bind(this)
+    .then(fetchPlan)
     .then(sendRequest)
     .then(setToken)
     .catch(err => {

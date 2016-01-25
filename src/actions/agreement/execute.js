@@ -11,6 +11,7 @@ const JSONStringify = JSON.stringify.bind(JSON);
 
 const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
+const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants.js');
 
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
@@ -68,7 +69,7 @@ function agreementExecute(message) {
         id: agreement.id,
         owner,
         start: moment().subtract(1, 'day').format('YYYY-MM-DD'),
-        end: moment().add(1, 'day').format('YYYY-MM-DD'),
+        end: moment().add(1, 'day'.format('YYYY-MM-DD')),
       })
       .return(agreement);
   }
@@ -99,12 +100,15 @@ function agreementExecute(message) {
       audience,
       metadata: {
         $set: {
-          nextCycle: Date.now(),
+          nextCycle: moment(agreement.start_date).valueOf(),
           agreement: agreement.id,
           plan: planId,
           modelPrice: subscription.price,
           subscriptionPrice: agreement.plan.payment_definitions[0].amount.value,
           subscriptionInterval: agreement.plan.payment_definitions[0].frequency.toLowerCase(),
+        },
+        $incr: {
+          models: subscription.models,
         },
       },
     };
@@ -115,7 +119,7 @@ function agreementExecute(message) {
   }
 
   function updateRedis({ agreement, owner, planId }) {
-    const agreementKey = key('agreements-data', agreement.id);
+    const agreementKey = key(AGREEMENT_DATA, agreement.id);
     const pipeline = redis.pipeline();
 
     const data = {
@@ -127,7 +131,7 @@ function agreementExecute(message) {
     };
 
     pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
-    pipeline.sadd('agreements-index', agreement.id);
+    pipeline.sadd(AGREEMENT_INDEX, agreement.id);
 
     return pipeline.exec().return({ agreement, owner });
   }
