@@ -1,5 +1,7 @@
-const { processResult, mapResult } = require('../../listUtils');
 const fsort = require('redis-filtered-sort');
+const { processResult, mapResult } = require('../../listUtils');
+const { AGREEMENT_DATA, AGREEMENT_INDEX } = require('../../constants.js');
+const key = require('../../redisKey.js');
 
 function planList(opts) {
   const { redis } = this;
@@ -11,8 +13,8 @@ function planList(opts) {
   const limit = opts.limit || 10;
 
   return redis
-    .fsort('agreements-index', 'agreements-data:*', criteria, order, strFilter, offset, limit)
-    .then(processResult('agreements-data', redis))
+    .fsort(AGREEMENT_INDEX, key(AGREEMENT_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .then(processResult(AGREEMENT_DATA, redis))
     .spread(mapResult(offset, limit));
 }
 
