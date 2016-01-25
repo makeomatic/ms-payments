@@ -29,7 +29,7 @@ describe('Agreements suite', function AgreementSuite() {
   let planId;
   let payments;
 
-  this.timeout(duration * 2);
+  this.timeout(duration * 4);
 
   before('delay for ms-users', () => Promise.delay(2000));
 
