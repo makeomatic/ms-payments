@@ -1,8 +1,7 @@
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
 const { AGREEMENT_DATA } = require('../../constants.js');
-const JSONParse = JSON.parse.bind(JSON);
-const mapValues = require('lodash/mapValues');
+const { deserialize } = require('../../utils/redis.js');
 
 module.exports = function getAgreement(message) {
   const { redis } = this;
@@ -25,9 +24,9 @@ module.exports = function getAgreement(message) {
         throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
       }
 
-      const output = mapValues(data, JSONParse);
+      const output = deserialize(data);
       if (owner && output.owner !== owner) {
-        throw new Errors.HttpStatusError(403, 'no access to ${id}');
+        throw new Errors.HttpStatusError(403, `no access to ${id}`);
       }
 
       return output;

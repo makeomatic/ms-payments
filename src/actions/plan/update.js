@@ -5,9 +5,8 @@ const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, { context:
 
 const omit = require('lodash/omit');
 const map = require('lodash/map');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
+const { serialize } = require('../../utils/redis.js');
 
 function planUpdate(message) {
   const { _config, redis } = this;
@@ -52,7 +51,7 @@ function planUpdate(message) {
       data.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, mapValues(data, JSONStringify));
+    pipeline.hmset(planKey, serialize(data));
     pipeline.sadd(PLANS_INDEX, id);
 
     return pipeline.exec().return(plan);

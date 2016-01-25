@@ -6,12 +6,11 @@ const key = require('../../redisKey');
 const getPlan = require('../plan/get');
 const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 
 const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
 const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants.js');
+const { serialize } = require('../../utils/redis.js');
 
 function agreementExecute(message) {
   const { _config, redis, amqp } = this;
@@ -131,7 +130,7 @@ function agreementExecute(message) {
       owner,
     };
 
-    pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
+    pipeline.hmset(agreementKey, serialize(data));
     pipeline.sadd(AGREEMENT_INDEX, agreement.id);
 
     return pipeline.exec().return({ agreement, owner, subscriptionInterval });

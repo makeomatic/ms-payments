@@ -1,9 +1,9 @@
-const key = require('../redisKey.js');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 const Promise = require('bluebird');
-const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const getPath = require('lodash/get');
+
+const { serialize } = require('./redis.js');
+const key = require('../redisKey.js');
+const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const {
   TRANSACTION_TYPE_RECURRING,
   TRANSACTION_TYPE_SALE,
@@ -45,7 +45,7 @@ function saveCommon(data) {
 
   pipeline.sadd(TRANSACTIONS_INDEX, id);
   pipeline.sadd(transactionTypeIndex, id);
-  pipeline.hmset(dataKey, mapValues(data, JSONStringify));
+  pipeline.hmset(dataKey, serialize(data));
 
   if (userIndex) {
     pipeline.sadd(userIndex, id);

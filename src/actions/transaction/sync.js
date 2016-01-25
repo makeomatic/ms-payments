@@ -1,14 +1,13 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const paypal = require('paypal-rest-sdk');
-const key = require('../../redisKey.js');
-const forEach = require('lodash/forEach');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement });
 const getAgreement = Promise.promisify(paypal.billingAgreement.get, { context: paypal.billingAgreement });
+const forEach = require('lodash/forEach');
+
+const key = require('../../redisKey.js');
+const { serialize } = require('../../utils/redis.js');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
-const { NotFoundError } = require('common-errors');
 const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
 
 function transactionSync(message) {
@@ -54,7 +53,7 @@ function transactionSync(message) {
           return users[0].id;
         }
 
-        throw new NotFoundError('Couldn\'t find user for agreement');
+        throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${agreementId}`);
       });
   }
 
@@ -76,7 +75,7 @@ function transactionSync(message) {
     const agreementKey = key(AGREEMENT_DATA, agreement.id);
 
     // update current agreement details
-    pipeline.hmset(agreementKey, mapValues({ agreement, state: agreement.state }, JSONStringify));
+    pipeline.hmset(agreementKey, serialize({ agreement, state: agreement.state }));
 
     // gather updates
     forEach(transactions, transaction => {
@@ -91,7 +90,7 @@ function transactionSync(message) {
         time_stamp: new Date(transaction.time_stamp).getTime(),
       };
 
-      pipeline.hmset(transactionKey, mapValues(data, JSONStringify));
+      pipeline.hmset(transactionKey, serialize(data));
       pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
 
       updates.push(updateCommon.call(this, transaction, owner));

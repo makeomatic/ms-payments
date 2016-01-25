@@ -1,15 +1,16 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const key = require('../../redisKey.js');
-const forEach = require('lodash/forEach');
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
 const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment }); // eslint-disable-line
-const salelist = require('./list');
 const moment = require('moment');
+const forEach = require('lodash/forEach');
+
+const salelist = require('./list');
+const key = require('../../redisKey.js');
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
-const TRANSACTIONS_LIMIT = 20;
 const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
+const { serialize } = require('../../utils/redis.js');
+
+const TRANSACTIONS_LIMIT = 20;
 
 function transactionSync(message = {}) {
   const { _config, redis } = this;
@@ -66,7 +67,7 @@ function transactionSync(message = {}) {
         update_time: new Date(sale.update_time).getTime(),
       };
 
-      pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
+      pipeline.hmset(saleKey, serialize(saveData));
       pipeline.sadd(SALES_ID_INDEX, sale.id);
 
       updates.push(updateCommon.call(this, sale, owner));

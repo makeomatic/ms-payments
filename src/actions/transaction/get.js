@@ -1,7 +1,7 @@
 const key = require('../../redisKey.js');
-const JSONParse = JSON.parse.bind(JSON);
 const Errors = require('common-errors');
-const mapValues = require('lodash/mapValues');
+
+const { deserialize } = require('../../utils/redis.js');
 const { TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
 
 module.exports = function saleGet(opts) {
@@ -16,7 +16,7 @@ module.exports = function saleGet(opts) {
         throw new Errors.HttpStatusError(404, `transaction id ${id} missing`);
       }
 
-      const output = mapValues(data, JSONParse);
+      const output = deserialize(data);
       if (owner && owner !== output.owner) {
         throw new Errors.HttpStatusError(403, `no access to transaction ${id}`);
       }

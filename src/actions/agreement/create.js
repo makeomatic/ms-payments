@@ -6,9 +6,8 @@ const url = require('url');
 const key = require('../../redisKey.js');
 const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
-const JSONParse = JSON.parse.bind(JSON);
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants.js');
+const { deserialize } = require('../../utils/redis.js');
 
 function agreementCreate(message) {
   const { _config, redis } = this;
@@ -22,7 +21,7 @@ function agreementCreate(message) {
           throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
         }
 
-        return mapValues(data, JSONParse);
+        return deserialize(data);
       })
       .tap(data => {
         if (data.state !== 'active') {

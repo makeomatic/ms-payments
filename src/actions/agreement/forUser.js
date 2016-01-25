@@ -1,8 +1,7 @@
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
 const { AGREEMENT_DATA } = require('../../constants.js');
-const JSONParse = JSON.parse.bind(JSON);
-const mapValues = require('lodash/mapValues');
+const { deserialize } = require('../../utils/redis.js');
 
 function forUser(message) {
   const { _config, redis, amqp } = this;
@@ -35,7 +34,7 @@ function forUser(message) {
           throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
         }
 
-        return mapValues(data, JSONParse);
+        return deserialize(data);
       });
   }
 

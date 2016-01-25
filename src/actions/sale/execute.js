@@ -3,8 +3,8 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
-const mapValues = require('lodash/mapValues');
-const JSONStringify = JSON.stringify.bind(JSON);
+
+const { serialize } = require('../../utils/redis.js');
 const { SALES_DATA_PREFIX } = require('../../constants.js');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
@@ -48,7 +48,7 @@ function saleExecute(message) {
     const updateTransaction = redis
       .pipeline()
       .hgetBuffer(saleKey, 'owner')
-      .hmset(saleKey, mapValues(updateData, JSONStringify))
+      .hmset(saleKey, serialize(updateData))
       .exec()
       .spread(recordedOwner => ({
         sale,

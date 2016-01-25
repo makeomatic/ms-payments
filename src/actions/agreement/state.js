@@ -7,6 +7,7 @@ const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   return ops;
 }, {});
 
+const { serialize } = require('../../utils/redis.js');
 const key = require('../../redisKey.js');
 const { AGREEMENT_DATA } = require('../../constants.js');
 const syncTransactions = require('../transaction/sync.js');
@@ -52,7 +53,7 @@ function agreementState(message) {
 
   function updateRedis(id) {
     const agreementKey = key(AGREEMENT_DATA, id);
-    const promises = [redis.hset(agreementKey, 'state', JSON.stringify(state))];
+    const promises = [redis.hmset(agreementKey, serialize({ state }))];
 
     if (state === 'cancel') {
       // delete agreement and set user to 'free' agreement

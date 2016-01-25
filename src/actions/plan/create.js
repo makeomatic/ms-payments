@@ -6,13 +6,12 @@ const mergeWith = require('lodash/mergeWith');
 const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
 const compact = require('lodash/compact');
 const isArray = Array.isArray;
-const JSONStringify = JSON.stringify.bind(JSON);
 const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line
 const Errors = require('common-errors');
 const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
+const { serialize } = require('../../utils/redis.js');
 
 function merger(a, b, k) {
   if (k === 'id') {
@@ -100,7 +99,7 @@ function createSaveToRedis(redis, message) {
       saveDataFull.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, mapValues(saveDataFull, JSONStringify));
+    pipeline.hmset(planKey, serialize(saveDataFull));
 
     plans.forEach(planData => {
       const saveData = {
@@ -119,7 +118,7 @@ function createSaveToRedis(redis, message) {
         saveData.alias = message.alias;
       }
 
-      pipeline.hmset(key(PLANS_DATA, planData.id), mapValues(saveData, JSONStringify));
+      pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
     });
 
     return pipeline.exec().return(plan);

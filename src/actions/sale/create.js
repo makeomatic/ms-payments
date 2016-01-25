@@ -5,12 +5,11 @@ const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: 
 const key = require('../../redisKey.js');
 const url = require('url');
 const find = require('lodash/find');
-const mapValues = require('lodash/mapValues');
 
+const { serialize } = require('../../utils/redis.js');
 const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 
-const JSONStringify = JSON.stringify.bind(JSON);
 const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
 
 function saleCreate(message) {
@@ -99,7 +98,7 @@ function saleCreate(message) {
       owner: message.owner,
     };
 
-    pipeline.hmset(saleKey, mapValues(saveData, JSONStringify));
+    pipeline.hmset(saleKey, serialize(saveData));
     pipeline.sadd(SALES_ID_INDEX, data.sale.id);
 
     return pipeline.exec().return(data);
