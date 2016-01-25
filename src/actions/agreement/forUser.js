@@ -1,10 +1,8 @@
-const Promise = require('bluebird');
 const key = require('../../redisKey.js');
-const { hmget } = require('../../listUtils.js');
 const Errors = require('common-errors');
-const EXTRACT_FIELDS = ['agreement', 'state', 'plan'];
-const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON);
 const { AGREEMENT_DATA } = require('../../constants.js');
+const JSONParse = JSON.parse.bind(JSON);
+const mapValues = require('lodash/mapValues');
 
 function forUser(message) {
   const { _config, redis, amqp } = this;
@@ -20,8 +18,7 @@ function forUser(message) {
 
     return amqp
       .publishAndWait(path, getRequest, { timeout: 5000 })
-      .get(audience)
-      .get('agreement');
+      .then(metadata => metadata[audience].agreement);
   }
 
   function getAgreement(id) {
@@ -32,18 +29,17 @@ function forUser(message) {
     const agreementKey = key(AGREEMENT_DATA, id);
 
     return redis
-      .exists(agreementKey)
-      .then(exists => {
-        if (!exists) {
+      .hgetall(agreementKey)
+      .then(data => {
+        if (!data) {
           throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
         }
 
-        return redis.hmget(agreementKey, EXTRACT_FIELDS);
-      })
-      .then(responseParser);
+        return mapValues(data, JSONParse);
+      });
   }
 
-  return Promise.bind(this).then(getId).then(getAgreement);
+  return getId().then(getAgreement);
 }
 
 module.exports = forUser;
