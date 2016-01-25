@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const moment = require('moment');
+const find = require('lodash/find');
 const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   ops[op] = Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
   return ops;
@@ -40,7 +41,7 @@ function agreementState(message) {
     return operations[state]
       .call(this, id, { note }, _config.paypal)
       .catch(err => {
-        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+        throw new Errors.HttpStatusError(err.httpStatusCode, `${id}: ${err.response.message}`, err.response.name);
       })
       .tap(() => syncTransactions.call(this, {
         id,

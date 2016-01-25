@@ -38,7 +38,7 @@ module.exports = exports = function mixPlan(username, audience) {
     hidden: false,
   };
 
-  const subscription = ld.find(plan.subs, ['name', 'month']);
+  const subscription = ld.find(plan.subs, { name: 'month' });
   const nextCycle = moment().add(1, 'month').format();
   const update = {
     username,
@@ -50,6 +50,8 @@ module.exports = exports = function mixPlan(username, audience) {
         nextCycle,
         models: subscription.models,
         modelPrice: subscription.price,
+        subscriptionInterval: 'month',
+        subscriptionPrice: '0.00',
       },
     },
   };

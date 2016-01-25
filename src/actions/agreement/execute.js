@@ -75,7 +75,7 @@ function agreementExecute(message) {
 
   function checkAndDeleteAgreement(input) {
     const { data, oldAgreement } = input;
-    if (data.agreement.id !== oldAgreement && oldAgreement !== 'free') {
+    if (data.agreement.id !== oldAgreement && oldAgreement !== 'free' && oldAgreement) {
       // remove old agreement if setting new one
       return setState
         .call(this, {

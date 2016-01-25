@@ -50,6 +50,7 @@ class Payments extends MService {
       },
     },
     defaultPlans: [{
+      id: 'free',
       alias: 'free',
       hidden: false,
       plan: {
