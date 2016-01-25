@@ -5,15 +5,20 @@ const key = require('../../redisKey.js');
 
 function planList(opts) {
   const { redis } = this;
-  const { filter } = opts;
+  const { filter, owner } = opts;
   const criteria = opts.criteria;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;
   const limit = opts.limit || 10;
 
+  let index = AGREEMENT_INDEX;
+  if (owner) {
+    index = key(index, owner);
+  }
+
   return redis
-    .fsort(AGREEMENT_INDEX, key(AGREEMENT_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .fsort(index, key(AGREEMENT_DATA, '*'), criteria, order, strFilter, offset, limit)
     .then(processResult(AGREEMENT_DATA, redis))
     .spread(mapResult(offset, limit));
 }

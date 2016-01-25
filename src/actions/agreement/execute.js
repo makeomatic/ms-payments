@@ -120,6 +120,7 @@ function agreementExecute(message) {
 
   function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
     const agreementKey = key(AGREEMENT_DATA, agreement.id);
+    const userAgreementIndex = key(AGREEMENT_INDEX, owner);
     const pipeline = redis.pipeline();
 
     const data = {
@@ -132,6 +133,7 @@ function agreementExecute(message) {
 
     pipeline.hmset(agreementKey, serialize(data));
     pipeline.sadd(AGREEMENT_INDEX, agreement.id);
+    pipeline.sadd(userAgreementIndex, agreement.id);
 
     return pipeline.exec().return({ agreement, owner, subscriptionInterval });
   }
