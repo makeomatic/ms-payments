@@ -21,6 +21,6 @@ module.exports = function saleGet(opts) {
         throw new Errors.HttpStatusError(403, `no access to transaction ${id}`);
       }
 
-      return data;
+      return output;
     });
 };
