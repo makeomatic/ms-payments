@@ -69,7 +69,7 @@ function agreementExecute(message) {
         id: agreement.id,
         owner,
         start: moment().subtract(1, 'day').format('YYYY-MM-DD'),
-        end: moment().add(1, 'day'.format('YYYY-MM-DD')),
+        end: moment().add(1, 'day').format('YYYY-MM-DD'),
       })
       .return(agreement);
   }
