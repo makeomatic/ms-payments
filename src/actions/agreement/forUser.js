@@ -4,6 +4,7 @@ const { hmget } = require('../../listUtils.js');
 const Errors = require('common-errors');
 const EXTRACT_FIELDS = ['agreement', 'state', 'plan'];
 const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON);
+const { AGREEMENT_DATA } = require('../../constants.js');
 
 function forUser(message) {
   const { _config, redis, amqp } = this;
@@ -28,7 +29,7 @@ function forUser(message) {
       return { id };
     }
 
-    const agreementKey = key('agreements-data', id);
+    const agreementKey = key(AGREEMENT_DATA, id);
 
     return redis
       .exists(agreementKey)
