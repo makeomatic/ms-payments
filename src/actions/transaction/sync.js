@@ -61,7 +61,7 @@ function transactionSync(message) {
   // insert data about transaction into common list of sales and
   function updateCommon(transaction, owner) {
     return Promise
-      .bind(this, parseAgreementTransaction(transaction, owner))
+      .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
       .then(saveCommon)
       .catch(err => {
         log.error('failed to insert common transaction data', err);

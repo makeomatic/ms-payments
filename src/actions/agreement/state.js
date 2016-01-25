@@ -26,11 +26,12 @@ function agreementState(message) {
 
     return amqp
       .publishAndWait(path, getRequest, { timeout: 5000 })
-      .get(audience)
-      .get('agreement');
+      .get(audience);
   }
 
-  function sendRequest(id) {
+  function sendRequest(meta) {
+    const { agreement: id, subscriptionInterval } = meta;
+
     if (id === 'free') {
       throw new Errors.NotPermittedError('User has free plan/agreement');
     }
@@ -43,7 +44,7 @@ function agreementState(message) {
       .tap(() => syncTransactions.call(this, {
         id,
         owner,
-        start: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
         end: moment().add(1, 'day').format('YYYY-MM-DD'),
       }))
       .return(id);

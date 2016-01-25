@@ -98,11 +98,12 @@ function parseSale(sale, owner) {
   });
 }
 
-function parseAgreementTransaction(transaction, owner) {
+function parseAgreementTransaction(transaction, owner, agreementId) {
   return Promise.try(() => ({
     id: transaction.transaction_id,
     type: TRANSACTION_TYPE_RECURRING,
     owner,
+    agreementId,
     payer: transaction.payer_email || undefined,
     date: new Date(transaction.time_stamp).getTime(),
     amount: transaction.amount && transaction.amount.value || '0.00',

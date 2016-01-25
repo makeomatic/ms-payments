@@ -40,8 +40,8 @@ function agreementSync(message) {
 
   // 2. bill users
   const billUser = user => {
-    const agreement = user.metadata[audience].agreement;
-    return bill.call(this, agreement);
+    const meta = user.metadata[audience];
+    return bill.call(this, meta);
   };
 
   return getUsers()

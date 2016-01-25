@@ -56,25 +56,26 @@ function agreementExecute(message) {
     return amqp
       .publishAndWait(path, getRequest, { timeout: 5000 })
       .get(audience)
-      .get('agreement')
-      .then(agreement => ({
+      .then(metadata => ({
         data,
-        oldAgreement: agreement,
+        oldAgreement: metadata.agreement,
+        subscriptionInterval: metadata.subscriptionInterval,
       }));
   }
 
-  function syncTransactions({ agreement, owner }) {
+  function syncTransactions({ agreement, owner, subscriptionInterval }) {
     return pullTransactionsData
       .call(this, {
         id: agreement.id,
         owner,
-        start: moment().subtract(1, 'day').format('YYYY-MM-DD'),
+        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
         end: moment().add(1, 'day').format('YYYY-MM-DD'),
       })
       .return(agreement);
   }
 
-  function checkAndDeleteAgreement({ data, oldAgreement }) {
+  function checkAndDeleteAgreement(input) {
+    const { data, oldAgreement } = input;
     if (data.agreement.id !== oldAgreement && oldAgreement !== 'free') {
       // remove old agreement if setting new one
       return setState
@@ -85,13 +86,13 @@ function agreementExecute(message) {
         .catch({ statusCode: 400 }, err => {
           this.log.warn('oldAgreement was already cancelled', err);
         })
-        .return(data);
+        .return(input);
     }
 
-    return data;
+    return input;
   }
 
-  function updateMetadata(data) {
+  function updateMetadata({ data, subscriptionInterval }) {
     const { subscription, agreement, planId, owner } = data;
     const path = `${prefix}.${postfix.updateMetadata}`;
 
@@ -115,10 +116,10 @@ function agreementExecute(message) {
 
     return amqp
       .publishAndWait(path, updateRequest, { timeout: 5000 })
-      .return({ agreement, owner, planId });
+      .return({ agreement, owner, planId, subscriptionInterval });
   }
 
-  function updateRedis({ agreement, owner, planId }) {
+  function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
     const agreementKey = key(AGREEMENT_DATA, agreement.id);
     const pipeline = redis.pipeline();
 
@@ -133,7 +134,7 @@ function agreementExecute(message) {
     pipeline.hmset(agreementKey, mapValues(data, JSONStringify));
     pipeline.sadd(AGREEMENT_INDEX, agreement.id);
 
-    return pipeline.exec().return({ agreement, owner });
+    return pipeline.exec().return({ agreement, owner, subscriptionInterval });
   }
 
   function verifyToken() {

@@ -1,0 +1,12 @@
+{
+  "id": "agreement.bill",
+  "type": "object",
+  "properties": {
+    "agreement": {
+      "type": "string"
+    },
+    "nextCycle": {
+      "type": "integer"
+    }
+  }
+}

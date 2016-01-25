@@ -17,10 +17,11 @@ const assign = require('lodash/assign');
 const { PLANS_DATA, AGREEMENT_DATA } = require('../../constants.js');
 
 // check agreement bill
-function agreementBill(id) {
+function agreementBill(input) {
+  const { agreement: id, subscriptionInterval } = input;
   const { _config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = _config;
-  const start = moment().subtract(1, 'day').format('YYYY-MM-DD');
+  const { users: { prefix, postfix } } = _config;
+  const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
   // pull agreement data
@@ -67,40 +68,35 @@ function agreementBill(id) {
 
   // bill next free cycle
   function billNextFreeCycle(data) {
-    const path = `${prefix}.${postfix.getMetadata}`;
-    const message = { username: data.agreement.owner, audience };
+    const nextCycle = moment(input.currentCycle);
+    const current = moment();
 
-    return amqp
-      .publishAndWait(path, message, { timeout: 5000 })
-      .get(audience)
-      .then(metadata => {
-        const nextCycle = moment(metadata.nextCycle);
-        const current = moment();
+    // 0 or 1
+    data.cyclesBilled = Number(nextCycle.isBefore(current));
+    data.nextCycle = nextCycle;
 
-        // 0 or 1
-        data.cyclesBilled = Number(nextCycle.isBefore(current));
-        data.nextCycle = nextCycle;
+    // if we missed many cycles
+    if (data.cyclesBilled) {
+      while (nextCycle.isBefore(current)) {
+        nextCycle.add(1, 'month');
+      }
+    }
 
-        // if we missed many cycles
-        if (data.cyclesBilled) {
-          while (nextCycle.isBefore(current)) {
-            nextCycle.add(1, 'month');
-          }
-        }
-
-        return data;
-      });
+    return data;
   }
 
   function billPaidCycle(data) {
     // agreement nextCycle date
     const nextCycle = moment(data.details.agreement.agreement_details.next_billing_date);
+    const currentCycle = moment(input.currentCycle).subtract(1, 'day');
     const { transactions } = data.details;
 
     // determine how many cycles and next billing date
     data.nextCycle = nextCycle;
     data.cyclesBilled = transactions.reduce((acc, it) => {
-      if (it.status === 'Completed') {
+      // TODO: does paypal charge earlier?
+      // we need to filter out setup fee
+      if (it.status.toLowerCase() === 'сompleted' && moment(it.time_stamp).isAfter(currentCycle)) {
         acc += 1; // eslint-disable-line no-param-reassign
       }
 
