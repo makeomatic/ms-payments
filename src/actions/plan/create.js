@@ -121,7 +121,7 @@ function createSaveToRedis(redis, message) {
       pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
     });
 
-    return pipeline.exec().return(plan);
+    return pipeline.exec().return(saveDataFull);
   };
 }
 
