@@ -35,8 +35,8 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   before('initPlan', () => (
-    payments.router(testPlanData, createPlanHeaders).then(plan => {
-      const id = plan.id.split('|')[0];
+    payments.router(testPlanData, createPlanHeaders).then(data => {
+      const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = id;
       return payments.router({ id, state: 'active' }, statePlanHeaders);

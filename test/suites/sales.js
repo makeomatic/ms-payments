@@ -33,7 +33,7 @@ describe('Sales suite', function SalesSuite() {
     it('Should fail to create sale on invalid arguments', () => {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
         });
