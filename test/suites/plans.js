@@ -96,9 +96,9 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should activate the plan', () => {
-      return payments.router({ id: billingPlan.id, state: 'active' }, statePlanHeaders)
+      return payments.router({ id: billingPlan.plan.id, state: 'active' }, statePlanHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           debug(result);
           assert(result.isFulfilled());
         });
@@ -114,7 +114,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to update on invalid plan schema', () => {
-      return payments.router({ id: billingPlan.id, plan: { invalid: true } }, updatePlanHeaders)
+      return payments.router({ id: billingPlan.plan.id, plan: { invalid: true } }, updatePlanHeaders)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -164,7 +164,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should delete plan', () => {
-      return payments.router(billingPlan.id, deletePlanHeaders)
+      return payments.router(billingPlan.plan.id, deletePlanHeaders)
         .reflect()
         .then((result) => {
           debug(result);
