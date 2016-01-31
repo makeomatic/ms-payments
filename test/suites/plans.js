@@ -33,17 +33,17 @@ describe('Plans suite', function PlansSuite() {
     it('Should create free plan', () => {
       return payments.router(freePlanData, createPlanHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           debug(result);
           assert(result.isFulfilled());
-          assert(result.value().id);
+          assert(result.value().plan.id);
         });
     });
 
     it('Should get free plan', () => {
       return payments.router('free', getPlanHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           debug(result);
           assert(result.isFulfilled());
           assert(result.value().alias);
