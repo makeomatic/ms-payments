@@ -39,8 +39,8 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   before(function initPlan() {
-    return payments.router(testPlanData, createPlanHeaders).then(plan => {
-      const id = plan.id.split('|')[0];
+    return payments.router(testPlanData, createPlanHeaders).then(data => {
+      const id = data.plan.id.split('|')[0];
       planId = id;
       testAgreementData.plan.id = id;
       return payments.router({ id, state: 'active' }, statePlanHeaders);
