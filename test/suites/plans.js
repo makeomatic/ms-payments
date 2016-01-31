@@ -72,7 +72,7 @@ describe('Plans suite', function PlansSuite() {
 
           billingPlan = result.value();
 
-          assert(billingPlan.id);
+          assert(billingPlan.plan.id);
           assert.equal(billingPlan.state, 'CREATED');
         });
     });
