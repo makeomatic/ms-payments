@@ -122,21 +122,21 @@ describe('Plans suite', function PlansSuite() {
         });
     });
 
-    /* it('Should update plan info', () => {
-     const updateData = {
-     id: billingPlan.id,
-     plan: {
-     name: 'Updated name',
-     },
-     };
+    it('Should update plan info', () => {
+      const updateData = {
+        id: billingPlan.plan.id,
+        plan: {
+          name: 'Updated name',
+        },
+      };
 
-     return payments.router(updateData, updatePlanHeaders)
-     .reflect()
-     .then((result) => {
-     debug(result);
-     expect(result.isFulfilled()).to.be.eq(true);
-     });
-     }); */
+      return payments.router(updateData, updatePlanHeaders)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+        });
+    });
 
     it('Should fail to list on invalid query schema', () => {
       return payments.router({ status: 'invalid' }, listPlanHeaders)
