@@ -77,33 +77,6 @@ describe('Plans suite', function PlansSuite() {
         });
     });
 
-    it('Should fail to activate on an unknown plan id', () => {
-      return payments.router({ id: 'random', state: 'active' }, statePlanHeaders)
-        .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().httpStatusCode, 400);
-        });
-    });
-
-    it('Should fail to activate on an invalid state', () => {
-      return payments.router({ id: 'random', state: 'invalid' }, statePlanHeaders)
-        .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
-        });
-    });
-
-    it('Should activate the plan', () => {
-      return payments.router({ id: billingPlan.plan.id, state: 'active' }, statePlanHeaders)
-        .reflect()
-        .then(result => {
-          debug(result);
-          assert(result.isFulfilled());
-        });
-    });
-
     it('Should fail to update on an unknown plan id', () => {
       return payments.router({ id: 'random', plan: { name: 'Updated name' } }, updatePlanHeaders)
         .reflect()
@@ -135,6 +108,48 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+        });
+    });
+
+    it('Should fail to activate on an invalid state', () => {
+      return payments.router({ id: 'random', state: 'invalid' }, statePlanHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isRejected());
+          assert.equal(result.reason().name, 'ValidationError');
+        });
+    });
+
+    it('Should fail to activate on an unknown plan id', () => {
+      return payments.router({ id: 'random', state: 'active' }, statePlanHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isRejected());
+          assert.equal(result.reason().httpStatusCode, 400);
+        });
+    });
+
+    it('Should activate the plan', () => {
+      return payments.router({ id: billingPlan.plan.id, state: 'active' }, statePlanHeaders)
+        .reflect()
+        .then(result => {
+          debug(result);
+          assert(result.isFulfilled());
+        });
+    });
+
+    it('Should fail to update plan info after activation', () => {
+      const updateData = {
+        id: billingPlan.plan.id,
+        plan: {
+          name: 'Updated name',
+        },
+      };
+
+      return payments.router(updateData, updatePlanHeaders)
+        .reflect()
+        .then((result) => {
+          assert(result.isRejected());
         });
     });
 
