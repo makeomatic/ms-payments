@@ -17,6 +17,8 @@ const compact = require('lodash/compact');
 const isArray = Array.isArray;
 const Errors = require('common-errors');
 
+const planGet = require('./get');
+
 function buildQuery(values) {
   const value = omit(values, ['alias', 'hidden', 'id']);
   if (Object.keys(value).length === 0) return null;
@@ -39,8 +41,12 @@ function merger(a, b, k) {
 
 function createJoinPlans(message) {
   return function joinPlans(plans) {
+    const plan = mergeWith({}, ...plans, merger);
+    if (message.plan && message.plan.name) {
+      plan.name = message.plan.name;
+    }
     return {
-      plan: mergeWith({}, ...plans, { name: message.plan.name }, merger),
+      plan,
       plans,
     };
   };
@@ -56,8 +62,8 @@ function sendRequest(config, message) {
 
   // setup default merchant preferences
   const { plan } = message;
-  const { merchant_preferences: merchatPref, payment_definitions } = plan;
-  plan.merchant_preferences = merge(defaultMerchantPreferences, merchatPref || {});
+  const { merchant_preferences: merchantPref, payment_definitions } = plan;
+  plan.merchant_preferences = merge(defaultMerchantPreferences, merchantPref || {});
 
   // divide single plan definition into as many as payment_definitions present
   const plans = payment_definitions.map(definition => {
@@ -68,6 +74,9 @@ function sendRequest(config, message) {
     };
 
     const query = buildQuery(partialPlan);
+    if (query === null) {
+      return null;
+    }
     return paypalPlanUpdate(plan.id, query, config.paypal);
   });
 
@@ -78,7 +87,6 @@ function createSaveToRedis(redis, message) {
   return function saveToRedis(data) {
     const { plan, plans } = data;
     const aliasedId = message.alias || plan.id;
-    const hidden = message.hidden || false;
 
     const pipeline = redis.pipeline();
     const planKey = key(PLANS_DATA, aliasedId);
@@ -90,25 +98,35 @@ function createSaveToRedis(redis, message) {
 
     pipeline.sadd(PLANS_INDEX, aliasedId);
 
-    const subscriptions = message.subscriptions.map(subscription => {
+    const subscriptions = message.subscriptions && message.subscriptions.map(subscription => {
       subscription.definition = find(plan.payment_definitions, item => (
         item.frequency.toLowerCase() === subscription.name
       ));
       return subscription;
-    });
+    }) || null;
 
     const saveDataFull = {
       plan: {
         ...plan,
-        hidden,
       },
-      subs: subscriptions,
-      type: plan.type,
-      state: plan.state,
-      name: plan.name,
-      hidden,
       ...plansData,
     };
+
+    if (subscriptions !== null) {
+      saveDataFull.subs = subscriptions;
+    }
+
+    if (plan.name) {
+      saveDataFull.name = plan.name;
+    }
+
+    if (plan.state) {
+      saveDataFull.state = plan.state;
+    }
+
+    if (message.hidden !== null && message.hidden !== undefined) {
+      saveDataFull.hidden = message.hidden;
+    }
 
     if (message.alias !== null && message.alias !== undefined) {
       saveDataFull.alias = message.alias;
@@ -120,16 +138,26 @@ function createSaveToRedis(redis, message) {
       const saveData = {
         plan: {
           ...planData,
-          hidden,
         },
-        subs: [find(subscriptions, { name: planData.payment_definitions[0].frequency.toLowerCase() })],
-        type: planData.type,
-        state: planData.state,
-        name: planData.name,
-        hidden,
       };
 
-      if (message.alias) {
+      if (subscriptions !== null) {
+        saveData.subs = [find(subscriptions, { name: planData.payment_definitions[0].frequency.toLowerCase() })];
+      }
+
+      if (plan.name) {
+        saveData.name = planData.name;
+      }
+
+      if (plan.state) {
+        saveData.state = planData.state;
+      }
+
+      if (message.hidden !== null && message.hidden !== undefined) {
+        saveData.hidden = message.hidden;
+      }
+
+      if (message.alias !== null && message.alias !== undefined) {
         saveData.alias = message.alias;
       }
 
@@ -153,8 +181,8 @@ module.exports = function planUpdate(message) {
 
   if (alias && alias !== 'free') {
     promise = redis.sismember(PLANS_INDEX, alias).then(isMember => {
-      if (isMember === 1) {
-        throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);
+      if (isMember !== 1) {
+        throw new Errors.HttpStatusError(400, `plan ${alias} does not exist`);
       }
     });
   }
