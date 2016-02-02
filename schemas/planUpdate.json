@@ -7,7 +7,7 @@
     "hidden": { "type": "boolean" },
     "alias": { "type": "string", "minLength": 1 },
     "subscriptions": { "type": "array", "items": { "$ref": "subscription#" } },
-    "plan": { "$ref": "plan#" }
+    "plan": { "$ref": "planUpdate#" }
 	},
   "additionalProperties": false
 }

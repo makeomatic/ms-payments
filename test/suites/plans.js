@@ -82,7 +82,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
-          assert.equal(result.reason().httpStatusCode, 400);
+          assert.equal(result.reason().statusCode, 400);
         });
     });
 
@@ -98,6 +98,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should update plan info', () => {
       const updateData = {
         id: billingPlan.plan.id,
+        alias: 'basic',
         plan: {
           name: 'Updated name',
         },

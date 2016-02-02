@@ -66,7 +66,7 @@ function sendRequest(config, message) {
   plan.merchant_preferences = merge(defaultMerchantPreferences, merchantPref || {});
 
   // divide single plan definition into as many as payment_definitions present
-  const plans = payment_definitions.map(definition => {
+  const plans = payment_definitions && map(payment_definitions, definition => {
     const partialPlan = {
       ...cloneDeep(plan),
       name: `${plan.name}-${definition.frequency.toLowerCase()}`,
@@ -78,9 +78,9 @@ function sendRequest(config, message) {
       return null;
     }
     return paypalPlanUpdate(plan.id, query, config.paypal);
-  });
+  }) || null;
 
-  return Promise.all(plans);
+  return plans && Promise.all(plans) || [];
 }
 
 function createSaveToRedis(redis, message) {
@@ -98,7 +98,7 @@ function createSaveToRedis(redis, message) {
 
     pipeline.sadd(PLANS_INDEX, aliasedId);
 
-    const subscriptions = message.subscriptions && message.subscriptions.map(subscription => {
+    const subscriptions = message.subscriptions && map(message.subscriptions, subscription => {
       subscription.definition = find(plan.payment_definitions, item => (
         item.frequency.toLowerCase() === subscription.name
       ));
@@ -177,15 +177,18 @@ module.exports = function planUpdate(message) {
   const { config, redis } = this;
   const { alias } = message;
   const saveToRedis = createSaveToRedis(redis, message);
-  let promise = Promise.bind(this);
 
+  const exists = [redis.sismember(PLANS_INDEX, message.id)];
   if (alias && alias !== 'free') {
-    promise = redis.sismember(PLANS_INDEX, alias).then(isMember => {
-      if (isMember !== 1) {
-        throw new Errors.HttpStatusError(400, `plan ${alias} does not exist`);
-      }
-    });
+    exists.push(redis.sismember(PLANS_INDEX, alias));
   }
+
+  let promise = Promise.all(exists).then(isMember => {
+    const count = reduce(isMember, (acc, member) => { return acc + member; }, 0);
+    if (count === 0) {
+      throw new Errors.HttpStatusError(400, `plan ${message.id}/${alias} does not exist`);
+    }
+  });
 
   // this is a free plan, don't put it on paypal
   if (alias === 'free') {
