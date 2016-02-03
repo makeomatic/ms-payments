@@ -108,11 +108,11 @@ class Payments extends MService {
     return Promise.map(defaultPlans, plan => (
       createPlan.call(this, plan)
         .then(newPlan => {
-          if (newPlan.id === 'free') {
+          if (newPlan.plan.id === 'free') {
             return newPlan;
           }
 
-          return statePlan.call(this, { id: newPlan.id, state: 'active' }).return(newPlan);
+          return statePlan.call(this, { id: newPlan.plan.id, state: 'active' }).return(newPlan);
         })
         .reflect()
     ))
