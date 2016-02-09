@@ -1,6 +1,6 @@
 # Microservice for handling PayPal payments over AMQP transport layer
 
-[![Build Status](https://semaphoreci.com/api/v1/projects/e8369db0-086d-4cb5-9407-4b86f1f0690c/659498/shields_badge.svg)](https://semaphoreci.com/makeomatic/ms-payments)
+[![Build Status](https://semaphoreci.com/api/v1/makeomatic/ms-payments/branches/master/shields_badge.svg)](https://semaphoreci.com/makeomatic/ms-payments)
 [![Code Climate](https://codeclimate.com/github/makeomatic/ms-payments/badges/gpa.svg)](https://codeclimate.com/github/makeomatic/ms-payments)
 [![npm version](https://badge.fury.io/js/ms-payments.svg)](https://badge.fury.io/js/ms-payments)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
