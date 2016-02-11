@@ -127,8 +127,10 @@ describe('Agreements suite', function AgreementSuite() {
           // TypeError: unable to verify the first certificate
           return browser
             .pressButton('#continue')
-            .catch(err => {
-              assert.equal(err.message, 'unable to verify the first certificate');
+            .catchReturn(err => {
+              // when dev servers are off
+              const idx = ['Timeout: did not get to load all resources on this page', 'unable to verify the first certificate'].indexOf(err.message);
+              assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
               return { success: true, err };
             });
         })
