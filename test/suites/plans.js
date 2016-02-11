@@ -78,9 +78,9 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to update on an unknown plan id', () => {
-      return payments.router({ id: 'random', plan: { name: 'Updated name' } }, updatePlanHeaders)
+      return payments.router({ id: 'P-veryrandomid', hidden: true }, updatePlanHeaders)
         .reflect()
-        .then((result) => {
+        .then(result => {
           assert(result.isRejected());
           assert.equal(result.reason().statusCode, 400);
         });
@@ -99,9 +99,6 @@ describe('Plans suite', function PlansSuite() {
       const updateData = {
         id: billingPlan.plan.id,
         alias: 'basic',
-        plan: {
-          name: 'Updated name',
-        },
       };
 
       return payments.router(updateData, updatePlanHeaders)
@@ -113,7 +110,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to activate on an invalid state', () => {
-      return payments.router({ id: 'random', state: 'invalid' }, statePlanHeaders)
+      return payments.router({ id: 'P-random', state: 'invalid' }, statePlanHeaders)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -122,7 +119,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to activate on an unknown plan id', () => {
-      return payments.router({ id: 'random', state: 'active' }, statePlanHeaders)
+      return payments.router({ id: 'P-random', state: 'active' }, statePlanHeaders)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -142,8 +139,10 @@ describe('Plans suite', function PlansSuite() {
     it('Should fail to update plan info after activation', () => {
       const updateData = {
         id: billingPlan.plan.id,
-        plan: {
-          name: 'Updated name',
+        subscriptions: {
+          yearly: {
+            price: '12312.00',
+          },
         },
       };
 
@@ -172,7 +171,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to delete on an unknown plan id', () => {
-      return payments.router('random', deletePlanHeaders)
+      return payments.router('P-random', deletePlanHeaders)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
