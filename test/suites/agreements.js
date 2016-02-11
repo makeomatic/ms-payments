@@ -127,7 +127,7 @@ describe('Agreements suite', function AgreementSuite() {
           // TypeError: unable to verify the first certificate
           return browser
             .pressButton('#continue')
-            .catchReturn(err => {
+            .catch(err => {
               // when dev servers are off
               const idx = ['Timeout: did not get to load all resources on this page', 'unable to verify the first certificate'].indexOf(err.message);
               assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
