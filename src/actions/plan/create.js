@@ -8,8 +8,9 @@ const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
 
+const statePlan = require('./state.js');
 const key = require('../../redisKey.js');
-const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
+const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 const { createJoinPlans } = require('../../utils/plans.js');
 
@@ -34,10 +35,24 @@ function sendRequest(config, message) {
       payment_definitions: [definition],
     };
 
-    return billingPlanCreate(partialPlan, config.paypal);
+    return billingPlanCreate(partialPlan, config.paypal)
+      .catch(err => {
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      });
   });
 
-  return Promise.all(plans);
+  const promise = Promise.all(plans);
+  const { state } = message.plan;
+  if (state && state.toLowerCase() !== 'active') {
+    return promise;
+  }
+
+  // activate the plan if we requested it
+  return promise.map(planData => {
+    const id = planData.id;
+    planData.state = 'active';
+    return statePlan.call(this, { id, state: 'active' }).return(planData);
+  });
 }
 
 function createSaveToRedis(redis, message) {
@@ -124,16 +139,18 @@ module.exports = function planCreate(message) {
   const saveToRedis = createSaveToRedis(redis, message);
   let promise = Promise.bind(this);
 
-  if (alias && alias !== 'free') {
-    promise = redis.sismember(PLANS_INDEX, alias).then(isMember => {
-      if (isMember === 1) {
-        throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);
-      }
+  if (alias && alias !== FREE_PLAN_ID) {
+    promise = promise.then(() => {
+      return redis.sismember(PLANS_INDEX, alias).then(isMember => {
+        if (isMember === 1) {
+          throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);
+        }
+      });
     });
   }
 
   // this is a free plan, don't put it on paypal
-  if (alias === 'free') {
+  if (alias === FREE_PLAN_ID) {
     message.plan.id = alias;
     promise = promise.return({ plan: message.plan, plans: [] });
   } else {

@@ -4,6 +4,7 @@ const key = require('../../redisKey.js');
 const update = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan });
 const map = require('lodash/map');
 const forEach = require('lodash/forEach');
+const uniq = require('lodash/uniq');
 const { PLANS_DATA } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 
@@ -11,7 +12,6 @@ function planState(message) {
   const { _config, redis, log } = this;
   const { id, state } = message;
   const { paypal: paypalConfig } = _config;
-  const promise = Promise.bind(this);
 
   function sendRequest() {
     const request = [{
@@ -31,7 +31,7 @@ function planState(message) {
   }
 
   function updateRedis() {
-    const ids = id.split('|').concat([id]);
+    const ids = uniq(id.split('|').concat([id]));
     const keys = map(ids, planId => key(PLANS_DATA, planId));
     const pipeline = redis.pipeline();
 
@@ -44,7 +44,7 @@ function planState(message) {
     return pipeline.exec();
   }
 
-  return promise.then(sendRequest).then(updateRedis);
+  return Promise.bind(this).then(sendRequest).then(updateRedis);
 }
 
 module.exports = planState;

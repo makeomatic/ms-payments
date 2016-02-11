@@ -5,7 +5,6 @@ const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
 
 const createPlan = require('./actions/plan/create');
-const statePlan = require('./actions/plan/state');
 const syncSaleTransactions = require('./actions/sale/sync.js');
 const syncAgreements = require('./actions/agreement/sync.js');
 
@@ -36,8 +35,8 @@ class Payments extends MService {
     },
     paypal: {
       mode: 'sandbox',
-      client_id: 'ASfLM0CKCfS1qAA5OhyGAQ7kneCBvvkpVkphYITmbnCXwqBCrGO1IDk6k842YnbRBVoWp3fqzJe4FaNx',
-      client_secret: 'EOu4zIgcRwNACG3XMQTUHiwZtc4lDfhO8xlKyK5t1_XBiJl8adpam88GoujJMhIRm9lsTfBdQ1IgCPYv', //eslint-disable-line
+      client_id: 'AdwVgBbIvVaPnlauY91S1-ifPMiQ1R2ZFiq7O6biwc60lcJTpdq9O_o-aFSfHTH9Bt2ly34s1lrQ-Dod',
+      client_secret: 'EH0QpMk8BeZRuEumPZ4l2McyYAz66jXDS64bVFJL9d2mT1pJyMOP-dx3jN1yuvcKV_c6U8AaLCkSYptu', //eslint-disable-line
     },
     validator: ['../schemas'],
     users: {
@@ -105,18 +104,9 @@ class Payments extends MService {
   initPlans() {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
-    return Promise.map(defaultPlans, plan => (
-      createPlan.call(this, plan)
-        .then(newPlan => {
-          if (newPlan.plan.id === 'free') {
-            return newPlan;
-          }
-
-          return statePlan.call(this, { id: newPlan.plan.id, state: 'active' }).return(newPlan);
-        })
-        .reflect()
-    ))
-    .bind(this)
+    return Promise
+    .bind(this, defaultPlans)
+    .map(plan => createPlan.call(this, plan).reflect())
     .map(function iterateOverPlans(plan) {
       if (plan.isFulfilled()) {
         this.log.info('Created plan %s', plan.value().name);

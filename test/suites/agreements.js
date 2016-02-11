@@ -14,7 +14,6 @@ describe('Agreements suite', function AgreementSuite() {
 
   const createPlanHeaders = { routingKey: 'payments.plan.create' };
   const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
-  const statePlanHeaders = { routingKey: 'payments.plan.state' };
 
   const getAgreementHeaders = { routingKey: 'payments.agreement.get' };
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
@@ -31,8 +30,6 @@ describe('Agreements suite', function AgreementSuite() {
 
   this.timeout(duration * 4);
 
-  before('delay for ms-users', () => Promise.delay(2000));
-
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
@@ -41,9 +38,8 @@ describe('Agreements suite', function AgreementSuite() {
   before(function initPlan() {
     return payments.router(testPlanData, createPlanHeaders).then(data => {
       const id = data.plan.id.split('|')[0];
-      planId = id;
+      planId = data.plan.id;
       testAgreementData.plan.id = id;
-      return payments.router({ id, state: 'active' }, statePlanHeaders);
     });
   });
 

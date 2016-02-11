@@ -64,7 +64,14 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should create a plan', () => {
-      return payments.router(testPlanData, createPlanHeaders)
+      return payments
+        .router({
+          ...testPlanData,
+          plan: {
+            ...testPlanData.plan,
+            state: 'CREATED',
+          },
+        }, createPlanHeaders)
         .reflect()
         .then((result) => {
           debug(result);
@@ -73,7 +80,7 @@ describe('Plans suite', function PlansSuite() {
           billingPlan = result.value();
 
           assert(billingPlan.plan.id);
-          assert.equal(billingPlan.state, 'CREATED');
+          assert.equal(billingPlan.state.toLowerCase(), 'created');
         });
     });
 

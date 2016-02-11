@@ -24,8 +24,8 @@ function agreementCreate(message) {
         return deserialize(data);
       })
       .tap(data => {
-        if (data.state !== 'active') {
-          throw new Errors.HttpStatusError(412, 'plan ${planId} is inactive');
+        if (data.state.toLowerCase() !== 'active') {
+          throw new Errors.HttpStatusError(412, `plan ${planId} is inactive`);
         }
       });
   }
@@ -38,6 +38,9 @@ function agreementCreate(message) {
         setup_fee: plan.subs[0].definition.amount,
       },
     }, _config.paypal)
+    .catch(err => {
+      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+    })
     .then(newAgreement => {
       const approval = find(newAgreement.links, { rel: 'approval_url' });
       if (approval === null) {
@@ -69,11 +72,7 @@ function agreementCreate(message) {
     .bind(this)
     .then(fetchPlan)
     .then(sendRequest)
-    .then(setToken)
-    .catch(err => {
-      this.log.error('paypal err: ', err.response && err.response.details || err);
-      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-    });
+    .then(setToken);
 }
 
 module.exports = agreementCreate;

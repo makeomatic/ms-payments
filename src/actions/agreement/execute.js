@@ -19,7 +19,8 @@ function agreementExecute(message) {
   const tokenKey = key('subscription-token', token);
 
   function sendRequest() {
-    return billingAgreement.executeAsync(token, {}, _config.paypal)
+    return billingAgreement
+      .executeAsync(token, {}, _config.paypal)
       .catch(err => {
         throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       })
