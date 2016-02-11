@@ -86,19 +86,19 @@ function createSaveToRedis(message) {
     .then(function updatePlansInRedis(plans) {
       const additionalData = {};
 
-      if (message.subscriptions) {
+      if ('subscriptions' in message) {
         updateSubscriptions(plans, message.subscriptions);
       }
 
-      if (message.description) {
+      if ('description' in message) {
         setField(plans, 'description', message.description);
       }
 
-      if (message.alias) {
+      if ('alias' in message) {
         additionalData.alias = message.alias;
       }
 
-      if (message.hidden) {
+      if ('hidden' in message) {
         additionalData.hidden = message.hidden;
       }
 
