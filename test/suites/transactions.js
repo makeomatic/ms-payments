@@ -20,7 +20,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
   const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
 
-  this.timeout(duration * 2);
+  this.timeout(duration * 4);
 
   let payments;
   let agreement;
