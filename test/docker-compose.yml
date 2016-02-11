@@ -48,7 +48,7 @@ ms-users:
     - redis_3
     - rabbitmq
     - redis_client
-  image: makeomatic/ms-users:5.4.0
+  image: makeomatic/ms-users:5.5.0
   hostname: ms-users
   container_name: ms-users
   volumes:
