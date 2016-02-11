@@ -15,7 +15,6 @@ describe('Transactions suite', function TransactionsSuite() {
   const getAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
 
   const createPlanHeaders = { routingKey: 'payments.plan.create' };
-  const statePlanHeaders = { routingKey: 'payments.plan.state' };
   const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
 
   const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
@@ -38,8 +37,7 @@ describe('Transactions suite', function TransactionsSuite() {
     payments.router(testPlanData, createPlanHeaders).then(data => {
       const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
-      planId = id;
-      return payments.router({ id, state: 'active' }, statePlanHeaders);
+      planId = data.plan.id;
     })
   ));
 
@@ -98,7 +96,7 @@ describe('Transactions suite', function TransactionsSuite() {
       })
   ));
 
-  after('cleanUp', () => Promise.all([payments.router(planId, deletePlanHeaders)]));
+  after('cleanUp', () => payments.router(planId, deletePlanHeaders));
 
   describe('unit tests', () => {
     it('Should not sync transaction on invalid data', () => (
