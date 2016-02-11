@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const key = require('../../redisKey.js');
-const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, { context: paypal.billingPlan }); // eslint-disable-line
+const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, {context: paypal.billingPlan}); // eslint-disable-line
 
 const omit = require('lodash/omit');
 const map = require('lodash/map');
@@ -13,6 +13,7 @@ const mergeWith = require('lodash/mergeWith');
 const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
+const findIndex = require('lodash/findIndex');
 const compact = require('lodash/compact');
 const isArray = Array.isArray;
 const Errors = require('common-errors');
@@ -39,133 +40,152 @@ function merger(a, b, k) {
   }
 }
 
-function createJoinPlans(message) {
-  return function joinPlans(plans) {
-    const plan = mergeWith({}, ...plans, merger);
-    if (message.plan && message.plan.name) {
-      plan.name = message.plan.name;
-    }
-    return {
-      plan,
-      plans,
-    };
+function joinPlans(plans) {
+  const plan = mergeWith({}, ...plans, merger);
+  return {
+    plan,
+    plans,
   };
 }
 
-function sendRequest(config, message) {
-  const defaultMerchantPreferences = {
-    return_url: config.urls.plan_return,
-    cancel_url: config.urls.plan_cancel,
-    auto_bill_amount: 'YES',
-    initial_fail_amount_action: 'CANCEL',
+function finder(pattern) {
+  return function findPattern(element) {
+    return element.plan.name.toLowerCase().indexOf(pattern.toLowerCase()) >= 0;
   };
-
-  // setup default merchant preferences
-  const { plan } = message;
-  const { merchant_preferences: merchantPref, payment_definitions } = plan;
-  plan.merchant_preferences = merge(defaultMerchantPreferences, merchantPref || {});
-
-  // divide single plan definition into as many as payment_definitions present
-  const plans = payment_definitions && map(payment_definitions, definition => {
-    const partialPlan = {
-      ...cloneDeep(plan),
-      name: `${plan.name}-${definition.frequency.toLowerCase()}`,
-      payment_definitions: [definition],
-    };
-
-    const query = buildQuery(partialPlan);
-    if (query === null) {
-      return null;
-    }
-    return paypalPlanUpdate(plan.id, query, config.paypal);
-  }) || null;
-
-  return plans && Promise.all(plans) || [];
 }
 
-function createSaveToRedis(redis, message) {
-  return function saveToRedis(data) {
-    const { plan, plans } = data;
-    const aliasedId = message.alias || plan.id;
+function updateSubscriptions(plans, subscriptions) {
+  const paypalQuery = {};
 
-    const pipeline = redis.pipeline();
-    const planKey = key(PLANS_DATA, aliasedId);
-    const plansData = reduce(plans, (a, p) => {
-      const frequency = p.payment_definitions[0].frequency;
-      a[frequency.toLowerCase()] = p.id;
-      return a;
-    }, { full: aliasedId });
-
-    pipeline.sadd(PLANS_INDEX, aliasedId);
-
-    const subscriptions = message.subscriptions && map(message.subscriptions, subscription => {
-      subscription.definition = find(plan.payment_definitions, item => (
-        item.frequency.toLowerCase() === subscription.name
-      ));
-      return subscription;
-    }) || null;
-
-    const saveDataFull = {
-      plan: {
-        ...plan,
-      },
-      ...plansData,
-    };
-
-    if (subscriptions !== null) {
-      saveDataFull.subs = subscriptions;
-    }
-
-    if (plan.name) {
-      saveDataFull.name = plan.name;
-    }
-
-    if (plan.state) {
-      saveDataFull.state = plan.state;
-    }
-
-    if (message.hidden !== null && message.hidden !== undefined) {
-      saveDataFull.hidden = message.hidden;
-    }
-
-    if (message.alias !== null && message.alias !== undefined) {
-      saveDataFull.alias = message.alias;
-    }
-
-    pipeline.hmset(planKey, serialize(saveDataFull));
-
-    plans.forEach(planData => {
-      const saveData = {
-        plan: {
-          ...planData,
-        },
+  if (subscriptions.monthly) {
+    const index = findIndex(plans, finder('month'));
+    if (subscriptions.monthly.price) {
+      const monthlyIndex = findIndex(plans[index].plan.payment_definitions, finder('month'));
+      plans[index].plan.payment_definitions[monthlyIndex].amount.value = subscriptions.monthly.price.toPrecision(2);
+      paypalQuery[plans[index].plan.id] = {
+        payment_definitions: [{
+          amount: {
+            value: subscriptions.monthly.price.toPrecision(2),
+          },
+        }],
       };
+    }
+    if (subscriptions.monthly.models) {
+      const monthlyIndex = findIndex(plans[index].subs, finder('month'));
+      plans[index].subs[monthlyIndex].models = subscriptions.monthly.models;
+    }
+    if (subscriptions.monthly.modelPrice) {
+      const monthlyIndex = findIndex(plans[index].subs, finder('month'));
+      plans[index].subs[monthlyIndex].modelPrice = subscriptions.monthly.modelPrice;
+    }
+  }
 
-      if (subscriptions !== null) {
-        saveData.subs = [find(subscriptions, { name: planData.payment_definitions[0].frequency.toLowerCase() })];
+  if (subscriptions.yearly) {
+    const index = findIndex(plans, finder('year'));
+    if (subscriptions.yearly.price) {
+      const yearlyIndex = findIndex(plans[index].plan.payment_definitions, finder('year'));
+      plans[index].plan.payment_definitions[yearlyIndex].amount.value = subscriptions.yearly.price.toPrecision(2);
+      paypalQuery[plans[index].plan.id] = {
+        payment_definitions: [{
+          amount: {
+            value: subscriptions.yearly.price.toPrecision(2),
+          },
+        }],
+      };
+    }
+    if (subscriptions.yearly.models) {
+      const yearlyIndex = findIndex(plans[index].subs, finder('year'));
+      plans[index].subs[yearlyIndex].models = subscriptions.yearly.models;
+    }
+    if (subscriptions.yearly.modelPrice) {
+      const yearlyIndex = findIndex(plans[index].subs, finder('year'));
+      plans[index].subs[yearlyIndex].modelPrice = subscriptions.yearly.modelPrice;
+    }
+  }
+
+  return paypalQuery;
+}
+
+function setField(plans, field, value) {
+  const path = field.split('.');
+  const len = path.length;
+
+  function setPlanField(plan) {
+    let schema = plan;
+    for (let i = 0; i < len; i++) {
+      const elem = path[i];
+      if (!schema[elem]) {
+        schema[elem] = {};
       }
+      schema = schema[elem];
+    }
+    schema[path[len - 1]] = value;
+    return schema;
+  }
 
-      if (plan.name) {
-        saveData.name = planData.name;
-      }
+  if (Array.isArray(plans)) {
+    return map(plans, setPlanField);
+  } else {
+    return setPlanField(plans);
+  }
+}
 
-      if (plan.state) {
-        saveData.state = planData.state;
-      }
+function createSaveToRedis({ config, redis, message }) {
+  const ids = map(message.id.split('|'), planGet);
+  return Promise.all(ids).then(function updatePlansInRedis(plans) {
+    const paypalQuery = {};
+    const additionalData = {};
+    if (message.subscriptions) {
+      const paypalUpdate = updateSubscriptions(plans, message.subscriptions);
+      merge(paypalQuery, paypalUpdate);
+    }
+    if (message.description) {
+      paypalQuery.common = {description: message.description};
+      setField(plans, 'description', message.description);
+    }
+    if (message.alias) {
+      additionalData.alias = message.alias;
+    }
+    if (message.hidden) {
+      additionalData.hidden = message.hidden;
+    }
+    return {paypalQuery, plans, additionalData, config, redis};
+  });
+}
 
-      if (message.hidden !== null && message.hidden !== undefined) {
-        saveData.hidden = message.hidden;
-      }
+function queryPaypal({ paypalQuery, plans, additionalData, config, redis }) {
+  const paypalObjects = omit(paypalQuery, 'common');
+  const query = map(paypalObjects, function makePayPalRequest(values, id) {
+    let vals;
+    if (paypalQuery.common) {
+      vals = merge(values, {description: paypalQuery['common'].description});
+    } else {
+      vals = values;
+    }
+    const request = buildQuery(vals);
+    return paypalPlanUpdate(id, request, config.paypal);
+  });
+  return Promise.all(query).return({plans, additionalData, config, redis});
+}
 
-      if (message.alias !== null && message.alias !== undefined) {
-        saveData.alias = message.alias;
-      }
+function saveToRedis({ plans, additionalData, config, redis }) {
+  const data = joinPlans(plans);
+  const aliasedId = additionalData.alias || data.plan.plan.id;
+  const planKey = key(PLANS_DATA, aliasedId);
 
-      pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
-    });
+  const pipeline = redis.pipeline();
 
-    return pipeline.exec().return(saveDataFull);
-  };
+  pipeline.sadd(PLANS_INDEX, aliasedId);
+
+  const saveDataFull = merge(data.plan, additionalData);
+  pipeline.hmset(planKey, serialize(saveDataFull));
+
+  data.plans.forEach(planData => {
+    const saveData = merge(planData, additionalData);
+    pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
+  });
+
+  return pipeline.exec().return(saveDataFull);
 }
 
 /**
@@ -176,7 +196,6 @@ function createSaveToRedis(redis, message) {
 module.exports = function planUpdate(message) {
   const { config, redis } = this;
   const { alias } = message;
-  const saveToRedis = createSaveToRedis(redis, message);
 
   const exists = [redis.sismember(PLANS_INDEX, message.id)];
   if (alias && alias !== 'free') {
@@ -184,18 +203,20 @@ module.exports = function planUpdate(message) {
   }
 
   let promise = Promise.all(exists).then(isMember => {
-    const count = reduce(isMember, (acc, member) => { return acc + member; }, 0);
+    const count = reduce(isMember, (acc, member) => {
+      return acc + member;
+    }, 0);
     if (count === 0) {
       throw new Errors.HttpStatusError(400, `plan ${message.id}/${alias} does not exist`);
     }
+    return { config, redis, message };
   });
 
+  promise = promise.then(createSaveToRedis);
+
   // this is a free plan, don't put it on paypal
-  if (alias === 'free') {
-    message.plan.id = alias;
-    promise = promise.return({ plan: message.plan, plans: [] });
-  } else {
-    promise = promise.return([config, message]).spread(sendRequest).then(createJoinPlans(message));
+  if (alias !== 'free') {
+    promise = promise.then(queryPaypal);
   }
 
   return promise.then(saveToRedis);
