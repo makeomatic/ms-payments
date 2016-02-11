@@ -4,10 +4,37 @@
 	"required": ["id"],
 	"properties": {
 		"id": { "type": "string", "minLength": 1 },
-    "hidden": { "type": "boolean" },
     "alias": { "type": "string", "minLength": 1 },
-    "subscriptions": { "type": "array", "items": { "$ref": "subscription#" } },
-    "plan": { "$ref": "planUpdate#" }
+    "description": { "type": "string", "minLength": 1 },
+    "hidden": { "type": "boolean" },
+    "subscriptions": {
+      "type": "object",
+      "required": ["monthly", "yearly"],
+      "properties": {
+        "monthly": { "$ref": "plan.update#/definitions/subscription" },
+        "yearly": { "$ref": "plan.update#/definitions/subscription" }
+      }
+    }
 	},
+  "definitions": {
+    "subscription": {
+      "type": "object",
+      "required": ["price", "models", "modelPrice"],
+      "properties": {
+        "price": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "models": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "modelPrice": {
+          "type": "number",
+          "minimum": 0.01
+        }
+      }
+    }
+  },
   "additionalProperties": false
 }
