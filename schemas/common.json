@@ -218,6 +218,18 @@
         "value": { "type": "string" }
       }
     },
+		"planId": {
+			"type": "string",
+			"minLength": 1,
+			"oneOf": [
+				{
+					"pattern": "^P-.+(\\|P-.+)?$"
+				},
+				{
+					"constant": "free"
+				}
+			]
+		},
 		"filter": {
 			"type": "object",
 			"properties": {

@@ -98,7 +98,15 @@ describe('Plans suite', function PlansSuite() {
     it('Should update plan info', () => {
       const updateData = {
         id: billingPlan.plan.id,
-        alias: 'basic',
+        alias: 'thesupermaster',
+        subscriptions: {
+          monthly: {
+            models: 100,
+          },
+          yearly: {
+            modelPrice: 10.5,
+          },
+        },
       };
 
       return payments.router(updateData, updatePlanHeaders)
@@ -133,23 +141,6 @@ describe('Plans suite', function PlansSuite() {
         .then(result => {
           debug(result);
           assert(result.isFulfilled());
-        });
-    });
-
-    it('Should fail to update plan info after activation', () => {
-      const updateData = {
-        id: billingPlan.plan.id,
-        subscriptions: {
-          yearly: {
-            price: '12312.00',
-          },
-        },
-      };
-
-      return payments.router(updateData, updatePlanHeaders)
-        .reflect()
-        .then((result) => {
-          assert(result.isRejected());
         });
     });
 

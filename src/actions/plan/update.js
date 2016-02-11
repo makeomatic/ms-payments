@@ -3,12 +3,11 @@ const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, {context: paypal.billingPlan}); // eslint-disable-line
 
-const omit = require('lodash/omit');
 const map = require('lodash/map');
-const merge = require('lodash/merge');
+const assign = require('lodash/assign');
 const mergeWith = require('lodash/mergeWith');
-const reduce = require('lodash/reduce');
 const findIndex = require('lodash/findIndex');
+const get = require('lodash/get');
 
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
@@ -16,16 +15,6 @@ const { merger } = require('../../utils/plans.js');
 
 const key = require('../../redisKey.js');
 const planGet = require('./get');
-
-function buildQuery(values) {
-  const value = omit(values, ['alias', 'hidden', 'id']);
-  if (Object.keys(value).length === 0) return null;
-  return [{
-    op: 'replace',
-    path: '/',
-    value,
-  }];
-}
 
 function joinPlans(plans) {
   const plan = mergeWith({}, ...plans, merger);
@@ -35,55 +24,35 @@ function joinPlans(plans) {
   };
 }
 
-function finder(pattern) {
+function finder(pattern, path) {
   return function findPattern(element) {
-    return element.plan.name.toLowerCase().indexOf(pattern.toLowerCase()) >= 0;
+    return get(element, path).toLowerCase().indexOf(pattern.toLowerCase()) >= 0;
   };
 }
 
-function prepareUpdate(paypalQuery, subscription, plans, period) {
-  const periodLookup = finder(period);
-  const index = findIndex(plans, periodLookup);
-
-  if (subscription.price) {
-    const price = subscription.price.toPrecision(2);
-    const indexForPeriod = findIndex(plans[index].plan.payment_definitions, periodLookup);
-    const plan = plans[index].plan;
-
-    plan.payment_definitions[indexForPeriod].amount.value = price;
-
-    paypalQuery[plan.id] = {
-      payment_definitions: [{
-        amount: {
-          value: price,
-        },
-      }],
-    };
-  }
+function prepareUpdate(subscription, plans, period) {
+  const index = findIndex(plans, finder(period, 'plan.name'));
+  const planData = plans[index];
 
   if (subscription.models) {
-    const indexForPeriod = findIndex(plans[index].subs, periodLookup);
-    plans[index].subs[indexForPeriod].models = subscription.models;
+    // these plans always have only 1 entry
+    planData.subs[0].models = subscription.models;
   }
 
   if (subscription.modelPrice) {
-    const indexForPeriod = findIndex(plans[index].subs, periodLookup);
-    plans[index].subs[indexForPeriod].modelPrice = subscription.modelPrice;
+    // these plans always have only 1 entry
+    planData.subs[0].modelPrice = subscription.modelPrice;
   }
 }
 
 function updateSubscriptions(plans, subscriptions) {
-  const paypalQuery = {};
-
   if (subscriptions.monthly) {
-    prepareUpdate(paypalQuery, subscriptions.monthly, plans, 'month');
+    prepareUpdate(subscriptions.monthly, plans, 'month');
   }
 
   if (subscriptions.yearly) {
-    prepareUpdate(paypalQuery, subscriptions.yearly, plans, 'year');
+    prepareUpdate(subscriptions.yearly, plans, 'year');
   }
-
-  return paypalQuery;
 }
 
 function setField(plans, field, value) {
@@ -110,21 +79,18 @@ function setField(plans, field, value) {
   return setPlanField(plans);
 }
 
-function createSaveToRedis({ config, redis, message }) {
+function createSaveToRedis(message) {
   return Promise
     .bind(this, message.id.split('|'))
     .map(planGet)
     .then(function updatePlansInRedis(plans) {
-      const paypalQuery = {};
       const additionalData = {};
 
       if (message.subscriptions) {
-        const paypalUpdate = updateSubscriptions(plans, message.subscriptions);
-        merge(paypalQuery, paypalUpdate);
+        updateSubscriptions(plans, message.subscriptions);
       }
 
       if (message.description) {
-        paypalQuery.common = { description: message.description };
         setField(plans, 'description', message.description);
       }
 
@@ -136,41 +102,29 @@ function createSaveToRedis({ config, redis, message }) {
         additionalData.hidden = message.hidden;
       }
 
-      return { paypalQuery, plans, additionalData, config, redis };
+      return { plans, additionalData };
     });
 }
 
-function queryPaypal({ paypalQuery, plans, additionalData, config, redis }) {
-  const paypalObjects = omit(paypalQuery, 'common');
-  const query = map(paypalObjects, function makePayPalRequest(values, id) {
-    let vals;
-    if (paypalQuery.common) {
-      vals = merge(values, { description: paypalQuery.common.description });
-    } else {
-      vals = values;
-    }
-
-    const request = buildQuery(vals);
-    return paypalPlanUpdate(id, request, config.paypal);
-  });
-
-  return Promise.all(query).return({ plans, additionalData, config, redis });
-}
-
-function saveToRedis({ plans, additionalData, redis }) {
+function saveToRedis({ plans, additionalData }) {
+  const { redis } = this;
   const data = joinPlans(plans);
-  const aliasedId = additionalData.alias || data.plan.plan.id;
+  const currentAlias = data.plan.alias;
+  const saveDataFull = assign(data.plan, additionalData);
+  const aliasedId = saveDataFull.alias;
+  const pipeline = redis.pipeline();
   const planKey = key(PLANS_DATA, aliasedId);
 
-  const pipeline = redis.pipeline();
+  // if we are changing alias - that requires checking if new alias already exists
+  if (aliasedId !== currentAlias) {
+    pipeline.srem(PLANS_INDEX, currentAlias);
+    pipeline.del(key(PLANS_DATA, currentAlias));
+  }
 
   pipeline.sadd(PLANS_INDEX, aliasedId);
-
-  const saveDataFull = merge(data.plan, additionalData);
   pipeline.hmset(planKey, serialize(saveDataFull));
-
-  data.plans.forEach(planData => {
-    const saveData = merge(planData, additionalData);
+  plans.forEach(planData => {
+    const saveData = assign(planData, additionalData);
     pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
   });
 
@@ -183,28 +137,36 @@ function saveToRedis({ plans, additionalData, redis }) {
  * @return {Promise}
  */
 module.exports = function planUpdate(message) {
-  const { config, redis } = this;
-  const { alias } = message;
+  const { redis } = this;
+  const { alias, id } = message;
 
-  const exists = [redis.sismember(PLANS_INDEX, message.id)];
-  if (alias && alias !== FREE_PLAN_ID) {
-    exists.push(redis.sismember(PLANS_INDEX, alias));
+  if (id !== FREE_PLAN_ID && id.indexOf('|') === -1) {
+    return Promise.reject(new Errors.HttpStatusError(400, `invalid plan id: ${id}`));
   }
 
-  let promise = Promise.all(exists).then(isMember => {
-    const count = reduce(isMember, (acc, member) => acc + member, 0);
-    if (count === 0) {
-      throw new Errors.HttpStatusError(400, `plan ${message.id}/${alias} does not exist`);
-    }
-    return { config, redis, message };
-  });
+  // message.alias can never be equal to FREE_PLAN_ID, because it's check in json-schema
+  // therefore we only need to check if message.alias already exists
 
-  promise = promise.then(createSaveToRedis);
+  return Promise
+    .bind(this, message)
+    .tap(() => {
+      if (!alias) {
+        return null;
+      }
 
-  // this is a free plan, don't put it on paypal
-  if (alias !== FREE_PLAN_ID) {
-    promise = promise.then(queryPaypal);
-  }
-
-  return promise.then(saveToRedis);
+      return redis.sismember(PLANS_INDEX, alias).then(isMember => {
+        if (isMember) {
+          throw new Errors.HttpStatusError(409, `alias ${alias} already exists`);
+        }
+      });
+    })
+    .tap(() => {
+      return redis.exists(key(PLANS_DATA, id)).then(exists => {
+        if (!exists) {
+          throw new Errors.HttpStatusError(404, `plan ${id} does not exist`);
+        }
+      });
+    })
+    .then(createSaveToRedis)
+    .then(saveToRedis);
 };

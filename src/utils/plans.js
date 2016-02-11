@@ -12,6 +12,8 @@ function merger(planOneData, planTwoData, fieldName) {
   }
 }
 
+exports.merger = merger;
+
 exports.createJoinPlans = function createJoinPlans(message) {
   return function joinPlans(plans) {
     return {

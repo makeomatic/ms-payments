@@ -52,7 +52,7 @@ function createSaveToRedis(redis, message) {
       const frequency = p.payment_definitions[0].frequency;
       a[frequency.toLowerCase()] = p.id;
       return a;
-    }, { full: aliasedId });
+    }, {});
 
     pipeline.sadd(PLANS_INDEX, aliasedId);
 
@@ -81,7 +81,12 @@ function createSaveToRedis(redis, message) {
       saveDataFull.alias = message.alias;
     }
 
-    pipeline.hmset(planKey, serialize(saveDataFull));
+    const serializedData = serialize(saveDataFull);
+    pipeline.hmset(planKey, serializedData);
+
+    if (plan.id !== aliasedId) {
+      pipeline.hmset(key(PLANS_DATA, plan.id), serializedData);
+    }
 
     plans.forEach(planData => {
       const saveData = {
