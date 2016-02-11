@@ -9,10 +9,17 @@
     "hidden": { "type": "boolean" },
     "subscriptions": {
       "type": "object",
-      "required": ["monthly", "yearly"],
+			"anyOf": [
+				{ "required": ["monthly"] },
+				{ "required": ["yearly"] }
+			],
       "properties": {
-        "monthly": { "$ref": "plan.update#/definitions/subscription" },
-        "yearly": { "$ref": "plan.update#/definitions/subscription" }
+        "monthly": {
+					"$ref": "plan.update#/definitions/subscription"
+				},
+        "yearly": {
+					"$ref": "plan.update#/definitions/subscription"
+				}
       }
     }
 	},
@@ -20,6 +27,11 @@
     "subscription": {
       "type": "object",
       "required": ["price", "models", "modelPrice"],
+			"anyOf": [
+				{ "required": ["price"] },
+				{ "required": ["models"] },
+				{ "required": ["modelPrice"] }
+			],
       "properties": {
         "price": {
           "type": "number",
