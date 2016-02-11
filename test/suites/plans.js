@@ -191,9 +191,8 @@ describe('Plans suite', function PlansSuite() {
     it('Should delete free plan', () => {
       return payments.router('free', deletePlanHeaders)
         .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
+        .then(result => {
+          assert(result.isRejected());
         });
     });
   });
