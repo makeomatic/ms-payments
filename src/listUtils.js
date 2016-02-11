@@ -1,5 +1,5 @@
 const Promise = require('bluebird');
-const { deserialize } = require('./utils/redis.js');
+const { deserialize, calcSlot } = require('./utils/redis.js');
 
 function processResult(dataIndex, redis) {
   return ids => {
@@ -44,13 +44,54 @@ function passThrough(input) {
 
 function hmget(fields, func = passThrough, ctx) {
   return function transformer(data) {
-    return fields.reduce(function transform(acc, field, idx) {
+    return fields.reduce((acc, field, idx) => {
       acc[field] = func.call(ctx || this, data[idx]);
       return acc;
     }, {});
   };
 }
 
+function transform(keys, prefixLength) {
+  return keys.map(key => key.slice(prefixLength));
+}
+
+function cleanupCache(_index) {
+  const { redis, config } = this;
+  const keyPrefix = config.redis.options.keyPrefix;
+  const keyPrefixLength = keyPrefix.length;
+  const index = `${keyPrefix}${_index}`;
+  const cacheKeys = [];
+  const slot = calcSlot(index);
+  // this has possibility of throwing, but not likely to since previous operations
+  // would've been rejected already, in a promise this will result in a rejection
+  const masterNode = redis.slots[slot].masterNode;
+
+  function scan(node, cursor = '0') {
+    return node
+      .scan(cursor, 'MATCH', `${index}:*`, 'COUNT', 50)
+      .then(response => {
+        const [next, keys] = response;
+
+        if (keys.length > 0) {
+          cacheKeys.push(...transform(keys, keyPrefixLength));
+        }
+
+        if (next === '0') {
+          if (cacheKeys.length === 0) {
+            return Promise.resolve(0);
+          }
+
+          return redis.del(cacheKeys);
+        }
+
+        return scan(node, next);
+      });
+  }
+
+  return scan(masterNode);
+}
+
+exports.cleanupCache = cleanupCache;
 exports.processResult = processResult;
 exports.mapResult = mapResult;
 exports.hmget = hmget;

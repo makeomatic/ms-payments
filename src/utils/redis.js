@@ -1,6 +1,7 @@
 const JSONParse = JSON.parse;
 const JSONStringify = JSON.stringify;
 const reduce = require('lodash/reduce');
+const calcSlot = require('ioredis/lib/utils').calcSlot;
 
 function reducer(accumulator, value, key) {
   if (value !== undefined) {
@@ -26,3 +27,5 @@ exports.serialize = function serialize(object) {
 exports.deserialize = function deserialize(object) {
   return reduce(object, expander, {});
 };
+
+exports.calcSlot = calcSlot;

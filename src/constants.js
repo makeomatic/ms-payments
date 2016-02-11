@@ -15,4 +15,5 @@ module.exports = {
   PAYPAL_DATE_FORMAT: 'YYYY-MM-DD[T]HH:mm:ss[Z]',
   PLANS_DATA: 'plans-data',
   PLANS_INDEX: 'plans-index',
+  FREE_PLAN_ID: 'free',
 };
