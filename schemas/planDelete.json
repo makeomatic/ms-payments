@@ -2,5 +2,5 @@
 	"id": "plan.delete",
 	"type": "string",
 	"minLength": 1,
-	"pattern": "^P-.+\\|P-.+$"
+	"pattern": "^P-.+(\\|P-.+)?$"
 }
