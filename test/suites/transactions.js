@@ -26,8 +26,6 @@ describe('Transactions suite', function TransactionsSuite() {
   let agreement;
   let planId;
 
-  before('delay for ms-users', () => Promise.delay(2000));
-
   before(() => {
     payments = new Payments(TEST_CONFIG);
     return payments.connect();
@@ -73,7 +71,11 @@ describe('Transactions suite', function TransactionsSuite() {
         browser
           .pressButton('#continue')
           .catch(err => {
-            assert.equal(err.message, 'unable to verify the first certificate');
+            const idx = [
+              'Timeout: did not get to load all resources on this page',
+              'unable to verify the first certificate',
+            ].indexOf(err.message);
+            assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
             return { success: true, err };
           })
       ))
