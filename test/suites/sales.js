@@ -17,12 +17,10 @@ describe('Sales suite', function SalesSuite() {
   const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
   const listSaleHeaders = { routingKey: 'payments.sale.list' };
 
-  this.timeout(duration * 2);
+  this.timeout(duration * 4);
 
   let payments;
   let sale;
-
-  before('delay for ms-users', () => Promise.delay(2000));
 
   before(() => {
     payments = new Payments(TEST_CONFIG);
@@ -60,9 +58,10 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should execute approved sale', () => {
       const cappacity = new Promise(resolve => {
-        browser.on('redirect', request => {
-          if (request.url.indexOf('cappasity') >= 0) {
-            const parsed = url.parse(request.url, true);
+        browser.on('redirect', (request, response, redirectURL) => {
+          payments.log.debug('request.url redirect %s', redirectURL);
+          if (redirectURL.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(redirectURL, true);
             resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
         });
