@@ -111,10 +111,9 @@ function setField(plans, field, value) {
 }
 
 function createSaveToRedis({ config, redis, message }) {
-  const ids = map(message.id.split('|'), planGet);
-
   return Promise
-    .all(ids)
+    .bind(this, message.id.split('|'))
+    .map(planGet)
     .then(function updatePlansInRedis(plans) {
       const paypalQuery = {};
       const additionalData = {};
