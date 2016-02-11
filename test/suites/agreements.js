@@ -51,10 +51,6 @@ describe('Agreements suite', function AgreementSuite() {
     return payments.router(planId, deletePlanHeaders);
   });
 
-  after(function deleteFreePlan() {
-    return payments.router('free', deletePlanHeaders);
-  });
-
   describe('unit tests', function UnitSuite() {
     it('Should fail to create agreement on invalid schema', () => {
       return payments.router({ random: true }, createAgreementHeaders)

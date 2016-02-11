@@ -9,6 +9,7 @@
   },
   "rules": {
     "no-param-reassign": [2, {"props": false}],
-    "max-len": [2, 150]
+    "max-len": [2, 150],
+    "prefer-arrow-callback": 0
   }
 }

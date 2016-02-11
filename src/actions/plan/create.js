@@ -1,36 +1,17 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const key = require('../../redisKey.js');
+const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line
+const Errors = require('common-errors');
+
 const merge = require('lodash/merge');
-const mergeWith = require('lodash/mergeWith');
 const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
-const compact = require('lodash/compact');
-const isArray = Array.isArray;
-const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line
-const Errors = require('common-errors');
+
+const key = require('../../redisKey.js');
 const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
-
-function merger(a, b, k) {
-  if (k === 'id') {
-    return compact([a, b]).join('|');
-  }
-
-  if (isArray(a) && isArray(b)) {
-    return a.concat(b);
-  }
-}
-
-function createJoinPlans(message) {
-  return function joinPlans(plans) {
-    return {
-      plan: mergeWith({}, ...plans, { name: message.plan.name }, merger),
-      plans,
-    };
-  };
-}
+const { createJoinPlans } = require('../../utils/plans.js');
 
 function sendRequest(config, message) {
   const defaultMerchantPreferences = {
