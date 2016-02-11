@@ -90,7 +90,11 @@ describe('Sales suite', function SalesSuite() {
             browser
               .pressButton('#continue_abovefold')
               .catch(err => {
-                assert.equal(err.message, 'unable to verify the first certificate');
+                const idx = [
+                  'Timeout: did not get to load all resources on this page',
+                  'unable to verify the first certificate',
+                ].indexOf(err.message);
+                assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
                 return { success: true, err };
               }),
             cappacity
