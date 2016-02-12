@@ -160,5 +160,5 @@ module.exports = function planCreate(message) {
 
   return promise
     .then(saveToRedis)
-    .tap(() => cleanupCache(PLANS_INDEX));
+    .tap(() => cleanupCache.call(this, PLANS_INDEX));
 };
