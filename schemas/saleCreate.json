@@ -4,7 +4,11 @@
   "require": ["owner", "amount"],
   "properties": {
     "owner": { "type": "string", "minLength": 1 },
-    "amount": { "type": "number" }
+    "amount": {
+      "type": "number",
+      "minimum": 0.01,
+      "maximum": 9999999.99
+    }
   },
   "additionalProperties": false
 }

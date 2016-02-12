@@ -10,8 +10,6 @@ const { serialize } = require('../../utils/redis.js');
 const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 
-const PRICE_REGEXP = /(\d)(?=(\d{3})+\.)/g;
-
 function saleCreate(message) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
@@ -48,10 +46,10 @@ function saleCreate(message) {
       .then(metadata => {
         if (metadata.modelPrice) {
           // paypal requires stupid formatting
-          const price = metadata.modelPrice.toFixed(2).replace(PRICE_REGEXP, '$1,');
+          const price = metadata.modelPrice.toFixed(2);
           const total = sale.transactions[0].amount.total * metadata.modelPrice;
 
-          sale.transactions[0].amount.total = total.toFixed(2).replace(PRICE_REGEXP, '$1,');
+          sale.transactions[0].amount.total = total.toFixed(2);
           sale.transactions[0].item_list = {
             items: [{
               // limit of 127. Only thing that's kept during transactions sync
@@ -70,7 +68,7 @@ function saleCreate(message) {
 
   function sendRequest(request) {
     return paypalPaymentCreate(request, _config.paypal).then(newSale => {
-      const approval = find(newSale.links, ['rel', 'approval_url']);
+      const approval = find(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
         throw new NotSupportedError('Unexpected PayPal response!');
       }
