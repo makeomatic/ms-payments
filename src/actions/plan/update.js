@@ -48,7 +48,10 @@ function prepareUpdate(subscription, plans, period) {
 
 function updateSubscriptions(plans, subscriptions) {
   each(DATA_HOLDERS, (period, containerKey) => {
-    prepareUpdate(subscriptions[containerKey], plans, period);
+    const subscription = subscriptions[containerKey];
+    if (subscription) {
+      prepareUpdate(subscription, plans, period);
+    }
   });
 }
 
