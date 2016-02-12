@@ -14,8 +14,10 @@ function deleteFromRedis(id, redis) {
 
     pipeline.del(planKey);
     pipeline.srem(PLANS_INDEX, id);
+
     if (aliasedId !== id) {
       pipeline.srem(PLANS_INDEX, aliasedId);
+      pipeline.del(key(PLANS_DATA, aliasedId));
     }
 
     return pipeline.exec();

@@ -96,8 +96,13 @@ function saveToRedis({ plans, additionalData }) {
     pipeline.rename(key(PLANS_DATA, currentAlias), planKey);
   }
 
+  const serializedData = serialize(saveDataFull);
   pipeline.sadd(PLANS_INDEX, aliasedId);
-  pipeline.hmset(planKey, serialize(saveDataFull));
+  pipeline.hmset(planKey, serializedData);
+
+  if (saveDataFull.id !== aliasedId) {
+    pipeline.hmset(key(PLANS_DATA, saveDataFull.id), serializedData);
+  }
 
   // free plan id contains only 1 plan and it has same id as alias
   if (aliasedId !== FREE_PLAN_ID) {
