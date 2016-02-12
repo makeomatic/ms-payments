@@ -3,25 +3,28 @@ const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, {context: paypal.billingPlan}); // eslint-disable-line
 
-const map = require('lodash/map');
+const set = require('lodash/set');
 const assign = require('lodash/assign');
 const mergeWith = require('lodash/mergeWith');
 const findIndex = require('lodash/findIndex');
 const get = require('lodash/get');
+const each = require('lodash/each');
 
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 const { merger } = require('../../utils/plans.js');
+const { cleanupCache } = require('../../listUtils.js');
 
 const key = require('../../redisKey.js');
 const planGet = require('./get');
+const DATA_HOLDERS = {
+  monthly: 'month',
+  yearly: 'year',
+};
 
 function joinPlans(plans) {
   const plan = mergeWith({}, ...plans, merger);
-  return {
-    plan,
-    plans,
-  };
+  return { plan, plans };
 }
 
 function finder(pattern, path) {
@@ -35,48 +38,23 @@ function prepareUpdate(subscription, plans, period) {
   const planData = plans[index];
 
   if (subscription.models) {
-    // these plans always have only 1 entry
-    planData.subs[0].models = subscription.models;
+    set(planData, 'subs[0].models', subscription.models);
   }
 
   if (subscription.modelPrice) {
-    // these plans always have only 1 entry
-    planData.subs[0].modelPrice = subscription.modelPrice;
+    set(planData, 'subs[0].modelPrice', subscription.modelPrice);
   }
 }
 
 function updateSubscriptions(plans, subscriptions) {
-  if (subscriptions.monthly) {
-    prepareUpdate(subscriptions.monthly, plans, 'month');
-  }
-
-  if (subscriptions.yearly) {
-    prepareUpdate(subscriptions.yearly, plans, 'year');
-  }
+  each(DATA_HOLDERS, (period, containerKey) => {
+    prepareUpdate(subscriptions[containerKey], plans, period);
+  });
 }
 
-function setField(plans, field, value) {
-  const path = field.split('.');
-  const len = path.length;
-
-  function setPlanField(plan) {
-    let schema = plan;
-    for (let i = 0; i < len; i++) {
-      const elem = path[i];
-      if (!schema[elem]) {
-        schema[elem] = {};
-      }
-      schema = schema[elem];
-    }
-    schema[path[len - 1]] = value;
-    return schema;
-  }
-
-  if (Array.isArray(plans)) {
-    return map(plans, setPlanField);
-  }
-
-  return setPlanField(plans);
+function setField(_plans, path, value) {
+  const plans = Array.isArray(_plans) ? _plans : [_plans];
+  return plans.forEach(plan => set(plan, path, value));
 }
 
 function createSaveToRedis(message) {
@@ -91,7 +69,7 @@ function createSaveToRedis(message) {
       }
 
       if ('description' in message) {
-        setField(plans, 'description', message.description);
+        setField(plans, 'plan.description', message.description);
       }
 
       if ('alias' in message) {
@@ -118,7 +96,7 @@ function saveToRedis({ plans, additionalData }) {
   // if we are changing alias - that requires checking if new alias already exists
   if (aliasedId !== currentAlias) {
     pipeline.srem(PLANS_INDEX, currentAlias);
-    pipeline.del(key(PLANS_DATA, currentAlias));
+    pipeline.rename(key(PLANS_DATA, currentAlias), planKey);
   }
 
   pipeline.sadd(PLANS_INDEX, aliasedId);
@@ -173,5 +151,6 @@ module.exports = function planUpdate(message) {
       });
     })
     .then(createSaveToRedis)
-    .then(saveToRedis);
+    .then(saveToRedis)
+    .tap(() => cleanupCache.call(this, PLANS_INDEX));
 };
