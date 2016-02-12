@@ -10,6 +10,7 @@ const find = require('lodash/find');
 
 const statePlan = require('./state.js');
 const key = require('../../redisKey.js');
+const { cleanupCache } = require('../../listUtils.js');
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 const { createJoinPlans } = require('../../utils/plans.js');
@@ -157,5 +158,7 @@ module.exports = function planCreate(message) {
     promise = promise.return([config, message]).spread(sendRequest).then(createJoinPlans(message));
   }
 
-  return promise.then(saveToRedis);
+  return promise
+    .then(saveToRedis)
+    .tap(() => cleanupCache(PLANS_INDEX));
 };
