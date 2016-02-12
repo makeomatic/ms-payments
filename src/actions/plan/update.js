@@ -42,7 +42,7 @@ function prepareUpdate(subscription, plans, period) {
   }
 
   if (subscription.modelPrice) {
-    set(planData, 'subs[0].modelPrice', subscription.modelPrice);
+    set(planData, 'subs[0].price', subscription.modelPrice);
   }
 }
 
