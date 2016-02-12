@@ -133,6 +133,11 @@ function saveToRedis({ plans, additionalData }) {
 
 /**
  * Update paypal plan with a special case for a free plan
+ * WARNING: this method is prone to race conditions, and, therefore, requires a lock to be
+ * used before updating data
+ *
+ * TODO: add lock when updating aliases
+ *
  * @param  {Object} message
  * @return {Promise}
  */
