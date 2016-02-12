@@ -11,12 +11,11 @@ const get = require('lodash/get');
 const each = require('lodash/each');
 
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
-const { serialize } = require('../../utils/redis.js');
+const { serialize, deserialize } = require('../../utils/redis.js');
 const { merger } = require('../../utils/plans.js');
 const { cleanupCache } = require('../../listUtils.js');
 
 const key = require('../../redisKey.js');
-const planGet = require('./get');
 const DATA_HOLDERS = {
   monthly: 'month',
   yearly: 'year',
@@ -27,14 +26,8 @@ function joinPlans(plans) {
   return { plan, plans };
 }
 
-function finder(pattern, path) {
-  return function findPattern(element) {
-    return get(element, path).toLowerCase().indexOf(pattern.toLowerCase()) >= 0;
-  };
-}
-
 function prepareUpdate(subscription, plans, period) {
-  const index = findIndex(plans, finder(period, 'plan.name'));
+  const index = findIndex(plans, it => get(it, 'plan.payment_definitions[0].frequency', '').toLowerCase() === period);
   const planData = plans[index];
 
   if (subscription.models) {
@@ -61,9 +54,10 @@ function setField(_plans, path, value) {
 }
 
 function createSaveToRedis(message) {
+  const { redis } = this;
   return Promise
     .bind(this, message.id.split('|'))
-    .map(planGet)
+    .map(id => redis.hgetall(key(PLANS_DATA, id)).then(deserialize))
     .then(function updatePlansInRedis(plans) {
       const additionalData = {};
 
@@ -104,10 +98,14 @@ function saveToRedis({ plans, additionalData }) {
 
   pipeline.sadd(PLANS_INDEX, aliasedId);
   pipeline.hmset(planKey, serialize(saveDataFull));
-  plans.forEach(planData => {
-    const saveData = assign(planData, additionalData);
-    pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
-  });
+
+  // free plan id contains only 1 plan and it has same id as alias
+  if (aliasedId !== FREE_PLAN_ID) {
+    plans.forEach(planData => {
+      const saveData = assign(planData, additionalData);
+      pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
+    });
+  }
 
   return pipeline.exec().return(saveDataFull);
 }
