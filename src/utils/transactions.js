@@ -84,7 +84,7 @@ function parseSale(sale, owner) {
     const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
     const [transaction] = sale.transactions;
     const description = formatItemList(transaction.item_list);
-    const type = description.indexOf('3d printing') >= 0 && TRANSACTION_TYPE_3D || TRANSACTION_TYPE_SALE;
+    const type = (description.indexOf('3d printing') >= 0) && TRANSACTION_TYPE_3D || TRANSACTION_TYPE_SALE;
 
     return {
       id: sale.id,
