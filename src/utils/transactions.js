@@ -127,7 +127,6 @@ module.exports = exports = {
   getOwner,
   saveCommon,
   parseSale,
-  parsePrintSale,
   parseAgreementTransaction,
   remapState,
 };
