@@ -12,6 +12,7 @@ module.exports = {
   AGREEMENT_TRANSACTIONS_DATA: 'transactions:meta',
   TRANSACTION_TYPE_RECURRING: 0,
   TRANSACTION_TYPE_SALE: 1,
+  TRANSACTION_TYPE_3D: 2,
   PAYPAL_DATE_FORMAT: 'YYYY-MM-DD[T]HH:mm:ss[Z]',
   PLANS_DATA: 'plans-data',
   PLANS_INDEX: 'plans-index',

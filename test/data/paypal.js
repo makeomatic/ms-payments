@@ -86,3 +86,9 @@ module.exports.testSaleData = {
   'owner': 'test@test.ru',
   'amount': 10,
 };
+
+module.exports.testDynamicSaleData = {
+  'owner': 'test@test.ru',
+  'amount': 10,
+  'type': 2,
+};
