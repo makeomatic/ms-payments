@@ -48,7 +48,7 @@ ms-users:
     - redis_3
     - rabbitmq
     - redis_client
-  image: makeomatic/ms-users:5.5.0
+  image: makeomatic/ms-users:5.6.0
   hostname: ms-users
   container_name: ms-users
   volumes:
@@ -75,6 +75,6 @@ tester:
   environment:
     NODE_ENV: ${NODE_ENV}
     DEBUG: ${DEBUG}
-    BLUEBIRD_DEBUG: ${B_DEBUG}
+    CI: ${CI}
     MS_PAYMENTS__LOGGER: 'true'
   command: "true"
