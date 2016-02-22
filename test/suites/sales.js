@@ -6,7 +6,7 @@ const url = require('url');
 const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
-  const browser = new Browser({ runScripts: false, waitDuration: duration });
+  const browser = new Browser({ runScripts: true, waitDuration: duration });
   const Payments = require('../../src');
 
   // mock paypal requests
@@ -23,8 +23,19 @@ describe('Sales suite', function SalesSuite() {
   let payments;
   let sale;
 
+  browser.on('redirect', (request, response, redirectURL) => {
+    payments.log.debug('request.url redirect %s', redirectURL);
+    if (redirectURL.indexOf('cappasity') >= 0) {
+      const parsed = url.parse(redirectURL, true);
+      console.log(request);
+      console.log(response);
+      //resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+    }
+  });
+
   function approve(saleUrl) {
-    const cappacity = new Promise(resolve => {
+    console.log(saleUrl);
+    /*const cappacity = new Promise(resolve => {
       browser.on('redirect', (request, response, redirectURL) => {
         payments.log.debug('request.url redirect %s', redirectURL);
         if (redirectURL.indexOf('cappasity') >= 0) {
@@ -32,9 +43,13 @@ describe('Sales suite', function SalesSuite() {
           resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
         }
       });
-    });
+    });*/
     return browser
       .visit(saleUrl)
+      .catch(err => {
+        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
+        return { success: true, err };
+      })
       .then(() => {
         browser.assert.success();
         return browser.pressButton('#loadLogin');
@@ -45,27 +60,52 @@ describe('Sales suite', function SalesSuite() {
       })
       .then(() => (
         browser
-          .fill('#login_email', 'test@cappacity.com')
-          .fill('#login_password', '12345678')
-          .pressButton('#submitLogin')
+          .fill('#email', 'test@cappacity.com')
+          .fill('#password', '12345678')
+          .pressButton('input[type=submit]')
       ))
+      .catch(err => {
+        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
+        return { success: true, err };
+      })
       .then(() => (
+        browser.pressButton('#confirmButtonTop')
+      ))
+      .catch(err => {
+        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
+        return { success: true, err };
+      })
+      .catch(err => {
+        const idx = [
+          'Timeout: did not get to load all resources on this page',
+          'unable to verify the first certificate',
+        ].indexOf(err.message);
+        payments.log.debug(err.message);
+        assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
+        return { success: true, err };
+      })
+      .then(() => {
+        browser.assert.success();
+        browser.dump();
+      });
+      /*.then(() => (
         // TypeError: unable to verify the first certificate
         Promise.join(
           browser
-            .pressButton('#continue_abovefold')
+            .pressButton('input[type=submit]')
             .catch(err => {
               const idx = [
                 'Timeout: did not get to load all resources on this page',
                 'unable to verify the first certificate',
               ].indexOf(err.message);
+              console.log(err.message);
               assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
               return { success: true, err };
             }),
           cappacity
           )
           .then(data => data[1])
-      ));
+      ));*/
   }
 
   before(() => {
@@ -104,14 +144,14 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should execute approved sale', () => {
       return approve(sale.url)
-        .then(query => (
-          payments.router(query, executeSaleHeaders)
+        .then(query => {
+          return payments.router(query, executeSaleHeaders)
             .reflect()
             .then(result => {
               debug(result);
               assert(result.isFulfilled());
-            })
-        ));
+            });
+        });
     });
 
     it('Should create 3d printing sale', () => {
