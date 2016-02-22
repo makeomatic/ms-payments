@@ -1,12 +1,11 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const Browser = require('zombie');
+const nightmare = require('../browser');
 const url = require('url');
 const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
-  const browser = new Browser({ runScripts: true, waitDuration: duration });
   const Payments = require('../../src');
 
   // mock paypal requests
@@ -23,89 +22,40 @@ describe('Sales suite', function SalesSuite() {
   let payments;
   let sale;
 
-  browser.on('redirect', (request, response, redirectURL) => {
-    payments.log.debug('request.url redirect %s', redirectURL);
-    if (redirectURL.indexOf('cappasity') >= 0) {
-      const parsed = url.parse(redirectURL, true);
-      console.log(request);
-      console.log(response);
-      //resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-    }
-  });
-
   function approve(saleUrl) {
-    console.log(saleUrl);
-    /*const cappacity = new Promise(resolve => {
-      browser.on('redirect', (request, response, redirectURL) => {
-        payments.log.debug('request.url redirect %s', redirectURL);
-        if (redirectURL.indexOf('cappasity') >= 0) {
-          const parsed = url.parse(redirectURL, true);
-          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-        }
-      });
-    });*/
-    return browser
-      .visit(saleUrl)
-      .catch(err => {
-        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
-        return { success: true, err };
-      })
-      .then(() => {
-        browser.assert.success();
-        return browser.pressButton('#loadLogin');
-      })
-      .catch(err => {
-        assert.equal(err.message, 'No BUTTON \'#loadLogin\'', err.message);
-        return { success: true, err };
-      })
-      .then(() => (
-        browser
-          .fill('#email', 'test@cappacity.com')
-          .fill('#password', '12345678')
-          .pressButton('input[type=submit]')
-      ))
-      .catch(err => {
-        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
-        return { success: true, err };
-      })
-      .then(() => (
-        browser.pressButton('#confirmButtonTop')
-      ))
-      .catch(err => {
-        assert.equal(err.message, 'Timeout: did not get to load all resources on this page', err.message);
-        return { success: true, err };
-      })
-      .catch(err => {
-        const idx = [
-          'Timeout: did not get to load all resources on this page',
-          'unable to verify the first certificate',
-        ].indexOf(err.message);
-        payments.log.debug(err.message);
-        assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
-        return { success: true, err };
-      })
-      .then(() => {
-        browser.assert.success();
-        browser.dump();
-      });
-      /*.then(() => (
-        // TypeError: unable to verify the first certificate
-        Promise.join(
-          browser
-            .pressButton('input[type=submit]')
-            .catch(err => {
-              const idx = [
-                'Timeout: did not get to load all resources on this page',
-                'unable to verify the first certificate',
-              ].indexOf(err.message);
-              console.log(err.message);
-              assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
-              return { success: true, err };
-            }),
-          cappacity
-          )
-          .then(data => data[1])
-      ));*/
+    const browser = nightmare({
+      show: true,
+      waitTimeout: duration * 2,
+    });
+
+    return new Promise(function(resolve) {
+      browser
+        .on('did-get-response-details', function(event, status, newUrl) {
+          if (newUrl.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(newUrl, true);
+            resolve({payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId});
+          }
+        })
+        .goto(saleUrl)
+        .ewait('dom-ready')
+        .evaluate(function() {
+          document.querySelector('#email').value = 'test@cappacity.com';
+          document.querySelector('#password').value = '12345678';
+          document.querySelector('input[type=submit]').click();
+        })
+        .wait(function() {
+          function isHidden(el) {
+            const style = window.getComputedStyle(el);
+            return (style.display === 'none');
+          }
+          return !isHidden(document.querySelector('#confirmButtonTop'));
+        })
+        .evaluate(function() {
+          document.querySelector('#confirmButtonTop').click();
+        })
+        .wait(3000)
+        .end();
+    }).bind(browser);
   }
 
   before(() => {
@@ -144,6 +94,7 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should execute approved sale', () => {
       return approve(sale.url)
+        .tap()
         .then(query => {
           return payments.router(query, executeSaleHeaders)
             .reflect()
