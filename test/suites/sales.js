@@ -1,61 +1,68 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const nightmare = require('../browser');
+const Nightmare = require('nightmare');
 const url = require('url');
+const once = require('lodash/once');
 const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
   const Payments = require('../../src');
 
-  // mock paypal requests
-  // require('../mocks/paypal');
   const { testSaleData, testDynamicSaleData } = require('../data/paypal');
-
   const createSaleHeaders = { routingKey: 'payments.sale.create' };
   const createDynamicSaleHeaders = { routingKey: 'payments.sale.createDynamic' };
   const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
   const listSaleHeaders = { routingKey: 'payments.sale.list' };
 
-  this.timeout(duration * 4);
+  this.timeout(duration * 10);
 
   let payments;
   let sale;
 
   function approve(saleUrl) {
-    const browser = nightmare({
-      show: true,
-      waitTimeout: duration * 2,
+    const browser = new Nightmare({
+      waitTimeout: 15000,
     });
 
-    return new Promise(function(resolve) {
+    return new Promise(_resolve => {
+      const resolve = once(_resolve);
+
       browser
-        .on('did-get-response-details', function(event, status, newUrl) {
+        .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
           if (newUrl.indexOf('cappasity') >= 0) {
             const parsed = url.parse(newUrl, true);
-            resolve({payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId});
+            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          }
+        })
+        .on('did-get-response-details', (event, status, newUrl) => {
+          if (newUrl.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(newUrl, true);
+            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
           }
         })
         .goto(saleUrl)
-        .ewait('dom-ready')
-        .evaluate(function() {
-          document.querySelector('#email').value = 'test@cappacity.com';
-          document.querySelector('#password').value = '12345678';
-          document.querySelector('input[type=submit]').click();
-        })
-        .wait(function() {
-          function isHidden(el) {
-            const style = window.getComputedStyle(el);
-            return (style.display === 'none');
-          }
-          return !isHidden(document.querySelector('#confirmButtonTop'));
-        })
-        .evaluate(function() {
-          document.querySelector('#confirmButtonTop').click();
-        })
+        .screenshot('./ss/pre-email.png')
+        .wait('#email')
+        .type('#email', false)
         .wait(3000)
-        .end();
-    }).bind(browser);
+        .type('#email', 'test@cappacity.com')
+        .type('#password', '12345678')
+        .wait(3000)
+        .screenshot('./ss/after-email.png')
+        .click('input[type=submit]')
+        .wait(10000)
+        .screenshot('./ss/after-submit.png')
+        .wait('#confirmButtonTop')
+        .screenshot('./ss/pre-confirm.png')
+        .click('#confirmButtonTop')
+        .wait(3000)
+        .screenshot('./ss/after-confirm.png')
+        .end()
+        .then(() => {
+          console.log('completed running %s', saleUrl); // eslint-disable-line
+        });
+    });
   }
 
   before(() => {
@@ -130,9 +137,9 @@ describe('Sales suite', function SalesSuite() {
     it('Should list all sales', () => (
       payments.router({}, listSaleHeaders)
         .reflect()
-        .then(result => (
-          result.isFulfilled() ? result.value() : Promise.reject(result.reason())
-        ))
+        .then(result => {
+          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
+        })
     ));
   });
 });

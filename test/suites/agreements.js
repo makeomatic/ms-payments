@@ -111,9 +111,9 @@ describe('Agreements suite', function AgreementSuite() {
         })
         .then(() => {
           return browser
-            .fill('#login_email', 'test@cappacity.com')
-            .fill('#login_password', '12345678')
-            .pressButton('#submitLogin');
+            .fill('#email', 'test@cappacity.com')
+            .fill('#password', '12345678')
+            .pressButton('input[type=submit]');
         })
         .then(() => {
           // TypeError: unable to verify the first certificate
@@ -171,6 +171,8 @@ describe('Agreements suite', function AgreementSuite() {
             if (agreement.state.toLowerCase() === 'pending') {
               return Promise.delay(500).then(waitForAgreementToBecomeActive);
             }
+
+            return null;
           });
       }
 

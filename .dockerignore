@@ -46,3 +46,4 @@ docker-release.sh
 .eslintrc
 .gitignore
 .npmignore
+/ss

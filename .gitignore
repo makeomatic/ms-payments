@@ -36,3 +36,4 @@ docs
 .babel-cache
 compiled-test
 docker-compose
+/ss
