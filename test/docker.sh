@@ -26,7 +26,6 @@ if ! [ -x "$COMPOSE" ]; then
 fi
 
 function finish {
-  rm -rf ./ss
   $COMPOSE -f $DC stop
   $COMPOSE -f $DC rm -f
 }
