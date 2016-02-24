@@ -61,6 +61,7 @@ describe('Agreements suite', function AgreementSuite() {
           _debug('navigate to %s', newUrl);
           parseURL(newUrl);
         })
+        .goto(saleUrl)
         .screenshot('./ss/pre-email.png')
         .wait('#email')
         .type('#email', false)
