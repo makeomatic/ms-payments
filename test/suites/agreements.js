@@ -99,6 +99,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should execute an approved agreement', () => {
+      console.log(billingAgreement.url);
       return browser.visit(billingAgreement.url)
         .then(() => {
           browser.assert.success();
@@ -111,9 +112,9 @@ describe('Agreements suite', function AgreementSuite() {
         })
         .then(() => {
           return browser
-            .fill('#email', 'test@cappacity.com')
-            .fill('#password', '12345678')
-            .pressButton('input[type=submit]');
+            .fill('#login_email', 'test@cappacity.com')
+            .fill('#login_password', '12345678')
+            .pressButton('#submitLogin');
         })
         .then(() => {
           // TypeError: unable to verify the first certificate
@@ -121,8 +122,15 @@ describe('Agreements suite', function AgreementSuite() {
             .pressButton('#continue')
             .catch(err => {
               // when dev servers are off
-              const idx = ['Timeout: did not get to load all resources on this page', 'unable to verify the first certificate'].indexOf(err.message);
-              assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
+              const idx = [
+                'Timeout: did not get to load all resources on this page',
+                'unable to verify the first certificate',
+                'code 404',
+                'ENOTFOUND',
+              ].findIndex((item) => {
+                return err.message.indexOf(item) >= 0;
+              });
+              assert.notEqual(idx, -1, err.message);
               return { success: true, err };
             });
         })
@@ -156,7 +164,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should pull updates for an agreement', () => {
-      this.timeout(60000);
+      this.timeout(duration);
 
       function waitForAgreementToBecomeActive() {
         return payments.router({}, syncAgreementsHeaders)
