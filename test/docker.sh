@@ -10,7 +10,7 @@ MOCHA=$BIN/_mocha
 COVER="$BIN/isparta cover"
 NODE=$BIN/babel-node
 TESTS=${TESTS:-test/suites/*.js}
-export IMAGE=nightmare
+export IMAGE=makeomatic/nightmare
 
 echo $DIR
 
@@ -31,7 +31,7 @@ function finish {
 }
 trap finish EXIT
 
-cat test/Dockerfile | docker build -t nightmare -
+# cat test/Dockerfile | docker build -t makeomatic/nightmare -
 $COMPOSE -f $DC up -d ms-users
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
