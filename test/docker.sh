@@ -10,6 +10,9 @@ MOCHA=$BIN/_mocha
 COVER="$BIN/isparta cover"
 NODE=$BIN/babel-node
 TESTS=${TESTS:-test/suites/*.js}
+export IMAGE=makeomatic/nightmare
+
+echo $DIR
 
 if [ -z "$NODE_VER" ]; then
   NODE_VER="5.6.0"
@@ -28,21 +31,24 @@ function finish {
 }
 trap finish EXIT
 
-export IMAGE=makeomatic/alpine-node:$NODE_VER
-$COMPOSE -f $DC up -d
+# cat test/Dockerfile | docker build -t makeomatic/nightmare -
+$COMPOSE -f $DC up -d ms-users
 
 if [[ "$SKIP_REBUILD" != "1" ]]; then
   echo "rebuilding native dependencies..."
-  $COMPOSE -f $DC run --rm tester npm rebuild
+  $COMPOSE -f $DC run --rm tester "npm rebuild"
 fi
 
 echo "cleaning old coverage"
 rm -rf ./coverage
 
 echo "running tests"
+mkdir ./ss
+rm ./ss/*.png
 for fn in $TESTS; do
   echo "running $fn"
-  $COMPOSE -f $DC run --rm tester /bin/sh -c "$NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
+  echo $COMPOSE -f $DC run --rm tester "xvfb-run --server-args=\"-screen 0 1024x768x24\" $NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn"
+  $COMPOSE -f $DC run --rm tester "xvfb-run --server-args=\"-screen 0 1024x768x24\" $NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn" || exit 1
 done
 
 echo "started generating combined coverage"

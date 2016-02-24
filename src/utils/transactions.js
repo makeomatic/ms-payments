@@ -7,18 +7,21 @@ const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const {
   TRANSACTION_TYPE_RECURRING,
   TRANSACTION_TYPE_SALE,
+  TRANSACTION_TYPE_3D,
   TRANSACTIONS_INDEX,
   TRANSACTIONS_COMMON_DATA,
-} = require('../constants.js');
+  } = require('../constants.js');
 
 function getTransactionType(type) {
   switch (type) {
-    case TRANSACTION_TYPE_RECURRING:
-      return 'subscription';
-    case TRANSACTION_TYPE_SALE:
-      return 'sale';
-    default:
-      throw new Error('unsupported transaction type');
+  case TRANSACTION_TYPE_RECURRING:
+    return 'subscription';
+  case TRANSACTION_TYPE_SALE:
+    return 'sale';
+  case TRANSACTION_TYPE_3D:
+    return 'print';
+  default:
+    throw new Error('unsupported transaction type');
   }
 }
 
@@ -80,17 +83,19 @@ function parseSale(sale, owner) {
     // reasonable default?
     const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
     const [transaction] = sale.transactions;
+    const description = formatItemList(transaction.item_list);
+    const type = (description.indexOf('3d printing') >= 0) && TRANSACTION_TYPE_3D || TRANSACTION_TYPE_SALE;
 
     return {
       id: sale.id,
-      type: TRANSACTION_TYPE_SALE,
+      type,
       owner,
       payer,
       date: new Date(sale.create_time).getTime(),
       update_time: new Date(sale.update_time || sale.create_time).getTime(),
       amount: transaction.amount.total,
       currency: transaction.amount.currency,
-      description: formatItemList(transaction.item_list),
+      description,
       // Payment state. Must be set to one of the one of the following: created; approved; failed; canceled; expired; pending.
       // Value assigned by PayPal.
       status: remapState(sale.state),
