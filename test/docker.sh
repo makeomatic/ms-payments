@@ -44,6 +44,7 @@ rm -rf ./coverage
 
 echo "running tests"
 mkdir ./ss
+rm ./ss/*.png
 for fn in $TESTS; do
   echo "running $fn"
   echo $COMPOSE -f $DC run --rm tester "xvfb-run --server-args=\"-screen 0 1024x768x24\" $NODE $COVER --dir ./coverage/${fn##*/} $MOCHA -- $fn"
