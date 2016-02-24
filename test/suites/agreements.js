@@ -3,6 +3,7 @@ const assert = require('assert');
 const Nightmare = require('nightmare');
 const { debug, duration } = require('../utils');
 const TEST_CONFIG = require('../config');
+const url = require('url');
 const once = require('lodash/once');
 
 describe('Agreements suite', function AgreementSuite() {
@@ -38,20 +39,28 @@ describe('Agreements suite', function AgreementSuite() {
     return new Promise(_resolve => {
       const resolve = once(_resolve);
 
+      const _debug = require('debug')('nightmare');
+
+      function parseURL(newUrl) {
+        if (newUrl.indexOf('cappasity') >= 0) {
+          const parsed = url.parse(newUrl, true);
+          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+        }
+      }
+
       browser
         .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
-          if (newUrl.indexOf('cappasity') >= 0) {
-            const parsed = url.parse(newUrl, true);
-            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-          }
+          _debug('redirect to %s', newUrl);
+          parseURL(newUrl);
         })
         .on('did-get-response-details', (event, status, newUrl) => {
-          if (newUrl.indexOf('cappasity') >= 0) {
-            const parsed = url.parse(newUrl, true);
-            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-          }
+          _debug('response from %s', newUrl);
+          parseURL(newUrl);
         })
-        .goto(saleUrl)
+        .on('will-navigate', (event, newUrl) => {
+          _debug('navigate to %s', newUrl);
+          parseURL(newUrl);
+        })
         .screenshot('./ss/pre-email.png')
         .wait('#email')
         .type('#email', false)
@@ -144,51 +153,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should execute an approved agreement', () => {
-      console.log(billingAgreement.url);
       return approve(billingAgreement.url)
-        .then(() => {
-          return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
-            .reflect()
-            .then(result => {
-              debug(result);
-              assert(result.isFulfilled());
-              billingAgreement.id = result.value().id;
-            });
-        });
-      return browser.visit(billingAgreement.url)
-        .then(() => {
-          browser.assert.success();
-          return browser
-            .pressButton('#loadLogin')
-            .catch(err => {
-              assert.equal(err.message, 'No BUTTON \'#loadLogin\'');
-              return { success: true, err };
-            });
-        })
-        .then(() => {
-          return browser
-            .fill('#login_email', 'test@cappacity.com')
-            .fill('#login_password', '12345678')
-            .pressButton('#submitLogin');
-        })
-        .then(() => {
-          // TypeError: unable to verify the first certificate
-          return browser
-            .pressButton('#continue')
-            .catch(err => {
-              // when dev servers are off
-              const idx = [
-                'Timeout: did not get to load all resources on this page',
-                'unable to verify the first certificate',
-                'code 404',
-                'ENOTFOUND',
-              ].findIndex((item) => {
-                return err.message.indexOf(item) >= 0;
-              });
-              assert.notEqual(idx, -1, err.message);
-              return { success: true, err };
-            });
-        })
         .then(() => {
           return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
             .reflect()

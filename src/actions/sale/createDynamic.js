@@ -12,7 +12,6 @@ const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 
 function saleCreate(message) {
   const { _config, redis } = this;
-  const { users: { prefix, postfix } } = _config;
   const promise = Promise.bind(this);
 
   // convert request to sale object
@@ -43,7 +42,6 @@ function saleCreate(message) {
   };
 
   function sendRequest() {
-    console.log(require('util').inspect(sale, {depth:5}))
     return paypalPaymentCreate(sale, _config.paypal).then(newSale => {
       const approval = find(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
