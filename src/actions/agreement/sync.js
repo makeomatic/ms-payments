@@ -84,7 +84,7 @@ function agreementSync(message) {
         return amqp
           .publishAndWait(getMetadata, request, { timeout: 10000 })
           .then(metadata => {
-            pool.push({ metadata });
+            pool.push({ username, metadata });
           });
       });
     });
@@ -93,7 +93,7 @@ function agreementSync(message) {
   // 3. bill users
   const billUser = user => {
     const meta = user.metadata[audience];
-    return bill.call(this, meta);
+    return bill.call(this, { ...meta, username: user.username });
   };
 
   return getUsers()

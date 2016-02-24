@@ -6,7 +6,7 @@ const sync = require('../transaction/sync.js');
 const moment = require('moment');
 const Errors = require('common-errors');
 
-const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
+const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'status'];
 const PLAN_KEYS = ['plan', 'subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
@@ -14,11 +14,11 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 const find = require('lodash/find');
 const assign = require('lodash/assign');
 
-const { PLANS_DATA, AGREEMENT_DATA } = require('../../constants.js');
+const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
 // check agreement bill
 function agreementBill(input) {
-  const { agreement: id, subscriptionInterval } = input;
+  const { agreement: id, subscriptionInterval, username } = input;
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix } } = _config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
@@ -26,13 +26,21 @@ function agreementBill(input) {
 
   // pull agreement data
   function getAgreement() {
-    const agreementKey = key(AGREEMENT_DATA, id);
+    if (id === FREE_PLAN_ID) {
+      return {
+        owner: username,
+        plan: {
+          id: FREE_PLAN_ID,
+        },
+      };
+    }
 
+    const agreementKey = key(AGREEMENT_DATA, id);
     return redis
       .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
       .then(data => {
-        const { agreement, plan, owner, state } = agreementParser(data);
-        if (state.toLowerCase() === 'cancelled') {
+        const { agreement, plan, owner, status } = agreementParser(data);
+        if (status.toLowerCase() === 'cancelled') {
           throw new Errors.NotPermitted('Operation not permitted on cancelled agreements.');
         }
 
@@ -57,7 +65,7 @@ function agreementBill(input) {
 
   // fetch transactions from paypal
   function getTransactions(data) {
-    if (data.agreement.plan.id === 'free') {
+    if (data.agreement.plan.id === FREE_PLAN_ID) {
       return Promise.resolve(data);
     }
 
@@ -108,7 +116,7 @@ function agreementBill(input) {
 
   // verify transactions data
   function checkData(data) {
-    if (data.agreement.plan.id === 'free') {
+    if (data.agreement.plan.id === FREE_PLAN_ID) {
       return billNextFreeCycle(data);
     }
 
