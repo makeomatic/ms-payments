@@ -7,6 +7,9 @@
     },
     "nextCycle": {
       "type": "integer"
+    },
+    "username": {
+      "type": "string"
     }
   }
 }
