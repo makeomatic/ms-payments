@@ -26,7 +26,7 @@ function saleCreate(message) {
         total: message.amount.toFixed(2),
         currency: 'USD',
       },
-      items_list: {
+      item_list: {
         items: [{
           name: `Client [${message.owner}]. 3d printing service`.slice(0, 127),
           price: message.amount.toFixed(2),
@@ -42,8 +42,9 @@ function saleCreate(message) {
     },
   };
 
-  function sendRequest(request) {
-    return paypalPaymentCreate(request, _config.paypal).then(newSale => {
+  function sendRequest() {
+    console.log(require('util').inspect(sale, {depth:5}))
+    return paypalPaymentCreate(sale, _config.paypal).then(newSale => {
       const approval = find(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
         throw new NotSupportedError('Unexpected PayPal response!');
