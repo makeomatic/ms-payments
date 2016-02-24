@@ -35,3 +35,4 @@ docs
 .vagrant
 .babel-cache
 compiled-test
+docker-compose
