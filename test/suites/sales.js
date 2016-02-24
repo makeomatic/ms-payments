@@ -27,19 +27,27 @@ describe('Sales suite', function SalesSuite() {
 
     return new Promise(_resolve => {
       const resolve = once(_resolve);
+      const _debug = require('debug')('nightmare');
+
+      function parseURL(newUrl) {
+        if (newUrl.indexOf('cappasity') >= 0) {
+          const parsed = url.parse(newUrl, true);
+          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+        }
+      }
 
       browser
         .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
-          if (newUrl.indexOf('cappasity') >= 0) {
-            const parsed = url.parse(newUrl, true);
-            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-          }
+          _debug('redirect to %s', newUrl);
+          parseURL(newUrl);
         })
         .on('did-get-response-details', (event, status, newUrl) => {
-          if (newUrl.indexOf('cappasity') >= 0) {
-            const parsed = url.parse(newUrl, true);
-            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
-          }
+          _debug('response from %s', newUrl);
+          parseURL(newUrl);
+        })
+        .on('will-navigate', (event, newUrl) => {
+          _debug('navigate to %s', newUrl);
+          parseURL(newUrl);
         })
         .goto(saleUrl)
         .screenshot('./ss/pre-email.png')
