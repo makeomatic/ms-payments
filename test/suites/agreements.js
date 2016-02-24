@@ -1,11 +1,11 @@
 const Promise = require('bluebird');
 const assert = require('assert');
-const Browser = require('zombie');
+const Nightmare = require('nightmare');
 const { debug, duration } = require('../utils');
 const TEST_CONFIG = require('../config');
+const once = require('lodash/once');
 
 describe('Agreements suite', function AgreementSuite() {
-  const browser = new Browser({ runScripts: false, waitDuration: duration * 2 });
   const Payments = require('../../src');
 
   // mock paypal requests
@@ -29,6 +29,51 @@ describe('Agreements suite', function AgreementSuite() {
   let payments;
 
   this.timeout(duration * 4);
+
+  function approve(saleUrl) {
+    const browser = new Nightmare({
+      waitTimeout: 15000,
+    });
+
+    return new Promise(_resolve => {
+      const resolve = once(_resolve);
+
+      browser
+        .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
+          if (newUrl.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(newUrl, true);
+            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          }
+        })
+        .on('did-get-response-details', (event, status, newUrl) => {
+          if (newUrl.indexOf('cappasity') >= 0) {
+            const parsed = url.parse(newUrl, true);
+            resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          }
+        })
+        .goto(saleUrl)
+        .screenshot('./ss/pre-email.png')
+        .wait('#email')
+        .type('#email', false)
+        .wait(3000)
+        .type('#email', 'test@cappacity.com')
+        .type('#password', '12345678')
+        .wait(3000)
+        .screenshot('./ss/after-email.png')
+        .click('input[type=submit]')
+        .wait(10000)
+        .screenshot('./ss/after-submit.png')
+        .wait('#confirmButtonTop')
+        .screenshot('./ss/pre-confirm.png')
+        .click('#confirmButtonTop')
+        .wait(3000)
+        .screenshot('./ss/after-confirm.png')
+        .end()
+        .then(() => {
+          console.log('completed running %s', saleUrl); // eslint-disable-line
+        });
+    });
+  }
 
   before(function startService() {
     payments = new Payments(TEST_CONFIG);
@@ -100,6 +145,16 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an approved agreement', () => {
       console.log(billingAgreement.url);
+      return approve(billingAgreement.url)
+        .then(() => {
+          return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
+            .reflect()
+            .then(result => {
+              debug(result);
+              assert(result.isFulfilled());
+              billingAgreement.id = result.value().id;
+            });
+        });
       return browser.visit(billingAgreement.url)
         .then(() => {
           browser.assert.success();

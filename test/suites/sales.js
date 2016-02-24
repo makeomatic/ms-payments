@@ -15,7 +15,7 @@ describe('Sales suite', function SalesSuite() {
   const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
   const listSaleHeaders = { routingKey: 'payments.sale.list' };
 
-  this.timeout(duration * 10);
+  this.timeout(duration * 4);
 
   let payments;
   let sale;
