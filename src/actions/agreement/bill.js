@@ -6,7 +6,7 @@ const sync = require('../transaction/sync.js');
 const moment = require('moment');
 const Errors = require('common-errors');
 
-const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
+const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'status'];
 const PLAN_KEYS = ['plan', 'subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
@@ -31,8 +31,8 @@ function agreementBill(input) {
     return redis
       .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
       .then(data => {
-        const { agreement, plan, owner, state } = agreementParser(data);
-        if (state.toLowerCase() === 'cancelled') {
+        const { agreement, plan, owner, status } = agreementParser(data);
+        if (status.toLowerCase() === 'cancelled') {
           throw new Errors.NotPermitted('Operation not permitted on cancelled agreements.');
         }
 
