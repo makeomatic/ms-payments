@@ -13,6 +13,7 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 
 const find = require('lodash/find');
 const assign = require('lodash/assign');
+const get = require('lodash/get');
 
 const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
@@ -131,7 +132,7 @@ function agreementBill(input) {
 
   function saveToRedis(data) {
     const path = `${prefix}.${postfix.updateMetadata}`;
-    const planFreq = data.agreement.plan.payment_definitions[0].frequency.toLowerCase();
+    const planFreq = get(data, 'agreement.plan.payment_definitions[0].frequency', 'month').toLowerCase();
     const sub = find(data.subs, { name: planFreq });
     const models = sub.models * data.cyclesBilled;
 
