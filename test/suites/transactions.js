@@ -1,13 +1,14 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const Browser = require('zombie');
+const once = require('lodash');
+const url = require('url');
+const Nightmare = require('nightmare');
 const { debug, duration } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
   const Payments = require('../../src');
-  const browser = new Browser({ runScripts: false, waitDuration: duration });
 
   const syncTransactionHeaders = { routingKey: 'payments.transaction.sync' };
   const listTransactionHeaders = { routingKey: 'payments.transaction.list' };
@@ -25,6 +26,64 @@ describe('Transactions suite', function TransactionsSuite() {
   let payments;
   let agreement;
   let planId;
+
+  function approve(saleUrl) {
+    const browser = new Nightmare({
+      waitTimeout: 15000,
+    });
+
+    return new Promise(_resolve => {
+      const resolve = once(_resolve);
+
+      const _debug = require('debug')('nightmare');
+
+      function parseURL(newUrl) {
+        if (newUrl.indexOf('cappasity') >= 0) {
+          const parsed = url.parse(newUrl, true);
+          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+        }
+      }
+
+      browser
+        .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
+          _debug('redirect to %s', newUrl);
+          parseURL(newUrl);
+        })
+        .on('did-get-response-details', (event, status, newUrl) => {
+          _debug('response from %s', newUrl);
+          parseURL(newUrl);
+        })
+        .on('will-navigate', (event, newUrl) => {
+          _debug('navigate to %s', newUrl);
+          parseURL(newUrl);
+        })
+        .goto(saleUrl)
+        .screenshot('./ss/pre-email.png')
+        .wait('#loadLogin')
+        .click('#loadLogin')
+        .wait('#login_email')
+        .type('#login_email', false)
+        .wait(3000)
+        .type('#login_email', 'test@cappacity.com')
+        .type('#login_password', '12345678')
+        .wait(3000)
+        .screenshot('./ss/after-email.png')
+        .click('#submitLogin')
+        .screenshot('./ss/right-after-submit.png')
+        .wait(3000)
+        .screenshot('./ss/after-submit.png')
+        .wait('#continue')
+        .screenshot('./ss/pre-confirm.png')
+        .click('#continue')
+        .screenshot('./ss/right-after-confirm.png')
+        .wait(3000)
+        .screenshot('./ss/after-confirm.png')
+        .end()
+        .then(() => {
+          console.log('completed running %s', saleUrl); // eslint-disable-line
+        });
+    });
+  }
 
   before(() => {
     payments = new Payments(TEST_CONFIG);
@@ -55,30 +114,7 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   before('executeAgreement', () => (
-    browser.visit(agreement.url)
-      .then(() => {
-        browser.assert.success();
-        return browser.pressButton('#loadLogin');
-      })
-      .then(() => (
-        browser
-          .fill('#login_email', 'test@cappacity.com')
-          .fill('#login_password', '12345678')
-          .pressButton('#submitLogin')
-      ))
-      .then(() => (
-        // TypeError: unable to verify the first certificate
-        browser
-          .pressButton('#continue')
-          .catch(err => {
-            const idx = [
-              'Timeout: did not get to load all resources on this page',
-              'unable to verify the first certificate',
-            ].indexOf(err.message);
-            assert.notEqual(idx, -1, 'failed to contact server on paypal redirect back');
-            return { success: true, err };
-          })
-      ))
+    approve(agreement.url)
       .then(() => (
         payments.router({ token: agreement.token }, executeAgreementHeaders)
           .reflect()
@@ -124,9 +160,9 @@ describe('Transactions suite', function TransactionsSuite() {
     it('Should list all transactions', () => (
       payments.router({}, listTransactionHeaders)
         .reflect()
-        .then(result => (
-          result.isFulfilled() ? result.value() : Promise.reject(result.reason())
-        ))
+        .then(result => {
+          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
+        })
     ));
   });
 });
