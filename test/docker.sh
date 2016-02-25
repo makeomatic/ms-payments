@@ -52,7 +52,7 @@ for fn in $TESTS; do
 done
 
 echo "started generating combined coverage"
-$COMPOSE -f $DC run --rm tester node ./test/aggregate-report.js
+$COMPOSE -f $DC run --rm tester "node ./test/aggregate-report.js"
 
 echo "uploading coverage report from ./coverage/lcov.info"
 if [[ "$CI" == "true" ]]; then
