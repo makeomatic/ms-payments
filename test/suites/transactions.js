@@ -1,7 +1,7 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const once = require('lodash');
+const once = require('lodash/once');
 const url = require('url');
 const Nightmare = require('nightmare');
 const { debug, duration } = require('../utils');
