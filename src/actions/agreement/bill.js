@@ -20,10 +20,12 @@ const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js
 // check agreement bill
 function agreementBill(input) {
   const { agreement: id, subscriptionInterval, username } = input;
-  const { _config, redis, amqp } = this;
+  const { _config, redis, amqp, log } = this;
   const { users: { prefix, postfix } } = _config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
+
+  log.debug('billing %s on %s', username, id);
 
   // pull agreement data
   function getAgreement() {
@@ -77,7 +79,7 @@ function agreementBill(input) {
 
   // bill next free cycle
   function billNextFreeCycle(data) {
-    const nextCycle = moment(input.currentCycle);
+    const nextCycle = moment(input.nextCycle);
     const current = moment();
 
     // 0 or 1
@@ -96,8 +98,8 @@ function agreementBill(input) {
 
   function billPaidCycle(data) {
     // agreement nextCycle date
-    const nextCycle = moment(data.details.agreement.agreement_details.next_billing_date);
-    const currentCycle = moment(input.currentCycle).subtract(1, 'day');
+    const nextCycle = moment(data.details.agreement.agreement_details.next_billing_date || input.nextCycle);
+    const currentCycle = moment(input.nextCycle).subtract(1, 'day');
     const { transactions } = data.details;
 
     // determine how many cycles and next billing date
