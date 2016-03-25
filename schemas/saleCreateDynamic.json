@@ -1,7 +1,7 @@
 {
   "id": "sale.createDynamic",
   "type": "object",
-  "require": ["owner", "amount"],
+  "require": ["owner", "amount", "cart"],
   "properties": {
     "owner": { "type": "string", "minLength": 1 },
     "amount": {
@@ -9,7 +9,19 @@
       "minimum": 0,
       "maximum": 999999
     },
-    "type": { "type": "integer", "enum": [2] }
+    "type": { "type": "integer", "enum": [2] },
+    "cart": {
+      "type": "object",
+      "required": ["id", "shipping_type", "shipping_price", "printing_price", "service_price", "user_price"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "shipping_type": { "type": "string", "minLength": 1 },
+        "shipping_price": { "type": "number", "minimum": 0, "maximum": 999999 },
+        "printing_price": { "type": "number", "minimum": 0, "maximum": 999999 },
+        "service_price": { "type": "number", "minimum": 0, "maximum": 999999 },
+        "user_price": { "type": "number", "minimum": 0, "maximum": 999999 }
+      }
+    }
   },
   "additionalProperties": false
 }
