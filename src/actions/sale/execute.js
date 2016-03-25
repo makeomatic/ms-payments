@@ -8,6 +8,9 @@ const { serialize } = require('../../utils/redis.js');
 const { SALES_DATA_PREFIX } = require('../../constants.js');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
+const swig = require('swig');
+const renderFile = Promise.promisify(swig.renderFile, { context: swig });
+
 function saleExecute(message) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix } } = _config;
@@ -48,11 +51,13 @@ function saleExecute(message) {
     const updateTransaction = redis
       .pipeline()
       .hgetBuffer(saleKey, 'owner')
+      .hgetBuffer(saleKey, 'cart')
       .hmset(saleKey, serialize(updateData))
       .exec()
-      .spread(recordedOwner => ({
+      .spread((recordedOwner, recordedCart) => ({
         sale,
         username: recordedOwner[1] && JSON.parse(recordedOwner[1]) || owner,
+        cart: recordedCart[1] && JSON.parse(recordedCart[1]) || null,
       }));
 
     const updateCommon = Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
@@ -60,7 +65,7 @@ function saleExecute(message) {
     return Promise.join(updateTransaction, updateCommon).get(0);
   }
 
-  function updateMetadata({ sale, username }) {
+  function updateMetadata({ sale, username, cart }) {
     const models = sale.transactions[0].item_list.items[0].quantity;
     const path = `${prefix}.${postfix.updateMetadata}`;
 
@@ -76,10 +81,33 @@ function saleExecute(message) {
 
     return amqp
       .publishAndWait(path, updateRequest, { timeout: 5000 })
-      .return(sale);
+      .return({ sale, cart });
   }
 
-  return Promise.bind(this).then(sendRequest).then(updateRedis).then(updateMetadata);
+  function sendCartEmail({ sale, cart }) {
+    if (cart === null) {
+      return Promise.resolve(sale);
+    }
+
+    // TODO: maybe add plain text template too?
+    return renderFile(_config.cart.htmlTemplate, cart).then(html => {
+      const email = {
+        account: _config.cart.emailAccount,
+        email: {
+          from: _config.cart.from,
+          to: _config.cart.to,
+          subject: _config.cart.subject,
+          html,
+        },
+      };
+
+      return amqp
+        .publishAndWait('mailer.adhoc', email, { timeout: 10000 })
+        .return(sale);
+    });
+  }
+
+  return Promise.bind(this).then(sendRequest).then(updateRedis).then(updateMetadata).then(sendCartEmail);
 }
 
 module.exports = saleExecute;

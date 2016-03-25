@@ -69,6 +69,7 @@ function saleCreate(message) {
       create_time: new Date(data.sale.create_time).getTime(),
       update_time: new Date(data.sale.update_time).getTime(),
       owner: message.owner,
+      cart: message.cart,
     };
 
     pipeline.hmset(saleKey, serialize(saveData));

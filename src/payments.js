@@ -83,6 +83,13 @@ class Payments extends MService {
       sale_cancel: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-cancel',
       sale_notify: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-notify',
     },
+    cart: {
+      emailAccount: 'test@test.com',
+      htmlTemplate: '/who/knows/where',
+      from: '',
+      to: '',
+      subject: '',
+    },
   };
 
   /**
