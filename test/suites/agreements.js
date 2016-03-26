@@ -29,7 +29,7 @@ describe('Agreements suite', function AgreementSuite() {
   let planId;
   let payments;
 
-  this.timeout(duration * 4);
+  this.timeout(duration * 8);
 
   function approve(saleUrl) {
     const browser = new Nightmare({
