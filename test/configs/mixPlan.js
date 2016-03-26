@@ -1,7 +1,7 @@
 const ld = require('../node_modules/lodash');
 const moment = require('../node_modules/moment');
 const setMetadata = require('../lib/utils/updateMetadata.js');
-const { FREE_PLAN_ID } = require('../lib/constants.js');
+const FREE_PLAN_ID = require('../lib/constants.js').FREE_PLAN_ID;
 
 module.exports = exports = function mixPlan(username, audience) {
   const id = FREE_PLAN_ID;

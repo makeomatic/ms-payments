@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "babel-cli": "^6.4.5",
-    "babel-eslint": "^5.0.0-beta6",
+    "babel-eslint": "^6.0.0",
     "babel-plugin-transform-class-properties": "^6.4.0",
     "babel-plugin-transform-es2015-destructuring": "^6.4.0",
     "babel-plugin-transform-es2015-parameters": "^6.4.5",
@@ -54,7 +54,6 @@
     "babel-preset-stage-0": "^6.3.13",
     "babel-register": "^6.4.3",
     "codecov.io": "^0.1.6",
-    "console-png": "^1.1.0",
     "cz-conventional-changelog": "^1.1.5",
     "eslint": "^2.2.0",
     "eslint-config-airbnb": "^6.0.0",
@@ -65,7 +64,6 @@
     "latest-version-cli": "^1.0.0",
     "mocha": "^2.3.3",
     "nightmare": "github:segmentio/nightmare",
-    "nock": "^7.2.2",
     "semantic-release": "^4.3.5"
   },
   "release": {
