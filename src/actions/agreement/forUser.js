@@ -1,6 +1,6 @@
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
-const { AGREEMENT_DATA } = require('../../constants.js');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
 function forUser(message) {
@@ -21,7 +21,7 @@ function forUser(message) {
   }
 
   function getAgreement(id) {
-    if (id === 'free') {
+    if (id === FREE_PLAN_ID) {
       return { id };
     }
 

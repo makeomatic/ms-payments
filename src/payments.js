@@ -7,6 +7,7 @@ const merge = require('lodash/merge');
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync.js');
 const syncAgreements = require('./actions/agreement/sync.js');
+const { FREE_PLAN_ID } = require('./constants.js');
 
 /**
  * Class representing payments handling
@@ -49,16 +50,16 @@ class Payments extends MService {
       },
     },
     defaultPlans: [{
-      id: 'free',
-      alias: 'free',
+      id: FREE_PLAN_ID,
+      alias: FREE_PLAN_ID,
       hidden: false,
       plan: {
-        name: 'free',
+        name: FREE_PLAN_ID,
         description: 'Default free plan',
         type: 'infinite',
         state: 'active',
         payment_definitions: [{
-          name: 'free',
+          name: FREE_PLAN_ID,
           type: 'regular',
           frequency: 'month',
           frequency_interval: '1',

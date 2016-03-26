@@ -9,7 +9,7 @@ const find = require('lodash/find');
 
 const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
-const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants.js');
+const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 
 function agreementExecute(message) {
@@ -76,7 +76,7 @@ function agreementExecute(message) {
 
   function checkAndDeleteAgreement(input) {
     const { data, oldAgreement } = input;
-    if (data.agreement.id !== oldAgreement && oldAgreement !== 'free' && oldAgreement) {
+    if (data.agreement.id !== oldAgreement && oldAgreement !== FREE_PLAN_ID && oldAgreement) {
       // remove old agreement if setting new one
       return setState
         .call(this, {

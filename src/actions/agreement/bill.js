@@ -1,21 +1,20 @@
+const { NotPermitted } = require('common-errors');
 const Promise = require('bluebird');
-const key = require('../../redisKey.js');
-const { hmget } = require('../../listUtils.js');
-
-const sync = require('../transaction/sync.js');
 const moment = require('moment');
-const Errors = require('common-errors');
+const find = require('lodash/find');
+const assign = require('lodash/assign');
+const get = require('lodash/get');
+
+const key = require('../../redisKey.js');
+const sync = require('../transaction/sync.js');
+const resetToFreePlan = require('../../utils/resetToFreePlan.js');
+const { hmget } = require('../../listUtils.js');
+const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
 const PLAN_KEYS = ['plan', 'subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
-
-const find = require('lodash/find');
-const assign = require('lodash/assign');
-const get = require('lodash/get');
-
-const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
 // check agreement bill
 function agreementBill(input) {
@@ -44,7 +43,7 @@ function agreementBill(input) {
       .then(data => {
         const { agreement, plan, owner, state } = agreementParser(data);
         if (state.toLowerCase() === 'cancelled') {
-          throw new Errors.NotPermitted('Operation not permitted on cancelled agreements.');
+          throw new NotPermitted('Operation not permitted on cancelled agreements.');
         }
 
         agreement.owner = owner;
@@ -160,7 +159,11 @@ function agreementBill(input) {
     .then(getPlan)
     .then(getTransactions)
     .then(checkData)
-    .then(saveToRedis);
+    .then(saveToRedis)
+    .catch(NotPermitted, e => {
+      this.logger.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
+      return resetToFreePlan.call(this, username);
+    });
 }
 
 module.exports = agreementBill;
