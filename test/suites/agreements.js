@@ -44,7 +44,7 @@ describe('Agreements suite', function AgreementSuite() {
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
-          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          resolve({ token: parsed.query.token, payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
         }
       }
 
@@ -85,6 +85,7 @@ describe('Agreements suite', function AgreementSuite() {
         .end()
         .then(() => {
           console.log('completed running %s', saleUrl); // eslint-disable-line
+          resolve();
         });
     });
   }
