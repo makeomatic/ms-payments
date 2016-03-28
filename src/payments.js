@@ -28,6 +28,13 @@ class Payments extends MService {
       prefix: 'payments',
       postfix: path.join(__dirname, 'actions'),
     },
+    mailer: {
+      prefix: 'mailer',
+      routes: {
+        adhoc: 'adhoc',
+        predefined: 'predefined',
+      },
+    },
     redis: {
       options: {
         keyPrefix: '{ms-payments}',
@@ -85,7 +92,7 @@ class Payments extends MService {
     },
     cart: {
       emailAccount: 'test@test.com',
-      htmlTemplate: '/who/knows/where',
+      template: 'cart',
       from: '',
       to: '',
       subject: '',

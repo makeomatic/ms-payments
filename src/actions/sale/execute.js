@@ -8,11 +8,10 @@ const { serialize } = require('../../utils/redis.js');
 const { SALES_DATA_PREFIX } = require('../../constants.js');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
-const swig = require('swig');
-const renderFile = Promise.promisify(swig.renderFile, { context: swig });
+const render = require('ms-mailer-templates');
 
 function saleExecute(message) {
-  const { _config, redis, amqp } = this;
+  const { _config, redis, amqp, mailer } = this;
   const { users: { prefix, postfix } } = _config;
 
   function sendRequest() {
@@ -90,20 +89,15 @@ function saleExecute(message) {
     }
 
     // TODO: maybe add plain text template too?
-    return renderFile(_config.cart.htmlTemplate, cart).then(html => {
+    return render(_config.cart.template, cart).then(html => {
       const email = {
-        account: _config.cart.emailAccount,
-        email: {
-          from: _config.cart.from,
-          to: _config.cart.to,
-          subject: _config.cart.subject,
-          html,
-        },
+        from: _config.cart.from,
+        to: _config.cart.to,
+        subject: _config.cart.subject,
+        html,
       };
 
-      return amqp
-        .publishAndWait('mailer.adhoc', email, { timeout: 10000 })
-        .return(sale);
+      return mailer.send(_config.cart.emailAccount, email).return(sale);
     });
   }
 

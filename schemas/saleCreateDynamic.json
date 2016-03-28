@@ -20,7 +20,8 @@
         "printing_price": { "type": "number", "minimum": 0, "maximum": 999999 },
         "service_price": { "type": "number", "minimum": 0, "maximum": 999999 },
         "user_price": { "type": "number", "minimum": 0, "maximum": 999999 }
-      }
+      },
+      "additionalProperties": false
     }
   },
   "additionalProperties": false
