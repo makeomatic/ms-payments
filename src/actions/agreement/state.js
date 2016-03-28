@@ -2,16 +2,26 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const moment = require('moment');
-const find = require('lodash/find');
+
+// paypal
 const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   ops[op] = Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
   return ops;
 }, {});
 
-const { serialize } = require('../../utils/redis.js');
+// user-defined
 const key = require('../../redisKey.js');
-const { AGREEMENT_DATA } = require('../../constants.js');
+const resetToFreePlan = require('../../utils/resetToFreePlan.js');
 const syncTransactions = require('../transaction/sync.js');
+const { serialize } = require('../../utils/redis.js');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
+
+// correctly save state
+const ACTION_TO_STATE = {
+  suspend: 'suspended',
+  reactivate: 'active',
+  cancel: 'cancelled',
+};
 
 function agreementState(message) {
   const { _config, redis, amqp } = this;
@@ -34,7 +44,7 @@ function agreementState(message) {
   function sendRequest(meta) {
     const { agreement: id, subscriptionInterval } = meta;
 
-    if (id === 'free') {
+    if (id === FREE_PLAN_ID) {
       throw new Errors.NotPermittedError('User has free plan/agreement');
     }
 
@@ -54,32 +64,20 @@ function agreementState(message) {
 
   function updateRedis(id) {
     const agreementKey = key(AGREEMENT_DATA, id);
-    const promises = [redis.hmset(agreementKey, serialize({ state }))];
+    const promises = [redis.hmset(agreementKey, serialize({ state: ACTION_TO_STATE[state] }))];
 
     if (state === 'cancel') {
-      // delete agreement and set user to 'free' agreement
-      const path = `${prefix}.${postfix.updateMetadata}`;
-      const updateRequest = {
-        username: owner,
-        audience,
-        metadata: {
-          $set: {
-            agreement: 'free',
-            plan: 'free',
-            subscriptionPrice: '0.00',
-            subscriptionInterval: 'month',
-            modelPrice: find(_config.defaultPlans, { id: 'free' }).subscriptions[0].price,
-          },
-        },
-      };
-
-      promises.push(amqp.publishAndWait(path, updateRequest, { timeout: 5000 }));
+      promises.push(resetToFreePlan.call(this, owner));
     }
 
     return Promise.all(promises).return(state);
   }
 
-  return Promise.bind(this).then(getId).then(sendRequest).then(updateRedis);
+  return Promise
+    .bind(this)
+    .then(getId)
+    .then(sendRequest)
+    .then(updateRedis);
 }
 
 module.exports = agreementState;

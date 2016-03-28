@@ -6,6 +6,7 @@ const url = require('url');
 const key = require('../../redisKey.js');
 const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
+const debug = require('debug')('nightmare:paypal-plan');
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
@@ -31,29 +32,33 @@ function agreementCreate(message) {
   }
 
   function sendRequest(plan) {
-    return billingAgreementCreate({
+    const planData = {
       ...message.agreement,
       start_date: moment().add(1, plan.subs[0].name).format(PAYPAL_DATE_FORMAT),
       override_merchant_preferences: {
         setup_fee: plan.subs[0].definition.amount,
       },
-    }, _config.paypal)
-    .catch(err => {
-      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-    })
-    .then(newAgreement => {
-      const approval = find(newAgreement.links, { rel: 'approval_url' });
-      if (approval === null) {
-        throw new Errors.NotSupportedError('Unexpected PayPal response!');
-      }
+    };
 
-      const token = url.parse(approval.href, true).query.token;
-      return {
-        token,
-        url: approval.href,
-        agreement: newAgreement,
-      };
-    });
+    debug('init plan %j', planData);
+
+    return billingAgreementCreate(planData, _config.paypal)
+      .catch(err => {
+        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      })
+      .then(newAgreement => {
+        const approval = find(newAgreement.links, { rel: 'approval_url' });
+        if (approval === null) {
+          throw new Errors.NotSupportedError('Unexpected PayPal response!');
+        }
+
+        const token = url.parse(approval.href, true).query.token;
+        return {
+          token,
+          url: approval.href,
+          agreement: newAgreement,
+        };
+      });
   }
 
   function setToken(response) {

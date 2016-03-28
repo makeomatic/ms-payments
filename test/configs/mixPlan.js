@@ -1,24 +1,25 @@
 const ld = require('../node_modules/lodash');
 const moment = require('../node_modules/moment');
 const setMetadata = require('../lib/utils/updateMetadata.js');
+const FREE_PLAN_ID = 'free';
 
 module.exports = exports = function mixPlan(username, audience) {
-  const id = 'free';
+  const id = FREE_PLAN_ID;
   const plan = {
     plan: {
-      name: 'free',
+      name: FREE_PLAN_ID,
       description: 'Default free plan',
       type: 'infinite',
       state: 'active',
       payment_definitions: [{
-        name: 'free',
+        name: FREE_PLAN_ID,
         type: 'regular',
         frequency: 'month',
         frequency_interval: '1',
         cycles: '0',
         amount: { currency: 'USD', value: '0' },
       }],
-      id: 'free',
+      id: FREE_PLAN_ID,
       hidden: false,
     },
     subs: [{
@@ -26,7 +27,7 @@ module.exports = exports = function mixPlan(username, audience) {
       models: 100,
       price: 0.5,
       definition: {
-        name: 'free',
+        name: FREE_PLAN_ID,
         type: 'regular',
         frequency: 'month',
         frequency_interval: '1',
@@ -34,7 +35,7 @@ module.exports = exports = function mixPlan(username, audience) {
         amount: { currency: 'USD', value: '0' },
       },
     }],
-    alias: 'free',
+    alias: FREE_PLAN_ID,
     hidden: false,
   };
 
