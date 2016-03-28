@@ -3,6 +3,7 @@ const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const render = require('ms-mailer-templates');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
+const pick = require('lodash/pick');
 
 const key = require('../../redisKey');
 const { serialize } = require('../../utils/redis.js');
@@ -105,7 +106,7 @@ function updateMetadata({ sale: { sale, username, cart }, parsedSale }) {
   };
 
   return amqp
-    .publishAndWait(path, updateRequest, { timeout: 5000 })
+    .publishAndWait(path, updateRequest)
     .return({ sale, cart, parsedSale });
 }
 
@@ -117,15 +118,10 @@ function sendCartEmail({ sale, cart, parsedSale }) {
 
   const { mailer, config } = this;
   const cartConfig = config.cart;
+  const emailData = pick(cartConfig, ['from', 'to', 'subject']);
   return render(cartConfig.template, cart)
     .then(html => {
-      const email = {
-        from: cartConfig.from,
-        to: cartConfig.to,
-        subject: cartConfig.subject,
-        html,
-      };
-
+      const email = { ...emailData, html };
       return mailer
         .send(cartConfig.emailAccount, email)
         .return(sale);
