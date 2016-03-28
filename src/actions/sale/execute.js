@@ -1,107 +1,145 @@
 const Errors = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const key = require('../../redisKey');
+const render = require('ms-mailer-templates');
 const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
 
+const key = require('../../redisKey');
 const { serialize } = require('../../utils/redis.js');
-const { SALES_DATA_PREFIX } = require('../../constants.js');
+const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants.js');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
 
-const render = require('ms-mailer-templates');
+// parse json
+function parseInput(data, fallback) {
+  return data && JSON.parse(data) || fallback;
+}
 
-function saleExecute(message) {
-  const { _config, redis, amqp, mailer } = this;
-  const { users: { prefix, postfix } } = _config;
+// send paypal request
+function sendRequest(message) {
+  const { config, log } = this;
+  return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, config.paypal)
+    .catch(err => {
+      log.warn('failed to bill payment', err.response);
+      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+    });
+}
 
-  function sendRequest() {
-    return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, _config.paypal)
-      .catch(err => {
-        this.log.warn('failed to bill payment', err.response);
-        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-      });
+// save data to redis
+function updateRedis(sale) {
+  const { redis } = this;
+  const { state } = sale;
+
+  if (state !== 'approved') {
+    throw new Errors.HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
   }
 
-  function updateRedis(sale) {
-    const { state } = sale;
-    if (state !== 'approved') {
-      throw new Errors.HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
-    }
+  const { id } = sale;
+  const saleKey = key(SALES_DATA_PREFIX, id);
+  const payer = sale.payer.payer_info.email && sale.payer.payer_info.email;
+  const owner = getOwner(sale);
 
-    const { id } = sale;
-    const saleKey = key(SALES_DATA_PREFIX, id);
-    const payer = sale.payer.payer_info.email && sale.payer.payer_info.email;
-    const owner = getOwner(sale);
+  const updateData = {
+    sale,
+    create_time: new Date(sale.create_time).getTime(),
+    update_time: new Date(sale.update_time).getTime(),
+  };
 
-    const updateData = {
-      sale,
-      create_time: new Date(sale.create_time).getTime(),
-      update_time: new Date(sale.update_time).getTime(),
-    };
+  if (payer) {
+    updateData.payer = payer;
+  }
 
-    if (payer) {
-      updateData.payer = payer;
-    }
+  if (owner) {
+    updateData.owner = owner;
+  }
 
-    if (owner) {
-      updateData.owner = owner;
-    }
+  const parsedSale = parseSale(sale, owner);
 
-    const updateTransaction = redis
-      .pipeline()
-      .hgetBuffer(saleKey, 'owner')
-      .hgetBuffer(saleKey, 'cart')
-      .hmset(saleKey, serialize(updateData))
-      .exec()
-      .spread((recordedOwner, recordedCart) => ({
+  const updateTransaction = redis
+    .pipeline()
+    .hmgetBuffer(saleKey, 'owner', 'cart')
+    .hmset(saleKey, serialize(updateData))
+    .exec()
+    .spread(resp => {
+      const [err, recordedData] = resp;
+      if (err) {
+        throw err;
+      }
+
+      return {
         sale,
-        username: recordedOwner[1] && JSON.parse(recordedOwner[1]) || owner,
-        cart: recordedCart[1] && JSON.parse(recordedCart[1]) || null,
-      }));
+        username: parseInput(recordedData[0], owner),
+        cart: parseInput(recordedData[1], null),
+      };
+    });
 
-    const updateCommon = Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
+  const updateCommon = Promise
+    .bind(this, parsedSale)
+    .then(saveCommon);
 
-    return Promise.join(updateTransaction, updateCommon).get(0);
+  return Promise.props({
+    parsedSale,
+    sale: updateTransaction,
+    updateCommon,
+  });
+}
+
+// update user's metadata during model's sale
+function updateMetadata({ sale: { sale, username, cart }, parsedSale }) {
+  if (parsedSale.type !== TRANSACTION_TYPE_SALE) {
+    return { sale, cart, parsedSale };
   }
 
-  function updateMetadata({ sale, username, cart }) {
-    const models = sale.transactions[0].item_list.items[0].quantity;
-    const path = `${prefix}.${postfix.updateMetadata}`;
+  const { amqp, config } = this;
+  const { users: { prefix, postfix, audience } } = config;
+  const models = sale.transactions[0].item_list.items[0].quantity;
+  const path = `${prefix}.${postfix.updateMetadata}`;
 
-    const updateRequest = {
-      username,
-      audience: _config.users.audience,
-      metadata: {
-        $incr: {
-          models,
-        },
+  const updateRequest = {
+    username,
+    audience,
+    metadata: {
+      $incr: {
+        models,
       },
-    };
+    },
+  };
 
-    return amqp
-      .publishAndWait(path, updateRequest, { timeout: 5000 })
-      .return({ sale, cart });
+  return amqp
+    .publishAndWait(path, updateRequest, { timeout: 5000 })
+    .return({ sale, cart, parsedSale });
+}
+
+// send email
+function sendCartEmail({ sale, cart, parsedSale }) {
+  if (parsedSale.type !== TRANSACTION_TYPE_3D || !cart) {
+    return sale;
   }
 
-  function sendCartEmail({ sale, cart }) {
-    if (cart === null) {
-      return Promise.resolve(sale);
-    }
-
-    // TODO: maybe add plain text template too?
-    return render(_config.cart.template, cart).then(html => {
+  const { mailer, config } = this;
+  const cartConfig = config.cart;
+  return render(cartConfig.template, cart)
+    .then(html => {
       const email = {
-        from: _config.cart.from,
-        to: _config.cart.to,
-        subject: _config.cart.subject,
+        from: cartConfig.from,
+        to: cartConfig.to,
+        subject: cartConfig.subject,
         html,
       };
 
-      return mailer.send(_config.cart.emailAccount, email).return(sale);
+      return mailer
+        .send(cartConfig.emailAccount, email)
+        .return(sale);
     });
-  }
+}
 
-  return Promise.bind(this).then(sendRequest).then(updateRedis).then(updateMetadata).then(sendCartEmail);
+// Action itself
+function saleExecute(message) {
+  return Promise
+    .bind(this, message)
+    .then(sendRequest)
+    .then(updateRedis)
+    .then(updateMetadata)
+    .then(sendCartEmail);
 }
 
 module.exports = saleExecute;
