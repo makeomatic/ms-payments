@@ -161,7 +161,7 @@ function agreementBill(input) {
     .then(checkData)
     .then(saveToRedis)
     .catch(NotPermitted, e => {
-      this.logger.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
+      log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
       return resetToFreePlan.call(this, username);
     });
 }
