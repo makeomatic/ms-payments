@@ -3,6 +3,7 @@ const MService = require('mservice');
 const path = require('path');
 const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
+const Mailer = require('ms-mailer-client');
 
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync.js');
@@ -109,6 +110,10 @@ class Payments extends MService {
 
     this.on('plugin:connect:redisCluster', (redis) => {
       fsort.attach(redis, 'fsort');
+    });
+    
+    this.on('plugin:connect:amqp', (amqp) => {
+      this.mailer = new Mailer(amqp, this.config.mailer);
     });
   }
 
