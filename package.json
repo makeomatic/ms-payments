@@ -63,7 +63,7 @@
     "json": "^9.0.3",
     "latest-version-cli": "^1.0.0",
     "mocha": "^2.3.3",
-    "nightmare": "github:segmentio/nightmare#2.2.0",
+    "nightmare": "github:segmentio/nightmare",
     "semantic-release": "^4.3.5"
   },
   "release": {

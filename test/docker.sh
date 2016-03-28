@@ -15,7 +15,7 @@ export IMAGE=makeomatic/nightmare
 echo $DIR
 
 if [ -z "$NODE_VER" ]; then
-  NODE_VER="5.6.0"
+  NODE_VER="5.9.0"
 fi
 
 if ! [ -x "$COMPOSE" ]; then
