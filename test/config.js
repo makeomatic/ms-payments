@@ -21,4 +21,11 @@ module.exports = exports = {
       },
     ],
   },
+  cart: {
+    emailAccount: 'info@cappasity.com',
+    template: 'cappasity-cart',
+    from: 'info@cappasity.com',
+    to: 'info@cappasity.com',
+    subject: 'test cart transaction',
+  },
 };

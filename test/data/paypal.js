@@ -1,4 +1,6 @@
-module.exports.testPlanData = {
+const moment = require('moment');
+
+exports.testPlanData = {
   alias: 'basic',
   hidden: false,
   plan: {
@@ -39,7 +41,7 @@ module.exports.testPlanData = {
   }],
 };
 
-module.exports.freePlanData = {
+exports.freePlanData = {
   alias: 'free',
   hidden: false,
   plan: {
@@ -66,29 +68,41 @@ module.exports.freePlanData = {
   }],
 };
 
-module.exports.testAgreementData = {
-  'name': 'Fast Speed Agreement',
-  'description': 'Agreement for Fast Speed Plan',
-  'start_date': '2016-12-01T00:37:04Z',
-  'plan': {'id': 'P-12U98928TT9129128ECALAJY'},
-  'payer': {'payment_method': 'paypal'},
-  'shipping_address': {
-    'line1': 'StayBr111idge Suites',
-    'line2': 'Cro12ok Street',
-    'city': 'San Jose',
-    'state': 'CA',
-    'postal_code': '95112',
-    'country_code': 'US',
+exports.testAgreementData = {
+  name: 'Fast Speed Agreement',
+  description: 'Agreement for Fast Speed Plan',
+  start_date: moment().add(1, 'month').format('YYYY-MM-DD[T]HH:mm:ss[Z]'),
+  plan: {
+    id: 'P-12U98928TT9129128ECALAJY',
+  },
+  payer: {
+    payment_method: 'paypal',
+  },
+  shipping_address: {
+    line1: 'StayBr111idge Suites',
+    line2: 'Cro12ok Street',
+    city: 'San Jose',
+    state: 'CA',
+    postal_code: '95112',
+    country_code: 'US',
   },
 };
 
-module.exports.testSaleData = {
-  'owner': 'test@test.ru',
-  'amount': 10,
+exports.testSaleData = {
+  owner: 'test@test.ru',
+  amount: 10,
 };
 
-module.exports.testDynamicSaleData = {
-  'owner': 'test@test.ru',
-  'amount': 10,
-  'type': 2,
+exports.testDynamicSaleData = {
+  owner: 'test@test.ru',
+  amount: 10,
+  type: 2,
+  cart: {
+    id: 'test-cart-id',
+    shipping_type: 'delivery',
+    shipping_price: 13.99,
+    printing_price: 25.99,
+    service_price: 3.99,
+    user_price: 55.90,
+  },
 };

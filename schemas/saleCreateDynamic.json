@@ -1,15 +1,21 @@
 {
   "id": "sale.createDynamic",
   "type": "object",
-  "require": ["owner", "amount", "cart"],
+  "require": ["owner", "amount", "cart", "type"],
   "properties": {
-    "owner": { "type": "string", "minLength": 1 },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
     "amount": {
       "type": "number",
       "minimum": 0,
       "maximum": 999999
     },
-    "type": { "type": "integer", "enum": [2] },
+    "type": {
+      "type": "integer",
+      "enum": [2]
+    },
     "cart": {
       "type": "object",
       "required": ["id", "shipping_type", "shipping_price", "printing_price", "service_price", "user_price"],

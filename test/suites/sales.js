@@ -4,6 +4,7 @@ const assert = require('assert');
 const Nightmare = require('nightmare');
 const url = require('url');
 const once = require('lodash/once');
+const sinon = require('sinon');
 const { debug, duration } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
@@ -22,18 +23,26 @@ describe('Sales suite', function SalesSuite() {
 
   function approve(saleUrl) {
     const browser = new Nightmare({
-      waitTimeout: 15000,
+      waitTimeout: 30000,
     });
 
     return new Promise(_resolve => {
       const resolve = once(_resolve);
       const _debug = require('debug')('nightmare');
 
+      const iframe = '#injectedUnifiedLogin iframe';
+      const emailSelector = { iframe, el: '#email' };
+      const passwordSelector = { iframe, el: '#password' };
+
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
           resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
         }
+      }
+
+      function selectElement(selector, element) {
+        return __nightmare.qs({ iframe: selector, el: element }); // eslint-disable-line
       }
 
       browser
@@ -49,17 +58,19 @@ describe('Sales suite', function SalesSuite() {
           _debug('navigate to %s', newUrl);
           parseURL(newUrl);
         })
+        .useragent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.87 Safari/537.36')
         .goto(saleUrl)
-        .screenshot('./ss/pre-email.png')
-        .wait('#email')
-        .type('#email', false)
         .wait(3000)
-        .type('#email', 'test@cappacity.com')
-        .type('#password', '12345678')
+        .screenshot('./ss/pre-email.png')
+        .wait(selectElement, iframe, emailSelector.el)
+        .type(emailSelector, false)
+        .wait(1000)
+        .type(emailSelector, 'test@cappacity.com')
+        .type(passwordSelector, '12345678')
         .wait(3000)
         .screenshot('./ss/after-email.png')
-        .click('input[type=submit]')
-        .wait(10000)
+        .click({ iframe, el: '#btnLogin' })
+        .wait(3000)
         .screenshot('./ss/after-submit.png')
         .wait('#confirmButtonTop')
         .screenshot('./ss/pre-confirm.png')
@@ -132,14 +143,21 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should approve & execute 3d printing sale', () => {
       return approve(sale.url)
-        .then(query => (
-          payments.router(query, executeSaleHeaders)
+        .then(query => {
+          sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
+
+          return payments.router(query, executeSaleHeaders)
             .reflect()
             .then(result => {
+              assert.ok(payments.mailer.send.calledOnce);
+
+              // sinon restore
+              payments.mailer.send.restore();
+
               debug(result);
               assert(result.isFulfilled());
-            })
-        ));
+            });
+        });
     });
 
     it('Should list all sales', () => (

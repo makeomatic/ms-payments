@@ -1,4 +1,4 @@
-FROM node:5.6
+FROM node:5.9
 
 # Updating ubuntu packages
 RUN apt-get update

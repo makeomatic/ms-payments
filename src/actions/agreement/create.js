@@ -37,6 +37,7 @@ function agreementCreate(message) {
       start_date: moment().add(1, plan.subs[0].name).format(PAYPAL_DATE_FORMAT),
       override_merchant_preferences: {
         setup_fee: plan.subs[0].definition.amount,
+        initial_fail_amount_action: 'CANCEL',
       },
     };
 

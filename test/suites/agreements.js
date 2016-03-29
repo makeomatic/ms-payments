@@ -44,7 +44,7 @@ describe('Agreements suite', function AgreementSuite() {
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
-          resolve({ token: parsed.query.token, payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
         }
       }
 
@@ -85,7 +85,6 @@ describe('Agreements suite', function AgreementSuite() {
         .end()
         .then(() => {
           console.log('completed running %s', saleUrl); // eslint-disable-line
-          resolve();
         });
     });
   }
@@ -189,7 +188,7 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it('Should pull updates for an agreement', () => {
+    it.skip('Should pull updates for an agreement', () => {
       this.timeout(duration);
 
       function waitForAgreementToBecomeActive() {
@@ -214,7 +213,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     // this test is perf
-    it('Should cancel agreement', () => {
+    it.skip('Should cancel agreement', () => {
       return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
         .reflect()
         .then((result) => {
@@ -223,7 +222,7 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it('Should get free agreement for user after cancelling', () => {
+    it.skip('Should get free agreement for user after cancelling', () => {
       return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
         .reflect()
         .then((result) => {

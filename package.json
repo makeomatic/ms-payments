@@ -57,6 +57,7 @@
     "babel-register": "^6.4.3",
     "codecov.io": "^0.1.6",
     "cz-conventional-changelog": "^1.1.5",
+    "electron-prebuilt": "^0.37.2",
     "eslint": "^2.2.0",
     "eslint-config-airbnb": "^6.0.0",
     "eslint-plugin-mocha": "^2.0.0",
@@ -65,8 +66,9 @@
     "json": "^9.0.3",
     "latest-version-cli": "^1.0.0",
     "mocha": "^2.3.3",
-    "nightmare": "github:segmentio/nightmare",
-    "semantic-release": "^4.3.5"
+    "nightmare": "github:AVVS/nightmare",
+    "semantic-release": "^4.3.5",
+    "sinon": "^1.17.3"
   },
   "release": {
     "verifyConditions": []
