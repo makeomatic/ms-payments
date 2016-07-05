@@ -102,10 +102,19 @@ function transactionSync(message) {
     return Promise.all(updates).return({ agreement, transactions });
   }
 
+  function removeOwnerFromTransactions({ agreement, transactions }) {
+    forEach(transactions, transaction => {
+      transaction.description = transaction.description.replace(/( (for|with) info@cappasity.com)/g, '');
+    });
+
+    return Promise.return({ agreement, transactions });
+  }
+
   return Promise
     .join(findOwner(), sendRequest())
     .bind(this)
-    .spread(saveToRedis);
+    .spread(saveToRedis)
+    .then(removeOwnerFromTransactions);
 }
 
 module.exports = transactionSync;
