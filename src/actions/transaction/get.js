@@ -3,6 +3,7 @@ const Errors = require('common-errors');
 
 const { deserialize } = require('../../utils/redis.js');
 const { TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
+const { removeOwnerFromDescription } = require('../../utils/transactions');
 
 module.exports = function saleGet(opts) {
   const { redis } = this;
@@ -22,5 +23,6 @@ module.exports = function saleGet(opts) {
       }
 
       return output;
-    });
+    })
+    .then(removeOwnerFromDescription);
 };
