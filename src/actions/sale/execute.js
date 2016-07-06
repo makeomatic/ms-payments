@@ -12,7 +12,7 @@ const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js
 
 // parse json
 function parseInput(data, fallback) {
-  return data && JSON.parse(data) || fallback;
+  return data ? JSON.parse(data) : fallback;
 }
 
 // send paypal request

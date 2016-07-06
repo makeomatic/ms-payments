@@ -10,7 +10,7 @@ function deleteFromRedis(id, redis) {
   const pipeline = redis.pipeline();
 
   return redis.hgetBuffer(planKey, 'alias').then(alias => {
-    const aliasedId = alias && alias.length > 0 && JSON.parse(alias) || id;
+    const aliasedId = alias && alias.length > 0 ? JSON.parse(alias) : id;
 
     pipeline.del(planKey);
     pipeline.srem(PLANS_INDEX, id);

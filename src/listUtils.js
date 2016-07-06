@@ -32,7 +32,7 @@ function mapResult(offset, limit) {
     return {
       items,
       cursor: offset + limit,
-      page: Math.floor(offset / limit + 1),
+      page: Math.floor(offset / limit) + 1,
       pages: Math.ceil(length / limit),
     };
   };
@@ -64,7 +64,8 @@ function cleanupCache(_index) {
   const slot = calcSlot(index);
   // this has possibility of throwing, but not likely to since previous operations
   // would've been rejected already, in a promise this will result in a rejection
-  const masterNode = redis.slots[slot].masterNode;
+  const nodeKeys = redis.slots[slot];
+  const masterNode = nodeKeys.reduce((node, key) => node || redis.connectionPool.nodes.master[key], null);
 
   function scan(node, cursor = '0') {
     return node

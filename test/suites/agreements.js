@@ -80,7 +80,7 @@ describe('Agreements suite', function AgreementSuite() {
         .screenshot('./ss/pre-confirm.png')
         .click('#continue')
         .screenshot('./ss/right-after-confirm.png')
-        .wait(3000)
+        .wait(10000)
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => {
@@ -117,7 +117,8 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('By default user should have free agreement', () => {
-      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+      return payments
+        .router({ user: 'test@test.ru' }, forUserAgreementHeaders)
         .reflect()
         .then((result) => {
           debug(result);
@@ -188,7 +189,7 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it.skip('Should pull updates for an agreement', () => {
+    it('Should pull updates for an agreement', () => {
       this.timeout(duration);
 
       function waitForAgreementToBecomeActive() {
@@ -213,7 +214,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     // this test is perf
-    it.skip('Should cancel agreement', () => {
+    it('Should cancel agreement', () => {
       return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
         .reflect()
         .then((result) => {
@@ -222,7 +223,7 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it.skip('Should get free agreement for user after cancelling', () => {
+    it('Should get free agreement for user after cancelling', () => {
       return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
         .reflect()
         .then((result) => {
