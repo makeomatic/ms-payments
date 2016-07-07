@@ -1,7 +1,7 @@
 const JSONParse = JSON.parse;
 const JSONStringify = JSON.stringify;
 const reduce = require('lodash/reduce');
-const calcSlot = require('ioredis/lib/utils').calcSlot;
+const calcSlot = require('cluster-key-slot');
 
 function reducer(accumulator, value, key) {
   if (value !== undefined) {

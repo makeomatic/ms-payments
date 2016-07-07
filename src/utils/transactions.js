@@ -14,14 +14,14 @@ const {
 
 function getTransactionType(type) {
   switch (type) {
-  case TRANSACTION_TYPE_RECURRING:
-    return 'subscription';
-  case TRANSACTION_TYPE_SALE:
-    return 'sale';
-  case TRANSACTION_TYPE_3D:
-    return 'print';
-  default:
-    throw new Error('unsupported transaction type');
+    case TRANSACTION_TYPE_RECURRING:
+      return 'subscription';
+    case TRANSACTION_TYPE_SALE:
+      return 'sale';
+    case TRANSACTION_TYPE_3D:
+      return 'print';
+    default:
+      throw new Error('unsupported transaction type');
   }
 }
 
@@ -81,10 +81,10 @@ function parseSale(sale, owner) {
   // to catch errors automatically
   return Promise.try(() => {
     // reasonable default?
-    const payer = sale.payer.payer_info && sale.payer.payer_info.email || owner;
+    const payer = getPath(sale, 'payer.payer_info.email', owner);
     const [transaction] = sale.transactions;
     const description = formatItemList(transaction.item_list);
-    const type = (description.indexOf('3d printing') >= 0) && TRANSACTION_TYPE_3D || TRANSACTION_TYPE_SALE;
+    const type = description.indexOf('3d printing') >= 0 ? TRANSACTION_TYPE_3D : TRANSACTION_TYPE_SALE;
 
     return {
       id: sale.id,
@@ -111,7 +111,7 @@ function parseAgreementTransaction(transaction, owner, agreementId) {
     agreementId,
     payer: transaction.payer_email || undefined,
     date: new Date(transaction.time_stamp).getTime(),
-    amount: transaction.amount && transaction.amount.value || '0.00',
+    amount: getPath(transaction, 'amount.value', '0.00'),
     description: prepareDescription(transaction.amount, owner, transaction.status),
     status: transaction.status,
   }));
@@ -119,8 +119,9 @@ function parseAgreementTransaction(transaction, owner, agreementId) {
 
 function getOwner(sale) {
   const description = getPath(sale, 'transactions[0].item_list.items[0].name', false);
-  const result = description && FIND_OWNER_REGEXP.exec(description);
-  return result && result[1] || sale.payer_info && sale.payer_info.email || null;
+  const match = description && FIND_OWNER_REGEXP.exec(description);
+  const result = match && match[1];
+  return result || (sale.payer_info && sale.payer_info.email) || null;
 }
 
 module.exports = exports = {

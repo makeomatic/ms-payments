@@ -40,6 +40,7 @@ class Payments extends MService {
     redis: {
       options: {
         keyPrefix: '{ms-payments}',
+        dropBufferSupport: false,
       },
     },
     paypal: {
@@ -112,7 +113,7 @@ class Payments extends MService {
     this.on('plugin:connect:redisCluster', (redis) => {
       fsort.attach(redis, 'fsort');
     });
-    
+
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
     });
@@ -130,7 +131,7 @@ class Payments extends MService {
     .map(function iterateOverPlans(plan) {
       if (plan.isFulfilled()) {
         this.log.info('Created plan %s', plan.value().name);
-        return;
+        return null;
       }
 
       const err = plan.reason();
@@ -139,6 +140,8 @@ class Payments extends MService {
       } else {
         this.log.warn(err.message);
       }
+
+      return null;
     });
   }
 

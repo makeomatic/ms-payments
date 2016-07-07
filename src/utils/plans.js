@@ -10,6 +10,8 @@ function merger(planOneData, planTwoData, fieldName) {
   if (isArray(planOneData) && isArray(planTwoData)) {
     return planOneData.concat(planTwoData);
   }
+
+  return void 0;
 }
 
 exports.merger = merger;

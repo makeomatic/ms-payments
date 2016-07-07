@@ -1,4 +1,4 @@
-FROM node:5.9
+FROM node:6.2
 
 # Updating ubuntu packages
 RUN apt-get update
@@ -31,6 +31,3 @@ ENV DEBUG="nightmare"
 
 # Set current working directory as /app
 WORKDIR /src
-
-# Default command. Assumes our file is index.js and our screen size is 1024x768
-ENTRYPOINT ["/bin/sh", "-c"]
