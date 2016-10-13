@@ -20,7 +20,7 @@ function agreementCreate({ params: message }) {
 
   function fetchPlan() {
     return redis
-      .hgetallBuffer(key(PLANS_DATA, planId))
+      .hgetall(key(PLANS_DATA, planId))
       .then((data) => {
         if (!data) {
           throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
