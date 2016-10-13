@@ -5,21 +5,22 @@ const Nightmare = require('nightmare');
 const url = require('url');
 const once = require('lodash/once');
 const sinon = require('sinon');
-const { debug, duration } = require('../utils');
+const { debug, duration, simpleDispatcher } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
   const Payments = require('../../src');
 
   const { testSaleData, testDynamicSaleData } = require('../data/paypal');
-  const createSaleHeaders = { routingKey: 'payments.sale.create' };
-  const createDynamicSaleHeaders = { routingKey: 'payments.sale.createDynamic' };
-  const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
-  const listSaleHeaders = { routingKey: 'payments.sale.list' };
+  const createSale = 'payments.sale.create';
+  const createDynamicSale = 'payments.sale.createDynamic';
+  const executeSale = 'payments.sale.execute';
+  const listSale = 'payments.sale.list';
 
   this.timeout(duration * 4);
 
   let payments;
   let sale;
+  let dispatch;
 
   function approve(saleUrl) {
     const browser = new Nightmare({
@@ -92,9 +93,13 @@ describe('Sales suite', function SalesSuite() {
     return payments.connect();
   });
 
+  before(() => {
+    dispatch = simpleDispatcher(dispatch);
+  });
+
   describe('unit tests', function UnitSuite() {
     it('Should fail to create sale on invalid arguments', () => {
-      return payments.router({ wrong: 'data' }, createSaleHeaders)
+      return dispatch(createSale, { wrong: 'data' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -103,7 +108,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should create sale', () => {
-      return payments.router(testSaleData, createSaleHeaders)
+      return dispatch(createSale, testSaleData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -113,8 +118,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should fail to execute unapproved sale', () => {
-      return payments
-        .router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
+      return dispatch(executeSale, { payment_id: sale.sale.id, payer_id: 'doesntmatter' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -125,7 +129,7 @@ describe('Sales suite', function SalesSuite() {
       return approve(sale.url)
         .tap()
         .then((query) => {
-          return payments.router(query, executeSaleHeaders)
+          return dispatch(executeSale, query)
             .reflect()
             .then((result) => {
               debug(result);
@@ -135,7 +139,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should create 3d printing sale', () => {
-      return payments.router(testDynamicSaleData, createDynamicSaleHeaders)
+      return dispatch(createDynamicSale, testDynamicSaleData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -149,7 +153,7 @@ describe('Sales suite', function SalesSuite() {
         .then((query) => {
           sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
 
-          return payments.router(query, executeSaleHeaders)
+          return dispatch(executeSale, query)
             .reflect()
             .then((result) => {
               assert.ok(payments.mailer.send.calledOnce);
@@ -164,7 +168,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should list all sales', () => (
-      payments.router({}, listSaleHeaders)
+      dispatch(listSale, {})
         .reflect()
         .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());

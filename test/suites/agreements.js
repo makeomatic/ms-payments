@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const Nightmare = require('nightmare');
-const { debug, duration } = require('../utils');
+const { debug, duration, simpleDispatcher } = require('../utils');
 const TEST_CONFIG = require('../config');
 const url = require('url');
 const once = require('lodash/once');
@@ -9,25 +9,22 @@ const once = require('lodash/once');
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
 
-  // mock paypal requests
-  // require('../mocks/paypal');
   const { testAgreementData, testPlanData } = require('../data/paypal');
 
-  const createPlanHeaders = { routingKey: 'payments.plan.create' };
-  const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
-
-  const getAgreementHeaders = { routingKey: 'payments.agreement.get' };
-  const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
-  const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
-  const stateAgreementHeaders = { routingKey: 'payments.agreement.state' };
-  const listAgreementHeaders = { routingKey: 'payments.agreement.list' };
-  const forUserAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
-  const syncAgreementsHeaders = { routingKey: 'payments.agreement.sync' };
-  // const billAgreementHeaders = { routingKey: 'payments.agreement.bill' };
+  const createPlan = 'payments.plan.create';
+  const deletePlan = 'payments.plan.delete';
+  const getAgreement = 'payments.agreement.get';
+  const createAgreement = 'payments.agreement.create';
+  const executeAgreement = 'payments.agreement.execute';
+  const stateAgreement = 'payments.agreement.state';
+  const listAgreement = 'payments.agreement.list';
+  const forUserAgreement = 'payments.agreement.forUser';
+  const syncAgreements = 'payments.agreement.sync';
 
   let billingAgreement;
   let planId;
   let payments;
+  let dispatch;
 
   this.timeout(duration * 8);
 
@@ -87,7 +84,7 @@ describe('Agreements suite', function AgreementSuite() {
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => {
-          console.log('completed running %s', saleUrl); // eslint-disable-line
+          console.log('completed running %s', saleUrl);
         });
     });
   }
@@ -98,20 +95,21 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   before(function initPlan() {
-    return payments.router(testPlanData, createPlanHeaders).then((data) => {
+    dispatch = simpleDispatcher(payments.router);
+    return dispatch(createPlan, testPlanData).then((data) => {
       const id = data.plan.id.split('|')[0];
       planId = data.plan.id;
       testAgreementData.plan.id = id;
     });
   });
 
-  after(function deletePlan() {
-    return payments.router(planId, deletePlanHeaders);
+  after(function cleanup() {
+    return dispatch(deletePlan, planId);
   });
 
   describe('unit tests', function UnitSuite() {
     it('Should fail to create agreement on invalid schema', () => {
-      return payments.router({ random: true }, createAgreementHeaders)
+      return dispatch(createAgreement, { random: true })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -120,8 +118,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('By default user should have free agreement', () => {
-      return payments
-        .router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+      return dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
         .then((result) => {
           debug(result);
@@ -136,7 +133,7 @@ describe('Agreements suite', function AgreementSuite() {
         owner: 'test@test.ru',
       };
 
-      return payments.router(data, createAgreementHeaders)
+      return dispatch(createAgreement, data)
         .reflect()
         .then((result) => {
           debug(result);
@@ -146,7 +143,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should fail to execute on an unknown token', () => {
-      return payments.router('random token', executeAgreementHeaders)
+      return dispatch(executeAgreement, 'random token')
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -154,7 +151,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should reject unapproved agreement', () => {
-      return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
+      return dispatch(executeAgreement, { token: billingAgreement.token })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -164,7 +161,7 @@ describe('Agreements suite', function AgreementSuite() {
     it('Should execute an approved agreement', () => {
       return approve(billingAgreement.url)
         .then(() => {
-          return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
+          return dispatch(executeAgreement, { token: billingAgreement.token })
             .reflect()
             .then((result) => {
               debug(result);
@@ -175,7 +172,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should list all agreements', () => {
-      return payments.router({}, listAgreementHeaders)
+      return dispatch(listAgreement, {})
         .reflect()
         .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
@@ -183,7 +180,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should get agreement for user', () => {
-      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+      return dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
         .then((result) => {
           debug(result);
@@ -196,13 +193,13 @@ describe('Agreements suite', function AgreementSuite() {
       this.timeout(duration);
 
       function waitForAgreementToBecomeActive() {
-        return payments.router({}, syncAgreementsHeaders)
+        return dispatch(syncAgreements, {})
           .reflect()
           .then((result) => {
             assert(result.isFulfilled());
           })
           .then(() => {
-            return payments.router({ id: billingAgreement.id }, getAgreementHeaders);
+            return dispatch(getAgreement, { id: billingAgreement.id });
           })
           .then((agreement) => {
             if (agreement.state.toLowerCase() === 'pending') {
@@ -218,7 +215,7 @@ describe('Agreements suite', function AgreementSuite() {
 
     // this test is perf
     it('Should cancel agreement', () => {
-      return payments.router({ owner: 'test@test.ru', state: 'cancel' }, stateAgreementHeaders)
+      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' })
         .reflect()
         .then((result) => {
           debug(result);
@@ -227,7 +224,7 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should get free agreement for user after cancelling', () => {
-      return payments.router({ user: 'test@test.ru' }, forUserAgreementHeaders)
+      return dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
         .then((result) => {
           assert(result.isFulfilled());

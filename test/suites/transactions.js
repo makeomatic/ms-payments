@@ -4,28 +4,26 @@ const assert = require('assert');
 const once = require('lodash/once');
 const url = require('url');
 const Nightmare = require('nightmare');
-const { debug, duration } = require('../utils');
+const { debug, duration, simpleDispatcher } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
   const Payments = require('../../src');
 
-  const syncTransactionHeaders = { routingKey: 'payments.transaction.sync' };
-  const listTransactionHeaders = { routingKey: 'payments.transaction.list' };
-
-  const getAgreementHeaders = { routingKey: 'payments.agreement.forUser' };
-
-  const createPlanHeaders = { routingKey: 'payments.plan.create' };
-  const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
-
-  const createAgreementHeaders = { routingKey: 'payments.agreement.create' };
-  const executeAgreementHeaders = { routingKey: 'payments.agreement.execute' };
+  const syncTransaction = 'payments.transaction.sync';
+  const listTransaction = 'payments.transaction.list';
+  const getAgreement = 'payments.agreement.forUser';
+  const createPlan = 'payments.plan.create';
+  const deletePlan = 'payments.plan.delete';
+  const createAgreement = 'payments.agreement.create';
+  const executeAgreement = 'payments.agreement.execute';
 
   this.timeout(duration * 4);
 
   let payments;
   let agreement;
   let planId;
+  let dispatch;
 
   function approve(saleUrl) {
     const browser = new Nightmare({
@@ -83,7 +81,7 @@ describe('Transactions suite', function TransactionsSuite() {
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => {
-          console.log('completed running %s', saleUrl); // eslint-disable-line
+          console.log('completed running %s', saleUrl);
         });
     });
   }
@@ -93,13 +91,14 @@ describe('Transactions suite', function TransactionsSuite() {
     return payments.connect();
   });
 
-  before('initPlan', () => (
-    payments.router(testPlanData, createPlanHeaders).then((data) => {
+  before('initPlan', () => {
+    dispatch = simpleDispatcher(payments.router);
+    return dispatch(createPlan, testPlanData).then((data) => {
       const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = data.plan.id;
-    })
-  ));
+    });
+  });
 
   before('createAgreement', () => {
     const data = {
@@ -107,7 +106,7 @@ describe('Transactions suite', function TransactionsSuite() {
       owner: 'test@test.ru',
     };
 
-    return payments.router(data, createAgreementHeaders)
+    return dispatch(createAgreement, data)
       .reflect()
       .then((result) => {
         debug(result);
@@ -119,7 +118,7 @@ describe('Transactions suite', function TransactionsSuite() {
   before('executeAgreement', () => (
     approve(agreement.url)
       .then(() => (
-        payments.router({ token: agreement.token }, executeAgreementHeaders)
+        dispatch(executeAgreement, { token: agreement.token })
           .reflect()
           .then((result) => {
             debug(result);
@@ -130,18 +129,18 @@ describe('Transactions suite', function TransactionsSuite() {
   ));
 
   before('getAgreement', () => (
-    payments.router({ user: 'test@test.ru' }, getAgreementHeaders)
+    dispatch(getAgreement, { user: 'test@test.ru' })
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
       })
   ));
 
-  after('cleanUp', () => payments.router(planId, deletePlanHeaders));
+  after('cleanUp', () => dispatch(deletePlan, planId));
 
   describe('unit tests', () => {
     it('Should not sync transaction on invalid data', () => (
-      payments.router({ wrong: 'data' }, syncTransactionHeaders)
+      dispatch(syncTransaction, { wrong: 'data' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -152,7 +151,7 @@ describe('Transactions suite', function TransactionsSuite() {
     it('Should sync transactions', () => {
       const start = '2015-01-01';
       const end = '2016-12-31';
-      return payments.router({ id: agreement.id, start, end }, syncTransactionHeaders)
+      return dispatch(syncTransaction, { id: agreement.id, start, end })
         .reflect()
         .then((result) => {
           debug(result);
@@ -161,7 +160,7 @@ describe('Transactions suite', function TransactionsSuite() {
     });
 
     it('Should list all transactions', () => (
-      payments.router({}, listTransactionHeaders)
+      dispatch(listTransaction, {})
         .reflect()
         .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());

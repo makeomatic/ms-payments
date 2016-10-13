@@ -1,27 +1,25 @@
 const TEST_CONFIG = require('../config');
 const assert = require('assert');
 const Promise = require('bluebird');
-const { debug, duration } = require('../utils');
+const { debug, duration, simpleDispatcher } = require('../utils');
 
 describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
-
-  // mock paypal requests
-  // require('../mocks/paypal');
   const { testPlanData, freePlanData } = require('../data/paypal');
 
   this.timeout(duration);
 
   describe('unit tests', function UnitSuite() {
-    const createPlanHeaders = { routingKey: 'payments.plan.create' };
-    const getPlanHeaders = { routingKey: 'payments.plan.get' };
-    const deletePlanHeaders = { routingKey: 'payments.plan.delete' };
-    const listPlanHeaders = { routingKey: 'payments.plan.list' };
-    const updatePlanHeaders = { routingKey: 'payments.plan.update' };
-    const statePlanHeaders = { routingKey: 'payments.plan.state' };
+    const createPlan = 'payments.plan.create';
+    const getPlan = 'payments.plan.get';
+    const deletePlan = 'payments.plan.delete';
+    const listPlan = 'payments.plan.list';
+    const updatePlan = 'payments.plan.update';
+    const statePlan = 'payments.plan.state';
 
     let payments;
     let billingPlan;
+    let dispatch;
 
     before('delay for ms-users', () => Promise.delay(2000));
 
@@ -30,8 +28,12 @@ describe('Plans suite', function PlansSuite() {
       return payments.connect();
     });
 
+    before(function addDispatcher() {
+      dispatch = simpleDispatcher(payments.router);
+    });
+
     it('Should create free plan', () => {
-      return payments.router(freePlanData, createPlanHeaders)
+      return dispatch(createPlan, freePlanData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -41,7 +43,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should get free plan', () => {
-      return payments.router('free', getPlanHeaders)
+      return dispatch(getPlan, 'free')
         .reflect()
         .then((result) => {
           debug(result);
@@ -55,7 +57,7 @@ describe('Plans suite', function PlansSuite() {
         something: 'useless',
       };
 
-      return payments.router(data, createPlanHeaders)
+      return dispatch(createPlan, data)
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -65,13 +67,13 @@ describe('Plans suite', function PlansSuite() {
 
     it('Should create a plan', () => {
       return payments
-        .router({
+        .router(createPlan, {
           ...testPlanData,
           plan: {
             ...testPlanData.plan,
             state: 'CREATED',
           },
-        }, createPlanHeaders)
+        })
         .reflect()
         .then((result) => {
           debug(result);
@@ -85,7 +87,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to update on an unknown plan id', () => {
-      return payments.router({ id: 'P-veryrandomid', hidden: true }, updatePlanHeaders)
+      return dispatch(updatePlan, { id: 'P-veryrandomid', hidden: true })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -94,7 +96,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to update on invalid plan schema', () => {
-      return payments.router({ id: billingPlan.plan.id, plan: { invalid: true } }, updatePlanHeaders)
+      return dispatch(updatePlan, { id: billingPlan.plan.id, plan: { invalid: true } })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -116,7 +118,7 @@ describe('Plans suite', function PlansSuite() {
         },
       };
 
-      return payments.router(updateData, updatePlanHeaders)
+      return dispatch(updatePlan, updateData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -125,7 +127,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to activate on an invalid state', () => {
-      return payments.router({ id: 'P-random', state: 'invalid' }, statePlanHeaders)
+      return dispatch(statePlan, { id: 'P-random', state: 'invalid' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -134,7 +136,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to activate on an unknown plan id', () => {
-      return payments.router({ id: 'P-random', state: 'active' }, statePlanHeaders)
+      return dispatch(statePlan, { id: 'P-random', state: 'active' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -143,7 +145,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should activate the plan', () => {
-      return payments.router({ id: billingPlan.plan.id, state: 'active' }, statePlanHeaders)
+      return dispatch(statePlan, { id: billingPlan.plan.id, state: 'active' })
         .reflect()
         .then((result) => {
           debug(result);
@@ -152,7 +154,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to list on invalid query schema', () => {
-      return payments.router({ status: 'invalid' }, listPlanHeaders)
+      return dispatch(listPlan, { status: 'invalid' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -161,7 +163,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should list all plans', () => {
-      return payments.router({}, listPlanHeaders)
+      return dispatch(listPlan, {})
         .reflect()
         .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
@@ -169,7 +171,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should fail to delete on an unknown plan id', () => {
-      return payments.router('P-random', deletePlanHeaders)
+      return dispatch(deletePlan, 'P-random')
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -177,7 +179,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should delete plan', () => {
-      return payments.router(billingPlan.plan.id, deletePlanHeaders)
+      return dispatch(deletePlan, billingPlan.plan.id)
         .reflect()
         .then((result) => {
           debug(result);
@@ -186,7 +188,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should delete free plan', () => {
-      return payments.router('free', deletePlanHeaders)
+      return dispatch(deletePlan, 'free')
         .reflect()
         .then((result) => {
           assert(result.isRejected());

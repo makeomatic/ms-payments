@@ -9,4 +9,10 @@ module.exports = exports = class {
       console.log(err && err.response || ''); // eslint-disable-line
     }
   }
+
+  static simpleDispatcher(router) {
+    return function dispatch(route, params) {
+      return router.dispatch(route, { params, transport: 'amqp' });
+    };
+  }
 };
