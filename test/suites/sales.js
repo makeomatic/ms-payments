@@ -82,9 +82,8 @@ describe('Sales suite', function SalesSuite() {
         .wait(3000)
         .screenshot('./ss/after-confirm.png')
         .end()
-        .then(() => {
-          console.log('completed running %s', saleUrl); // eslint-disable-line
-        });
+        .then(() => _debug('finished running', saleUrl))
+        .catch(err => _debug('failed with error', err));
     });
   }
 

@@ -44,7 +44,14 @@ describe('Agreements suite', function AgreementSuite() {
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
-          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          const data = {
+            payer_id: parsed.query.PayerID,
+            payment_id: parsed.query.paymentId,
+            token: parsed.query.token,
+          };
+
+          _debug('resolved data', data);
+          resolve(data);
         }
       }
 
@@ -83,9 +90,8 @@ describe('Agreements suite', function AgreementSuite() {
         .wait(10000)
         .screenshot('./ss/after-confirm.png')
         .end()
-        .then(() => {
-          console.log('completed running %s', saleUrl);
-        });
+        .then(() => _debug('finished running'))
+        .catch(err => _debug('failed with error', err));
     });
   }
 

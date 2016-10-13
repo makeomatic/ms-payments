@@ -80,9 +80,8 @@ describe('Transactions suite', function TransactionsSuite() {
         .wait(3000)
         .screenshot('./ss/after-confirm.png')
         .end()
-        .then(() => {
-          console.log('completed running %s', saleUrl);
-        });
+        .then(() => _debug('finished running'))
+        .catch(err => _debug('failed with error', err));
     });
   }
 
@@ -117,8 +116,8 @@ describe('Transactions suite', function TransactionsSuite() {
 
   before('executeAgreement', () => (
     approve(agreement.url)
-      .then(() => (
-        dispatch(executeAgreement, { token: agreement.token })
+      .then(parsed => (
+        dispatch(executeAgreement, { token: parsed.token })
           .reflect()
           .then((result) => {
             debug(result);

@@ -1,9 +1,10 @@
 const Errors = require('common-errors');
 
 // helpers
-const key = require('../../redisKey.js');
-const { hmget } = require('../../listUtils.js');
-const { PLANS_DATA } = require('../../constants.js');
+const key = require('../../redisKey');
+const { hmget } = require('../../listUtils');
+const { PLANS_DATA } = require('../../constants');
+const { handlePipeline } = require('../../utils/redis');
 
 // constants
 const EXTRACT_FIELDS = ['plan', 'subs', 'alias', 'hidden'];
@@ -18,6 +19,7 @@ function planGet({ params: id }) {
     .exists(planKey)
     .hmget(planKey, EXTRACT_FIELDS)
     .exec()
+    .then(handlePipeline)
     .spread((exists, data) => {
       if (!exists) {
         throw new Errors.HttpStatusError(404, `plan ${id} not found`);
