@@ -24,9 +24,12 @@ describe('Sales suite', function SalesSuite() {
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 30000,
+      webPreferences: {
+        preload: '/src/test/data/preload.js',
+      },
     });
 
-    return new Promise(_resolve => {
+    return new Promise((_resolve) => {
       const resolve = once(_resolve);
       const _debug = require('debug')('nightmare');
 
@@ -93,7 +96,7 @@ describe('Sales suite', function SalesSuite() {
     it('Should fail to create sale on invalid arguments', () => {
       return payments.router({ wrong: 'data' }, createSaleHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
         });
@@ -121,10 +124,10 @@ describe('Sales suite', function SalesSuite() {
     it('Should execute approved sale', () => {
       return approve(sale.url)
         .tap()
-        .then(query => {
+        .then((query) => {
           return payments.router(query, executeSaleHeaders)
             .reflect()
-            .then(result => {
+            .then((result) => {
               debug(result);
               assert(result.isFulfilled());
             });
@@ -143,12 +146,12 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should approve & execute 3d printing sale', () => {
       return approve(sale.url)
-        .then(query => {
+        .then((query) => {
           sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
 
           return payments.router(query, executeSaleHeaders)
             .reflect()
-            .then(result => {
+            .then((result) => {
               assert.ok(payments.mailer.send.calledOnce);
 
               // sinon restore
@@ -163,7 +166,7 @@ describe('Sales suite', function SalesSuite() {
     it('Should list all sales', () => (
       payments.router({}, listSaleHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         })
     ));

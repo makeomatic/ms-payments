@@ -30,9 +30,12 @@ describe('Transactions suite', function TransactionsSuite() {
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 15000,
+      webPreferences: {
+        preload: '/src/test/data/preload.js',
+      },
     });
 
-    return new Promise(_resolve => {
+    return new Promise((_resolve) => {
       const resolve = once(_resolve);
 
       const _debug = require('debug')('nightmare');
@@ -91,7 +94,7 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   before('initPlan', () => (
-    payments.router(testPlanData, createPlanHeaders).then(data => {
+    payments.router(testPlanData, createPlanHeaders).then((data) => {
       const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = data.plan.id;
@@ -140,7 +143,7 @@ describe('Transactions suite', function TransactionsSuite() {
     it('Should not sync transaction on invalid data', () => (
       payments.router({ wrong: 'data' }, syncTransactionHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
         })
@@ -151,7 +154,7 @@ describe('Transactions suite', function TransactionsSuite() {
       const end = '2016-12-31';
       return payments.router({ id: agreement.id, start, end }, syncTransactionHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           debug(result);
           assert(result.isFulfilled());
         });
@@ -160,7 +163,7 @@ describe('Transactions suite', function TransactionsSuite() {
     it('Should list all transactions', () => (
       payments.router({}, listTransactionHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         })
     ));

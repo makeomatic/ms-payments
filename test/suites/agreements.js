@@ -34,9 +34,12 @@ describe('Agreements suite', function AgreementSuite() {
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 15000,
+      webPreferences: {
+        preload: '/src/test/data/preload.js',
+      },
     });
 
-    return new Promise(_resolve => {
+    return new Promise((_resolve) => {
       const resolve = once(_resolve);
 
       const _debug = require('debug')('nightmare');
@@ -95,7 +98,7 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   before(function initPlan() {
-    return payments.router(testPlanData, createPlanHeaders).then(data => {
+    return payments.router(testPlanData, createPlanHeaders).then((data) => {
       const id = data.plan.id.split('|')[0];
       planId = data.plan.id;
       testAgreementData.plan.id = id;
@@ -163,7 +166,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then(() => {
           return payments.router({ token: billingAgreement.token }, executeAgreementHeaders)
             .reflect()
-            .then(result => {
+            .then((result) => {
               debug(result);
               assert(result.isFulfilled());
               billingAgreement.id = result.value().id;
@@ -174,7 +177,7 @@ describe('Agreements suite', function AgreementSuite() {
     it('Should list all agreements', () => {
       return payments.router({}, listAgreementHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         });
     });
@@ -195,13 +198,13 @@ describe('Agreements suite', function AgreementSuite() {
       function waitForAgreementToBecomeActive() {
         return payments.router({}, syncAgreementsHeaders)
           .reflect()
-          .then(result => {
+          .then((result) => {
             assert(result.isFulfilled());
           })
           .then(() => {
             return payments.router({ id: billingAgreement.id }, getAgreementHeaders);
           })
-          .then(agreement => {
+          .then((agreement) => {
             if (agreement.state.toLowerCase() === 'pending') {
               return Promise.delay(500).then(waitForAgreementToBecomeActive);
             }

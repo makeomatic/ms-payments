@@ -33,7 +33,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should create free plan', () => {
       return payments.router(freePlanData, createPlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           debug(result);
           assert(result.isFulfilled());
           assert(result.value().plan.id);
@@ -43,7 +43,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should get free plan', () => {
       return payments.router('free', getPlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           debug(result);
           assert(result.isFulfilled());
           assert(result.value().alias);
@@ -87,7 +87,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should fail to update on an unknown plan id', () => {
       return payments.router({ id: 'P-veryrandomid', hidden: true }, updatePlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().statusCode, 400);
         });
@@ -145,7 +145,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should activate the plan', () => {
       return payments.router({ id: billingPlan.plan.id, state: 'active' }, statePlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           debug(result);
           assert(result.isFulfilled());
         });
@@ -163,7 +163,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should list all plans', () => {
       return payments.router({}, listPlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         });
     });
@@ -188,7 +188,7 @@ describe('Plans suite', function PlansSuite() {
     it('Should delete free plan', () => {
       return payments.router('free', deletePlanHeaders)
         .reflect()
-        .then(result => {
+        .then((result) => {
           assert(result.isRejected());
         });
     });
