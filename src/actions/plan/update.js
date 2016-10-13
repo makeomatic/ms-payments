@@ -124,9 +124,9 @@ function saveToRedis({ plans, additionalData }) {
  * @param  {Object} message
  * @return {Promise}
  */
-module.exports = function planUpdate(message) {
+module.exports = function planUpdate({ params }) {
   const { redis } = this;
-  const { alias, id } = message;
+  const { alias, id } = params;
 
   if (id !== FREE_PLAN_ID && id.indexOf('|') === -1) {
     return Promise.reject(new Errors.HttpStatusError(400, `invalid plan id: ${id}`));
@@ -136,7 +136,7 @@ module.exports = function planUpdate(message) {
   // therefore we only need to check if message.alias already exists
 
   return Promise
-    .bind(this, message)
+    .bind(this, params)
     .tap(() => {
       if (!alias) {
         return null;

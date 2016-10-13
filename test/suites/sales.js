@@ -41,7 +41,14 @@ describe('Sales suite', function SalesSuite() {
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
-          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          const data = {
+            payer_id: parsed.query.PayerID,
+            payment_id: parsed.query.paymentId,
+            token: parsed.query.token,
+          };
+
+          _debug('resolved data', data);
+          resolve(data);
         }
       }
 
@@ -93,7 +100,7 @@ describe('Sales suite', function SalesSuite() {
   });
 
   before(() => {
-    dispatch = simpleDispatcher(dispatch);
+    dispatch = simpleDispatcher(payments.router);
   });
 
   describe('unit tests', function UnitSuite() {

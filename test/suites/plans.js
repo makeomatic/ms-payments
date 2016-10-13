@@ -66,24 +66,23 @@ describe('Plans suite', function PlansSuite() {
     });
 
     it('Should create a plan', () => {
-      return payments
-        .router(createPlan, {
-          ...testPlanData,
-          plan: {
-            ...testPlanData.plan,
-            state: 'CREATED',
-          },
-        })
-        .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
+      return dispatch(createPlan, {
+        ...testPlanData,
+        plan: {
+          ...testPlanData.plan,
+          state: 'CREATED',
+        },
+      })
+      .reflect()
+      .then((result) => {
+        debug(result);
+        assert(result.isFulfilled());
 
-          billingPlan = result.value();
+        billingPlan = result.value();
 
-          assert(billingPlan.plan.id);
-          assert.equal(billingPlan.state.toLowerCase(), 'created');
-        });
+        assert(billingPlan.plan.id);
+        assert.equal(billingPlan.state.toLowerCase(), 'created');
+      });
     });
 
     it('Should fail to update on an unknown plan id', () => {

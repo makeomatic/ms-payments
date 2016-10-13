@@ -166,8 +166,8 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an approved agreement', () => {
       return approve(billingAgreement.url)
-        .then(() => {
-          return dispatch(executeAgreement, { token: billingAgreement.token })
+        .then((params) => {
+          return dispatch(executeAgreement, { token: params.token })
             .reflect()
             .then((result) => {
               debug(result);

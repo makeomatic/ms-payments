@@ -168,6 +168,7 @@ function agreementExecute({ params }) {
   return Promise
     .bind({
       token,
+      log: this.log,
       users: config.users,
       paypal: config.paypal,
       tokenKey: key('subscription-token', token),
