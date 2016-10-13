@@ -1,16 +1,19 @@
 const { NotSupportedError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
-const key = require('../../redisKey.js');
 const url = require('url');
 const find = require('lodash/find');
 
+// helpers
+const key = require('../../redisKey.js');
 const { serialize } = require('../../utils/redis.js');
 const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 
-function saleCreate(message) {
+// paypal
+const paypalPaymentCreate = Promise.promisify(paypal.payment.create, { context: paypal.payment });
+
+function saleCreate({ params: message }) {
   const { _config, redis } = this;
   const promise = Promise.bind(this);
 
@@ -42,7 +45,7 @@ function saleCreate(message) {
   };
 
   function sendRequest() {
-    return paypalPaymentCreate(sale, _config.paypal).then(newSale => {
+    return paypalPaymentCreate(sale, _config.paypal).then((newSale) => {
       const approval = find(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
         throw new NotSupportedError('Unexpected PayPal response!');

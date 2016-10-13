@@ -1,17 +1,18 @@
-const key = require('../../redisKey.js');
 const Errors = require('common-errors');
 
+// helpers
+const key = require('../../redisKey.js');
 const { deserialize } = require('../../utils/redis.js');
 const { TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
 
-module.exports = function saleGet(opts) {
+module.exports = function saleGet({ params: opts }) {
   const { redis } = this;
   const { owner, id } = opts;
   const transactionData = key(TRANSACTIONS_COMMON_DATA, id);
 
   return redis
-    .hgetallBuffer(transactionData)
-    .then(data => {
+    .hgetall(transactionData)
+    .then((data) => {
       if (!data) {
         throw new Errors.HttpStatusError(404, `transaction id ${id} missing`);
       }

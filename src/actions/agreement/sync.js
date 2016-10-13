@@ -1,11 +1,15 @@
 const Promise = require('bluebird');
 const moment = require('moment');
+
+// internal actions
 const bill = require('./bill');
-const FETCH_USERS_LIMIT = 20;
-const AGREEMENT_PENDING_STATUS = JSON.stringify('Pending');
 const listAgreements = require('./list.js');
 
-function agreementSync(message) {
+// constants
+const FETCH_USERS_LIMIT = 20;
+const AGREEMENT_PENDING_STATUS = JSON.stringify('Pending');
+
+function agreementSync({ params: message = {} }) {
   const { _config, amqp, log } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const usersList = `${prefix}.${postfix.list}`;
@@ -32,10 +36,10 @@ function agreementSync(message) {
 
     return amqp
       .publishAndWait(usersList, getRequest, { timeout: 5000 })
-      .then(response => {
+      .then((response) => {
         const { users, cursor, page, pages } = response;
 
-        users.forEach(user => {
+        users.forEach((user) => {
           pulledUsers.add(user.id);
           pool.push(user);
         });
@@ -53,18 +57,21 @@ function agreementSync(message) {
     const offset = opts.cursor || 0;
 
     return listAgreements.call(this, {
-      offset,
-      limit: FETCH_USERS_LIMIT,
-      filter: {
-        state: {
-          eq: AGREEMENT_PENDING_STATUS,
+      params:
+      {
+        offset,
+        limit: FETCH_USERS_LIMIT,
+        filter: {
+          state: {
+            eq: AGREEMENT_PENDING_STATUS,
+          },
         },
       },
     })
-    .then(response => {
+    .then((response) => {
       const { items: agreements, cursor, page, pages } = response;
 
-      agreements.forEach(agreement => {
+      agreements.forEach((agreement) => {
         const { owner } = agreement;
         if (!pulledUsers.has(owner)) {
           missingUsers.add(owner);
@@ -79,11 +86,11 @@ function agreementSync(message) {
         return null;
       }
 
-      return Promise.map(missingUsers, username => {
+      return Promise.map(missingUsers, (username) => {
         const request = { username, audience };
         return amqp
           .publishAndWait(getMetadata, request, { timeout: 10000 })
-          .then(metadata => {
+          .then((metadata) => {
             pool.push({ id: username, metadata });
           });
       });
@@ -91,14 +98,14 @@ function agreementSync(message) {
   }
 
   // 3. bill users
-  const billUser = user => {
+  const billUser = (user) => {
     const meta = user.metadata[audience];
-    return bill.call(this, { ...meta, username: user.id });
+    return bill.call(this, { params: { ...meta, username: user.id } });
   };
 
   return getUsers()
     .tap(() => getPendingAgreements.call(this))
-    .tap(users => {
+    .tap((users) => {
       log.info('fetched %d users to bill', users.length);
     })
     .map(billUser);

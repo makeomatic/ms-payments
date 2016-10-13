@@ -1,9 +1,11 @@
-const { processResult, mapResult } = require('../../listUtils');
 const fsort = require('redis-filtered-sort');
+
+// helpers
+const { processResult, mapResult } = require('../../listUtils');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 const key = require('../../redisKey.js');
 
-function saleList(opts) {
+function saleList({ params: opts }) {
   const { redis } = this;
   const { filter } = opts;
   const criteria = opts.criteria;

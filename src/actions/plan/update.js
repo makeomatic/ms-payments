@@ -1,8 +1,5 @@
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
-const paypalPlanUpdate = Promise.promisify(paypal.billingPlan.update, {context: paypal.billingPlan}); // eslint-disable-line
-
 const set = require('lodash/set');
 const assign = require('lodash/assign');
 const mergeWith = require('lodash/mergeWith');
@@ -10,12 +7,14 @@ const findIndex = require('lodash/findIndex');
 const get = require('lodash/get');
 const each = require('lodash/each');
 
+// helpers
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize, deserialize } = require('../../utils/redis.js');
 const { merger } = require('../../utils/plans.js');
 const { cleanupCache } = require('../../listUtils.js');
-
 const key = require('../../redisKey.js');
+
+// constants
 const DATA_HOLDERS = {
   monthly: 'month',
   yearly: 'year',
@@ -106,7 +105,7 @@ function saveToRedis({ plans, additionalData }) {
 
   // free plan id contains only 1 plan and it has same id as alias
   if (aliasedId !== FREE_PLAN_ID) {
-    plans.forEach(planData => {
+    plans.forEach((planData) => {
       const saveData = assign(planData, additionalData);
       pipeline.hmset(key(PLANS_DATA, planData.id), serialize(saveData));
     });
@@ -143,14 +142,14 @@ module.exports = function planUpdate(message) {
         return null;
       }
 
-      return redis.sismember(PLANS_INDEX, alias).then(isMember => {
+      return redis.sismember(PLANS_INDEX, alias).then((isMember) => {
         if (isMember) {
           throw new Errors.HttpStatusError(409, `alias ${alias} already exists`);
         }
       });
     })
     .tap(() => {
-      return redis.exists(key(PLANS_DATA, id)).then(exists => {
+      return redis.exists(key(PLANS_DATA, id)).then((exists) => {
         if (!exists) {
           throw new Errors.HttpStatusError(404, `plan ${id} does not exist`);
         }

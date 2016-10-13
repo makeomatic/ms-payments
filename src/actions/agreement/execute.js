@@ -2,17 +2,22 @@ const Errors = require('common-errors');
 const Promise = require('bluebird');
 const moment = require('moment');
 const paypal = require('paypal-rest-sdk');
-const key = require('../../redisKey');
-const getPlan = require('../plan/get');
-const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
 
-const pullTransactionsData = require('../transaction/sync.js');
-const setState = require('./state');
+// helpers
+const key = require('../../redisKey');
 const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 
-function agreementExecute(message) {
+// internal actions
+const pullTransactionsData = require('../transaction/sync.js');
+const setState = require('./state');
+const getPlan = require('../plan/get');
+
+// eslint-disable-next-line max-len
+const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
+
+function agreementExecute({ params: message }) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const { token } = message;
@@ -21,7 +26,7 @@ function agreementExecute(message) {
   function sendRequest() {
     return billingAgreement
       .executeAsync(token, {}, _config.paypal)
-      .catch(err => {
+      .catch((err) => {
         throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       })
       .get('id');
@@ -40,7 +45,7 @@ function agreementExecute(message) {
     const { planId, agreement, owner } = data;
     const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
-    return getPlan.call(this, planId).then((plan) => {
+    return getPlan.call(this, { params: planId }).then((plan) => {
       const subscription = find(plan.subs, { name: subscriptionName });
       return { agreement, subscription, planId, owner };
     });
@@ -66,10 +71,12 @@ function agreementExecute(message) {
   function syncTransactions({ agreement, owner, subscriptionInterval }) {
     return pullTransactionsData
       .call(this, {
-        id: agreement.id,
-        owner,
-        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
-        end: moment().add(1, 'day').format('YYYY-MM-DD'),
+        params: {
+          id: agreement.id,
+          owner,
+          start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+          end: moment().add(1, 'day').format('YYYY-MM-DD'),
+        },
       })
       .return(agreement);
   }
@@ -80,10 +87,12 @@ function agreementExecute(message) {
       // remove old agreement if setting new one
       return setState
         .call(this, {
-          owner: data.owner,
-          state: 'cancel',
+          params: {
+            owner: data.owner,
+            state: 'cancel',
+          },
         })
-        .catch({ statusCode: 400 }, err => {
+        .catch({ statusCode: 400 }, (err) => {
           this.log.warn('oldAgreement was already cancelled', err);
         })
         .return(input);
@@ -142,7 +151,7 @@ function agreementExecute(message) {
   function verifyToken() {
     return redis
       .exists(tokenKey)
-      .then(response => {
+      .then((response) => {
         if (!response) {
           throw new Errors.HttpStatusError(404, `subscription token ${token} was not found`);
         }

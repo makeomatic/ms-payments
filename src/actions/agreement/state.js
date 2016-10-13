@@ -9,10 +9,12 @@ const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
   return ops;
 }, {});
 
-// user-defined
+// internal actions
+const syncTransactions = require('../transaction/sync.js');
+
+// helpers
 const key = require('../../redisKey.js');
 const resetToFreePlan = require('../../utils/resetToFreePlan.js');
-const syncTransactions = require('../transaction/sync.js');
 const { serialize } = require('../../utils/redis.js');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
@@ -23,7 +25,7 @@ const ACTION_TO_STATE = {
   cancel: 'cancelled',
 };
 
-function agreementState(message) {
+function agreementState({ params: message }) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const { owner, state } = message;
@@ -50,14 +52,16 @@ function agreementState(message) {
 
     return operations[state]
       .call(this, id, { note }, _config.paypal)
-      .catch(err => {
+      .catch((err) => {
         throw new Errors.HttpStatusError(err.httpStatusCode, `${id}: ${err.response.message}`, err.response.name);
       })
       .tap(() => syncTransactions.call(this, {
-        id,
-        owner,
-        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
-        end: moment().add(1, 'day').format('YYYY-MM-DD'),
+        params: {
+          id,
+          owner,
+          start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+          end: moment().add(1, 'day').format('YYYY-MM-DD'),
+        },
       }))
       .return(id);
   }

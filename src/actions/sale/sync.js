@@ -1,18 +1,22 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment }); // eslint-disable-line
 const moment = require('moment');
 const forEach = require('lodash/forEach');
 
+// internal actions
 const salelist = require('./list');
+
+// helpers
 const key = require('../../redisKey.js');
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
 const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
 const { serialize } = require('../../utils/redis.js');
 
+// eslint-disable-next-line max-len
+const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment });
 const TRANSACTIONS_LIMIT = 20;
 
-function transactionSync(message = {}) {
+function transactionSync({ params: message = {} }) {
   const { _config, redis } = this;
   const { paypal: paypalConfig } = _config;
 
@@ -32,7 +36,7 @@ function transactionSync(message = {}) {
       limit: 1,
     };
 
-    return salelist.call(this, query).get('items');
+    return salelist.call(this, { params: query }).get('items');
   }
 
   function sendRequest(items) {
@@ -57,7 +61,7 @@ function transactionSync(message = {}) {
     const pipeline = redis.pipeline();
     const updates = [];
 
-    forEach(data.payments, sale => {
+    forEach(data.payments, (sale) => {
       const saleKey = key(SALES_DATA_PREFIX, sale.id);
       const owner = getOwner(sale);
       const saveData = {
@@ -75,14 +79,13 @@ function transactionSync(message = {}) {
 
     updates.push(pipeline.exec());
 
-
     return Promise.all(updates).then(() => {
       if (data.count < TRANSACTIONS_LIMIT) {
         return null;
       }
 
       // recursively sync until we are done
-      return transactionSync.call(this, { next_id: data.next_id });
+      return transactionSync.call(this, { params: { next_id: data.next_id } });
     });
   }
 
