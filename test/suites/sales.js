@@ -30,8 +30,7 @@ describe('Sales suite', function SalesSuite() {
       },
     });
 
-    return new Promise((_resolve) => {
-      const resolve = once(_resolve);
+    return new Promise((resolve, reject) => {
       const _debug = require('debug')('nightmare');
 
       const iframe = '#injectedUnifiedLogin iframe';
@@ -53,7 +52,8 @@ describe('Sales suite', function SalesSuite() {
       }
 
       function selectElement(selector, element) {
-        return __nightmare.qs({ iframe: selector, el: element }); // eslint-disable-line
+        // eslint-disable-next-line no-undef
+        return __nightmare.qs({ iframe: selector, el: element });
       }
 
       browser
@@ -90,7 +90,10 @@ describe('Sales suite', function SalesSuite() {
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => _debug('finished running', saleUrl))
-        .catch(err => _debug('failed with error', err));
+        .catch((err) => {
+          _debug('failed with error', err);
+          reject(err);
+        });
     });
   }
 

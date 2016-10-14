@@ -64,9 +64,11 @@ __nightmare.ipc = require('electron').ipcRenderer;
 __nightmare.sliced = require('sliced');
 __nightmare.qs = function(selector) {
   if (selector && typeof selector === 'object') {
+		console.log('selecting with %j', selector);
     return document.querySelector(selector.iframe).contentWindow.document.querySelector(selector.el);
   }
 
+	console.log('selecting', selector);
   return document.querySelector(selector);
 }
 

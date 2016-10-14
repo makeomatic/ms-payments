@@ -1,4 +1,4 @@
-const Errors = require('common-errors');
+const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const render = require('ms-mailer-templates');
@@ -19,12 +19,12 @@ function parseInput(data, fallback) {
 }
 
 // send paypal request
-function sendRequest(message) {
+function sendRequest({ payer_id, payment_id }) {
   const { config, log } = this;
-  return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, config.paypal)
+  return paypalPaymentExecute(payment_id, { payer_id }, config.paypal)
     .catch((err) => {
       log.warn('failed to bill payment', err.response);
-      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
     });
 }
 
@@ -34,7 +34,7 @@ function updateRedis(sale) {
   const { state } = sale;
 
   if (state !== 'approved') {
-    throw new Errors.HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
+    throw new HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
   }
 
   const { id } = sale;
