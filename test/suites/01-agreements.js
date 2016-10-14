@@ -4,7 +4,6 @@ const Nightmare = require('nightmare');
 const { debug, duration, simpleDispatcher } = require('../utils');
 const TEST_CONFIG = require('../config');
 const url = require('url');
-const once = require('lodash/once');
 
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
@@ -36,9 +35,7 @@ describe('Agreements suite', function AgreementSuite() {
       },
     });
 
-    return new Promise((_resolve) => {
-      const resolve = once(_resolve);
-
+    return new Promise((resolve, reject) => {
       const _debug = require('debug')('nightmare');
 
       function parseURL(newUrl) {
@@ -91,7 +88,10 @@ describe('Agreements suite', function AgreementSuite() {
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => _debug('finished running'))
-        .catch(err => _debug('failed with error', err));
+        .catch((err) => {
+          _debug('failed with error', err);
+          reject(err);
+        });
     });
   }
 

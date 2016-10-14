@@ -3,7 +3,6 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const Nightmare = require('nightmare');
 const url = require('url');
-const once = require('lodash/once');
 const sinon = require('sinon');
 const { debug, duration, simpleDispatcher } = require('../utils');
 

@@ -1,7 +1,6 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const once = require('lodash/once');
 const url = require('url');
 const Nightmare = require('nightmare');
 const { debug, duration, simpleDispatcher } = require('../utils');
@@ -33,9 +32,7 @@ describe('Transactions suite', function TransactionsSuite() {
       },
     });
 
-    return new Promise((_resolve) => {
-      const resolve = once(_resolve);
-
+    return new Promise((resolve, reject) => {
       const _debug = require('debug')('nightmare');
 
       function parseURL(newUrl) {
@@ -88,7 +85,10 @@ describe('Transactions suite', function TransactionsSuite() {
         .screenshot('./ss/after-confirm.png')
         .end()
         .then(() => _debug('finished running'))
-        .catch(err => _debug('failed with error', err));
+        .catch((err) => {
+          _debug('failed with error', err);
+          reject(err);
+        });
     });
   }
 
