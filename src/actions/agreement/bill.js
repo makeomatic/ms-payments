@@ -5,19 +5,23 @@ const find = require('lodash/find');
 const assign = require('lodash/assign');
 const get = require('lodash/get');
 
+// helpers
 const key = require('../../redisKey.js');
-const sync = require('../transaction/sync.js');
 const resetToFreePlan = require('../../utils/resetToFreePlan.js');
 const { hmget } = require('../../listUtils.js');
 const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 
+// internal actions
+const sync = require('../transaction/sync.js');
+
+// constants
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
 const PLAN_KEYS = ['plan', 'subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 
 // check agreement bill
-function agreementBill(input) {
+function agreementBill({ params: input }) {
   const { agreement: id, subscriptionInterval, username } = input;
   const { _config, redis, amqp, log } = this;
   const { users: { prefix, postfix } } = _config;
@@ -40,7 +44,7 @@ function agreementBill(input) {
     const agreementKey = key(AGREEMENT_DATA, id);
     return redis
       .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
-      .then(data => {
+      .then((data) => {
         const { agreement, plan, owner, state } = agreementParser(data);
         if (state.toLowerCase() === 'cancelled') {
           throw new NotPermitted('Operation not permitted on cancelled agreements.');
@@ -72,7 +76,7 @@ function agreementBill(input) {
     }
 
     return sync
-      .call(this, { id, start, end })
+      .call(this, { params: { id, start, end } })
       .then(agreementData => assign(data, { details: agreementData }));
   }
 
@@ -160,7 +164,7 @@ function agreementBill(input) {
     .then(getTransactions)
     .then(checkData)
     .then(saveToRedis)
-    .catch(NotPermitted, e => {
+    .catch(NotPermitted, (e) => {
       log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
       return resetToFreePlan.call(this, username);
     });

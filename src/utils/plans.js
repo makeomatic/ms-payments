@@ -11,7 +11,7 @@ function merger(planOneData, planTwoData, fieldName) {
     return planOneData.concat(planTwoData);
   }
 
-  return void 0;
+  return undefined;
 }
 
 exports.merger = merger;

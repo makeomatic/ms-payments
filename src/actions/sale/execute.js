@@ -1,14 +1,17 @@
-const Errors = require('common-errors');
+const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
 const render = require('ms-mailer-templates');
-const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
 const pick = require('lodash/pick');
 
+// helpers
 const key = require('../../redisKey');
 const { serialize } = require('../../utils/redis.js');
 const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants.js');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
+
+// paypal
+const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
 
 // parse json
 function parseInput(data, fallback) {
@@ -16,12 +19,12 @@ function parseInput(data, fallback) {
 }
 
 // send paypal request
-function sendRequest(message) {
+function sendRequest({ payer_id, payment_id }) {
   const { config, log } = this;
-  return paypalPaymentExecute(message.payment_id, { payer_id: message.payer_id }, config.paypal)
-    .catch(err => {
+  return paypalPaymentExecute(payment_id, { payer_id }, config.paypal)
+    .catch((err) => {
       log.warn('failed to bill payment', err.response);
-      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+      throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
     });
 }
 
@@ -31,7 +34,7 @@ function updateRedis(sale) {
   const { state } = sale;
 
   if (state !== 'approved') {
-    throw new Errors.HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
+    throw new HttpStatusError(412, `paypal returned "${sale.state}" on the sale`);
   }
 
   const { id } = sale;
@@ -60,7 +63,7 @@ function updateRedis(sale) {
     .hmgetBuffer(saleKey, 'owner', 'cart')
     .hmset(saleKey, serialize(updateData))
     .exec()
-    .spread(resp => {
+    .spread((resp) => {
       const [err, recordedData] = resp;
       if (err) {
         throw err;
@@ -120,7 +123,7 @@ function sendCartEmail({ sale, cart, parsedSale }) {
   const cartConfig = config.cart;
   const emailData = pick(cartConfig, ['from', 'to', 'subject']);
   return render(cartConfig.template, cart)
-    .then(html => {
+    .then((html) => {
       const email = { ...emailData, html };
       return mailer
         .send(cartConfig.emailAccount, email)
@@ -129,7 +132,7 @@ function sendCartEmail({ sale, cart, parsedSale }) {
 }
 
 // Action itself
-function saleExecute(message) {
+function saleExecute({ params: message }) {
   return Promise
     .bind(this, message)
     .then(sendRequest)

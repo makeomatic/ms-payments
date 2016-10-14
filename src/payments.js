@@ -4,10 +4,18 @@ const path = require('path');
 const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
 const Mailer = require('ms-mailer-client');
+const routerExtension = require('mservice').routerExtension;
 
+// plugins
+const autoSchema = routerExtension('validate/schemaLessAction');
+const auditLog = routerExtension('audit/log');
+
+// internal actions
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync.js');
 const syncAgreements = require('./actions/agreement/sync.js');
+
+// constants
 const { FREE_PLAN_ID } = require('./constants.js');
 
 /**
@@ -21,14 +29,25 @@ class Payments extends MService {
    * @type {Object}
    */
   static defaultOpts = {
-    logger: process.env.NODE_ENV === 'development',
-    plugins: ['logger', 'validator', 'amqp', 'redisCluster'],
+    debug: process.env.NODE_ENV !== 'production',
+    logger: true,
+    plugins: ['logger', 'validator', 'router', 'amqp', 'redisCluster'],
     amqp: {
-      queue: 'ms-payments',
-      initRoutes: true,
-      initRouter: true,
-      prefix: 'payments',
-      postfix: path.join(__dirname, 'actions'),
+      transport: {
+        queue: 'ms-payments',
+      },
+    },
+    router: {
+      routes: {
+        directory: path.join(__dirname, 'actions'),
+        prefix: 'payments',
+        setTransportsAsDefault: true,
+        transports: ['amqp'],
+      },
+      extensions: {
+        enabled: ['postRequest', 'preRequest', 'preResponse'],
+        register: [autoSchema, auditLog],
+      },
     },
     mailer: {
       prefix: 'mailer',
@@ -127,7 +146,7 @@ class Payments extends MService {
     const { defaultPlans } = this.config;
     return Promise
     .bind(this, defaultPlans)
-    .map(plan => createPlan.call(this, plan).reflect())
+    .map(plan => createPlan.call(this, { params: plan }).reflect())
     .map(function iterateOverPlans(plan) {
       if (plan.isFulfilled()) {
         this.log.info('Created plan %s', plan.value().name);
@@ -149,11 +168,11 @@ class Payments extends MService {
     this.log.info('syncing possibly missed transactions');
 
     // init sales sync
-    syncSaleTransactions.call(this)
+    syncSaleTransactions.call(this, {})
       .then(() => {
         this.log.info('completed sync of missing transactions');
       })
-      .catch(err => {
+      .catch((err) => {
         this.log.error('failed to sync sale transactions', err.stack);
       });
 
@@ -161,7 +180,7 @@ class Payments extends MService {
       .then(() => {
         this.log.info('completed sync of agreements');
       })
-      .catch(err => {
+      .catch((err) => {
         this.log.error('failed to sync recurring transactions', err.stack);
       });
 

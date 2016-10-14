@@ -2,18 +2,18 @@ const Promise = require('bluebird');
 const { deserialize, calcSlot } = require('./utils/redis.js');
 
 function processResult(dataIndex, redis) {
-  return ids => {
+  return (ids) => {
     const length = +ids.pop();
     if (length === 0 || ids.length === 0) {
       return [
-        ids || [],
+        [],
         [],
         length,
       ];
     }
 
     const pipeline = redis.pipeline();
-    ids.forEach(planId => {
+    ids.forEach((planId) => {
       pipeline.hgetall(`${dataIndex}:${planId}`);
     });
 
@@ -70,7 +70,7 @@ function cleanupCache(_index) {
   function scan(node, cursor = '0') {
     return node
       .scan(cursor, 'MATCH', `${index}:*`, 'COUNT', 50)
-      .then(response => {
+      .then((response) => {
         const [next, keys] = response;
 
         if (keys.length > 0) {

@@ -3,31 +3,33 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const Nightmare = require('nightmare');
 const url = require('url');
-const once = require('lodash/once');
 const sinon = require('sinon');
-const { debug, duration } = require('../utils');
+const { debug, duration, simpleDispatcher } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
   const Payments = require('../../src');
 
   const { testSaleData, testDynamicSaleData } = require('../data/paypal');
-  const createSaleHeaders = { routingKey: 'payments.sale.create' };
-  const createDynamicSaleHeaders = { routingKey: 'payments.sale.createDynamic' };
-  const executeSaleHeaders = { routingKey: 'payments.sale.execute' };
-  const listSaleHeaders = { routingKey: 'payments.sale.list' };
+  const createSale = 'payments.sale.create';
+  const createDynamicSale = 'payments.sale.createDynamic';
+  const executeSale = 'payments.sale.execute';
+  const listSale = 'payments.sale.list';
 
   this.timeout(duration * 4);
 
   let payments;
   let sale;
+  let dispatch;
 
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 30000,
+      webPreferences: {
+        preload: '/src/test/data/preload.js',
+      },
     });
 
-    return new Promise(_resolve => {
-      const resolve = once(_resolve);
+    return new Promise((resolve, reject) => {
       const _debug = require('debug')('nightmare');
 
       const iframe = '#injectedUnifiedLogin iframe';
@@ -37,12 +39,20 @@ describe('Sales suite', function SalesSuite() {
       function parseURL(newUrl) {
         if (newUrl.indexOf('cappasity') >= 0) {
           const parsed = url.parse(newUrl, true);
-          resolve({ payer_id: parsed.query.PayerID, payment_id: parsed.query.paymentId });
+          const data = {
+            payer_id: parsed.query.PayerID,
+            payment_id: parsed.query.paymentId,
+            token: parsed.query.token,
+          };
+
+          _debug('resolved data', data);
+          resolve(data);
         }
       }
 
       function selectElement(selector, element) {
-        return __nightmare.qs({ iframe: selector, el: element }); // eslint-disable-line
+        // eslint-disable-next-line no-undef
+        return __nightmare.qs({ iframe: selector, el: element });
       }
 
       browser
@@ -78,8 +88,10 @@ describe('Sales suite', function SalesSuite() {
         .wait(3000)
         .screenshot('./ss/after-confirm.png')
         .end()
-        .then(() => {
-          console.log('completed running %s', saleUrl); // eslint-disable-line
+        .then(() => _debug('finished running', saleUrl))
+        .catch((err) => {
+          _debug('failed with error', err);
+          reject(err);
         });
     });
   }
@@ -89,18 +101,22 @@ describe('Sales suite', function SalesSuite() {
     return payments.connect();
   });
 
+  before(() => {
+    dispatch = simpleDispatcher(payments.router);
+  });
+
   describe('unit tests', function UnitSuite() {
     it('Should fail to create sale on invalid arguments', () => {
-      return payments.router({ wrong: 'data' }, createSaleHeaders)
+      return dispatch(createSale, { wrong: 'data' })
         .reflect()
-        .then(result => {
+        .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
         });
     });
 
     it('Should create sale', () => {
-      return payments.router(testSaleData, createSaleHeaders)
+      return dispatch(createSale, testSaleData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -110,8 +126,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should fail to execute unapproved sale', () => {
-      return payments
-        .router({ payment_id: sale.sale.id, payer_id: 'doesntmatter' }, executeSaleHeaders)
+      return dispatch(executeSale, { payment_id: sale.sale.id, payer_id: 'doesntmatter' })
         .reflect()
         .then((result) => {
           assert(result.isRejected());
@@ -121,10 +136,10 @@ describe('Sales suite', function SalesSuite() {
     it('Should execute approved sale', () => {
       return approve(sale.url)
         .tap()
-        .then(query => {
-          return payments.router(query, executeSaleHeaders)
+        .then((query) => {
+          return dispatch(executeSale, query)
             .reflect()
-            .then(result => {
+            .then((result) => {
               debug(result);
               assert(result.isFulfilled());
             });
@@ -132,7 +147,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should create 3d printing sale', () => {
-      return payments.router(testDynamicSaleData, createDynamicSaleHeaders)
+      return dispatch(createDynamicSale, testDynamicSaleData)
         .reflect()
         .then((result) => {
           debug(result);
@@ -143,12 +158,12 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should approve & execute 3d printing sale', () => {
       return approve(sale.url)
-        .then(query => {
+        .then((query) => {
           sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
 
-          return payments.router(query, executeSaleHeaders)
+          return dispatch(executeSale, query)
             .reflect()
-            .then(result => {
+            .then((result) => {
               assert.ok(payments.mailer.send.calledOnce);
 
               // sinon restore
@@ -161,9 +176,9 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should list all sales', () => (
-      payments.router({}, listSaleHeaders)
+      dispatch(listSale, {})
         .reflect()
-        .then(result => {
+        .then((result) => {
           return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
         })
     ));

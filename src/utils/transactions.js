@@ -1,8 +1,11 @@
 const Promise = require('bluebird');
 const getPath = require('lodash/get');
 
+// helpers
 const { serialize } = require('./redis.js');
 const key = require('../redisKey.js');
+
+// constants
 const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const {
   TRANSACTION_TYPE_RECURRING,

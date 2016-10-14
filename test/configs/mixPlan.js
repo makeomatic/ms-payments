@@ -1,9 +1,9 @@
-const ld = require('../node_modules/lodash');
-const moment = require('../node_modules/moment');
-const setMetadata = require('../lib/utils/updateMetadata.js');
+const ld = require('/src/node_modules/lodash');
+const moment = require('/src/node_modules/moment');
+const setMetadata = require('/src/lib/utils/updateMetadata.js');
 const FREE_PLAN_ID = 'free';
 
-module.exports = exports = function mixPlan(username, audience) {
+module.exports = exports = function mixPlan(username, params) {
   const id = FREE_PLAN_ID;
   const plan = {
     plan: {
@@ -43,7 +43,7 @@ module.exports = exports = function mixPlan(username, audience) {
   const nextCycle = moment().add(1, 'month').format();
   const update = {
     username,
-    audience,
+    audience: params.audience,
     metadata: {
       $set: {
         plan: id,

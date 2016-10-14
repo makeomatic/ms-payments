@@ -1,5 +1,7 @@
-const { processResult, mapResult } = require('../../listUtils');
 const fsort = require('redis-filtered-sort');
+
+// helpers
+const { processResult, mapResult } = require('../../listUtils');
 const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
 const key = require('../../redisKey.js');
 
@@ -7,7 +9,7 @@ const key = require('../../redisKey.js');
  * List files
  * @return {Promise}
  */
-module.exports = function listCommonTransactions(opts) {
+module.exports = function listCommonTransactions({ params: opts }) {
   const { redis } = this;
   const { owner, type, filter } = opts;
   const criteria = opts.criteria;

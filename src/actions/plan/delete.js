@@ -1,6 +1,10 @@
-const state = require('./state.js');
-const key = require('../../redisKey.js');
 const Promise = require('bluebird');
+
+// internal actions
+const setState = require('./state.js');
+
+// helpers
+const key = require('../../redisKey.js');
 const { cleanupCache } = require('../../listUtils.js');
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 
@@ -9,7 +13,7 @@ function deleteFromRedis(id, redis) {
   const planKey = key(PLANS_DATA, id);
   const pipeline = redis.pipeline();
 
-  return redis.hgetBuffer(planKey, 'alias').then(alias => {
+  return redis.hget(planKey, 'alias').then((alias) => {
     const aliasedId = alias && alias.length > 0 ? JSON.parse(alias) : id;
 
     pipeline.del(planKey);
@@ -30,12 +34,12 @@ function actualDelete(id) {
     return deleteFromRedis(id, redis);
   }
 
-  return state
-    .call(this, { id, state: 'deleted' })
+  return setState
+    .call(this, { params: { id, state: 'deleted' } })
     .then(() => deleteFromRedis(id, redis));
 }
 
-function planDelete(id) {
+function planDelete({ params: id }) {
   if (id === FREE_PLAN_ID) {
     return Promise.resolve(1);
   }

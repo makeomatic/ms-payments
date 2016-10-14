@@ -1,19 +1,22 @@
 const Promise = require('bluebird');
 const paypal = require('paypal-rest-sdk');
-const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line
 const Errors = require('common-errors');
-
 const merge = require('lodash/merge');
 const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
 
+// internal actions
 const statePlan = require('./state.js');
+
+// helpers
 const key = require('../../redisKey.js');
 const { cleanupCache } = require('../../listUtils.js');
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
 const { serialize } = require('../../utils/redis.js');
 const { createJoinPlans } = require('../../utils/plans.js');
+
+const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line max-len
 
 function sendRequest(config, message) {
   const defaultMerchantPreferences = {
@@ -29,7 +32,7 @@ function sendRequest(config, message) {
   plan.merchant_preferences = merge(defaultMerchantPreferences, merchatPref || {});
 
   // divide single plan definition into as many as payment_definitions present
-  const plans = payment_definitions.map(definition => {
+  const plans = payment_definitions.map((definition) => {
     const partialPlan = {
       ...cloneDeep(plan),
       name: `${plan.name}-${definition.frequency.toLowerCase()}`,
@@ -37,7 +40,7 @@ function sendRequest(config, message) {
     };
 
     return billingPlanCreate(partialPlan, config.paypal)
-      .catch(err => {
+      .catch((err) => {
         throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       });
   });
@@ -49,10 +52,12 @@ function sendRequest(config, message) {
   }
 
   // activate the plan if we requested it
-  return promise.map(planData => {
+  return promise.map((planData) => {
     const id = planData.id;
     planData.state = 'active';
-    return statePlan.call(this, { id, state: 'active' }).return(planData);
+    return statePlan
+      .call(this, { params: { id, state: 'active' } })
+      .return(planData);
   });
 }
 
@@ -72,7 +77,7 @@ function createSaveToRedis(redis, message) {
 
     pipeline.sadd(PLANS_INDEX, aliasedId);
 
-    const subscriptions = message.subscriptions.map(subscription => {
+    const subscriptions = message.subscriptions.map((subscription) => {
       subscription.definition = find(plan.payment_definitions, item => (
         item.frequency.toLowerCase() === subscription.name
       ));
@@ -104,7 +109,7 @@ function createSaveToRedis(redis, message) {
       pipeline.hmset(key(PLANS_DATA, plan.id), serializedData);
     }
 
-    plans.forEach(planData => {
+    plans.forEach((planData) => {
       const saveData = {
         plan: {
           ...planData,
@@ -134,7 +139,7 @@ function createSaveToRedis(redis, message) {
  * @param  {Object} message
  * @return {Promise}
  */
-module.exports = function planCreate(message) {
+module.exports = function planCreate({ params: message }) {
   const { config, redis } = this;
   const { alias } = message;
   const saveToRedis = createSaveToRedis(redis, message);
@@ -142,7 +147,7 @@ module.exports = function planCreate(message) {
 
   if (alias && alias !== FREE_PLAN_ID) {
     promise = promise.then(() => {
-      return redis.sismember(PLANS_INDEX, alias).then(isMember => {
+      return redis.sismember(PLANS_INDEX, alias).then((isMember) => {
         if (isMember === 1) {
           throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);
         }

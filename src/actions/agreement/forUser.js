@@ -1,9 +1,11 @@
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
+
+// helpers
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
-function forUser(message) {
+function forUser({ params: message }) {
   const { _config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = _config;
   const { user } = message;
@@ -29,7 +31,7 @@ function forUser(message) {
 
     return redis
       .hgetall(agreementKey)
-      .then(data => {
+      .then((data) => {
         if (!data) {
           throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
         }

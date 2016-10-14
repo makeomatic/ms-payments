@@ -3,28 +3,32 @@ const Errors = require('common-errors');
 const paypal = require('paypal-rest-sdk');
 const moment = require('moment');
 const url = require('url');
-const key = require('../../redisKey.js');
-const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement }); // eslint-disable-line
 const find = require('lodash/find');
 const debug = require('debug')('nightmare:paypal-plan');
+
+// helpers
+const key = require('../../redisKey.js');
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
-function agreementCreate(message) {
+// eslint-disable-next-line max-len
+const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement });
+
+function agreementCreate({ params: message }) {
   const { _config, redis } = this;
   const planId = message.agreement.plan.id;
 
   function fetchPlan() {
     return redis
-      .hgetallBuffer(key(PLANS_DATA, planId))
-      .then(data => {
+      .hgetall(key(PLANS_DATA, planId))
+      .then((data) => {
         if (!data) {
           throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
         }
 
         return deserialize(data);
       })
-      .tap(data => {
+      .tap((data) => {
         if (data.state.toLowerCase() !== 'active') {
           throw new Errors.HttpStatusError(412, `plan ${planId} is inactive`);
         }
@@ -44,10 +48,10 @@ function agreementCreate(message) {
     debug('init plan %j', planData);
 
     return billingAgreementCreate(planData, _config.paypal)
-      .catch(err => {
+      .catch((err) => {
         throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
       })
-      .then(newAgreement => {
+      .then((newAgreement) => {
         const approval = find(newAgreement.links, { rel: 'approval_url' });
         if (approval === null) {
           throw new Errors.NotSupportedError('Unexpected PayPal response!');

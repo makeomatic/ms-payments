@@ -1,10 +1,10 @@
-FROM node:6.2
+FROM node:6.8
 
 # Updating ubuntu packages
 RUN apt-get update
 
 # Installing the packages needed to run Nightmare
-RUN apt-get install -y \
+RUN apt-get install -y --force-yes \
   xvfb \
   x11-xkb-utils \
   xfonts-100dpi \
