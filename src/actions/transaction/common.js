@@ -4,6 +4,8 @@ const fsort = require('redis-filtered-sort');
 const { processResult, mapResult } = require('../../listUtils');
 const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
 const key = require('../../redisKey.js');
+const { removeOwnerFromDescription } = require('../../utils/transactions');
+const map = require('lodash/map');
 
 /**
  * List files
@@ -34,5 +36,10 @@ module.exports = function listCommonTransactions({ params: opts }) {
   return redis
     .fsort(index, key(TRANSACTIONS_COMMON_DATA, '*'), criteria, order, strFilter, offset, limit)
     .then(processResult(TRANSACTIONS_COMMON_DATA, redis))
-    .spread(mapResult(offset, limit));
+    .spread(mapResult(offset, limit))
+    .then(result => {
+      result.items = map(result.items, removeOwnerFromDescription);
+
+      return result;
+    });
 };

@@ -4,6 +4,8 @@ const fsort = require('redis-filtered-sort');
 const { processResult, mapResult } = require('../../listUtils');
 const key = require('../../redisKey.js');
 const { AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
+const { removeOwnerFromDescription } = require('../../utils/transactions');
+const map = require('lodash/map');
 
 function planList({ params: opts }) {
   const { redis } = this;
@@ -18,7 +20,12 @@ function planList({ params: opts }) {
   return redis
     .fsort(AGREEMENT_TRANSACTIONS_INDEX, meta, criteria, order, strFilter, offset, limit)
     .then(processResult(AGREEMENT_TRANSACTIONS_DATA, redis))
-    .spread(mapResult(offset, limit));
+    .spread(mapResult(offset, limit))
+    .then(result => {
+      result.items = map(result.items, removeOwnerFromDescription);
+
+      return result;
+    });
 }
 
 module.exports = planList;

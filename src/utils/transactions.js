@@ -127,10 +127,15 @@ function getOwner(sale) {
   return result || (sale.payer_info && sale.payer_info.email) || null;
 }
 
+function removeOwnerFromDescription(transaction) {
+  return transaction.description.replace(/( (for|with) info@cappasity.com)/g, '');
+}
+
 module.exports = exports = {
   getOwner,
   saveCommon,
   parseSale,
   parseAgreementTransaction,
   remapState,
+  removeOwnerFromDescription,
 };
