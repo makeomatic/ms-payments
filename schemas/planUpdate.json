@@ -49,6 +49,18 @@
         "modelPrice": {
           "type": "number",
           "minimum": 0.01
+        },
+        "embeddings": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "storage": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "traffic": {
+          "type": "number",
+          "minimum": 0.01
         }
       }
     }

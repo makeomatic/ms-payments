@@ -34,10 +34,16 @@ exports.testPlanData = {
     name: 'month', // must be equal to payment_definitions frequency,
     models: 20,
     price: 5,
+    embeddings: 50,
+    storage: 12,
+    traffic: 55,
   }, {
     name: 'year', // must be equal to payment_definitions frequency,
     models: 240,
     price: 5,
+    embeddings: 500,
+    storage: 12,
+    traffic: 550,
   }],
 };
 
@@ -65,6 +71,9 @@ exports.freePlanData = {
     name: 'month', // must be equal to payment_definitions frequency,
     models: 100,
     price: 0.5,
+    embeddings: 10,
+    storage: 2,
+    traffic: 5,
   }],
 };
 

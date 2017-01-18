@@ -7,6 +7,7 @@ module.exports = function resetToFreePlan(owner) {
 
   // delete agreement and set user to 'free' agreement
   const path = `${prefix}.${postfix.updateMetadata}`;
+  const freePlan = find(config.defaultPlans, { id: FREE_PLAN_ID }).subscriptions[0];
   const updateRequest = {
     username: owner,
     audience,
@@ -16,7 +17,10 @@ module.exports = function resetToFreePlan(owner) {
         plan: FREE_PLAN_ID,
         subscriptionPrice: '0.00',
         subscriptionInterval: 'month',
-        modelPrice: find(config.defaultPlans, { id: FREE_PLAN_ID }).subscriptions[0].price,
+        modelPrice: freePlan.price,
+        embeddings: freePlan.embeddings,
+        traffic: freePlan.traffic,
+        storage: freePlan.storage,
       },
     },
   };

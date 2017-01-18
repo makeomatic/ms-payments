@@ -102,6 +102,9 @@ class Payments extends MService {
         name: 'month', // must be equal to payment_definitions frequency,
         models: 100,
         price: 0.5,
+        embeddings: 30,
+        traffic: 2,
+        storage: 0.5,
       }],
     }],
     urls: {
