@@ -139,7 +139,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
-          assert.equal(result.reason().httpStatusCode, 400, result.reason());
+          assert.equal(result.reason().inner_error.httpStatusCode, 500);
         });
     });
 

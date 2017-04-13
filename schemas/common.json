@@ -123,8 +123,8 @@
 				"external_customer_id": { "type": "string", "minLength": 1 },
 				"merchant_id": { "type": "string", "minLength": 1 },
 				"external_card_id": { "type": "string", "minLength": 1 },
-				"create_time": { "type": "string", "format": "datetime" },
-				"update_time": { "type": "string", "format": "datetime" },
+				"create_time": { "type": "string", "format": "date-time" },
+				"update_time": { "type": "string", "format": "date-time" },
 				"state": { "type": "string", "minLength": 1 },
 				"valid_until": { "type": "string", "minLength": 1 }
 			}

@@ -63,7 +63,7 @@
     "latest-version-cli": "^1.0.0",
     "mkdirp": "^0.5.1",
     "mocha": "^3.1.2",
-    "nightmare": "github:AVVS/nightmare",
+    "nightmare": "AVVS/nightmare",
     "nyc": "^10.2.0",
     "rimraf": "^2.6.1",
     "semantic-release": "^6.3.2",
