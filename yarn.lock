@@ -6,9 +6,9 @@
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/@bahmutov/parse-github-repo-url/-/parse-github-repo-url-0.1.2.tgz#6311dfbe7fe00ac464b9069d0e2684a739aeb69b"
 
-"@makeomatic/deploy@^1.1.0":
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/@makeomatic/deploy/-/deploy-1.1.0.tgz#cd8853a6976b8b42bd0d6e798fbfe9135787e476"
+"@makeomatic/deploy@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@makeomatic/deploy/-/deploy-1.1.1.tgz#c6bc3731c51c6dea240f03481c165253b313b76e"
   dependencies:
     death "^1.1.0"
     glob "^7.1.1"
