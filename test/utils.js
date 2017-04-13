@@ -11,6 +11,6 @@ exports.debug = function debug(result) {
 
 exports.simpleDispatcher = function simpleDispatcher(router) {
   return function dispatch(route, params) {
-    return router.dispatch(route, { params, transport: 'amqp' });
+    return router.dispatch(route, { params, transport: 'amqp', method: 'amqp' });
   };
 };
