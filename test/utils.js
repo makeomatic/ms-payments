@@ -9,8 +9,8 @@ exports.debug = function debug(result) {
   }
 };
 
-exports.simpleDispatcher = function simpleDispatcher(router) {
+exports.simpleDispatcher = function simpleDispatcher(service) {
   return function dispatch(route, params) {
-    return router.dispatch(route, { params, transport: 'amqp', method: 'amqp' });
+    return service.amqp.publishAndWait(route, params);
   };
 };

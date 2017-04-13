@@ -575,7 +575,7 @@ camelcase-keys@^2.0.0:
     camelcase "^2.0.0"
     map-obj "^1.0.0"
 
-camelcase@^1.0.2, camelcase@^1.2.1:
+camelcase@^1.0.2:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/camelcase/-/camelcase-1.2.1.tgz#9bb5304d2e0b56698b2c758b08a3eaa9daa58a39"
 
@@ -963,10 +963,6 @@ doctrine@^2.0.0:
   dependencies:
     esutils "^2.0.2"
     isarray "^1.0.0"
-
-dotenv@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-1.2.0.tgz#7cd73e16e07f057c8072147a5bc3a8677f0ab5c6"
 
 dotenv@^4.0.0:
   version "4.0.0"
@@ -2270,7 +2266,7 @@ lodash@3.0.x:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.0.1.tgz#14d49028a38bc740241d11e2ecd57ec06d73c19a"
 
-lodash@^3.10.1, lodash@^3.6.0:
+lodash@^3.6.0:
   version "3.10.1"
   resolved "https://registry.yarnpkg.com/lodash/-/lodash-3.10.1.tgz#5bf45e8e49ba4189e17d482789dfd15bd140b7b6"
 
@@ -2437,15 +2433,6 @@ moment@^2.10.6, moment@^2.15.1:
   version "2.18.1"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.18.1.tgz#c36193dd3ce1c2eed2adb7c802dbbc77a81b1c0f"
 
-ms-amqp-conf@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/ms-amqp-conf/-/ms-amqp-conf-0.2.0.tgz#71b5fbd92c348c3d4ce0ad64455b76e114cd6506"
-  dependencies:
-    camelcase "^1.2.1"
-    dotenv "^1.2.0"
-    lodash "^3.10.1"
-    nconf "^0.8.2"
-
 ms-amqp-transport@^7.1.0:
   version "7.1.0"
   resolved "https://registry.yarnpkg.com/ms-amqp-transport/-/ms-amqp-transport-7.1.0.tgz#b11177e5b5c42780ae7941d3b611ba09a34eaec8"
@@ -2548,7 +2535,7 @@ natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
 
-nconf@^0.8.2, nconf@^0.8.4:
+nconf@^0.8.4:
   version "0.8.4"
   resolved "https://registry.yarnpkg.com/nconf/-/nconf-0.8.4.tgz#9502234f7ad6238cab7f92d7c068c20434d3ff93"
   dependencies:

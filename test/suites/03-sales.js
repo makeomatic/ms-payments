@@ -102,7 +102,7 @@ describe('Sales suite', function SalesSuite() {
   });
 
   before(() => {
-    dispatch = simpleDispatcher(payments.router);
+    dispatch = simpleDispatcher(payments);
   });
 
   describe('unit tests', function UnitSuite() {

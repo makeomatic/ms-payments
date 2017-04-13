@@ -31,7 +31,6 @@
     "ioredis": "^2.4.0",
     "lodash": "^4.16.4",
     "moment": "^2.15.1",
-    "ms-amqp-conf": "^0.2.0",
     "ms-amqp-transport": "^7.1.0",
     "ms-mailer-client": "^5.0.1",
     "ms-mailer-templates": "^1.0.0",

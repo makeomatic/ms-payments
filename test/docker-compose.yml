@@ -40,7 +40,4 @@ services:
       - ${PWD}:/src
     environment:
       NODE_ENV: "test"
-      DEBUG: ${DEBUG}
-      CI: ${CI}
-      MS_PAYMENTS__LOGGER__DEFAULT_LOGGER: 'true'
     command: tail -f /dev/null

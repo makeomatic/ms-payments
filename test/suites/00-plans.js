@@ -29,7 +29,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     before(function addDispatcher() {
-      dispatch = simpleDispatcher(payments.router);
+      dispatch = simpleDispatcher(payments);
     });
 
     it('Should create free plan', () => {

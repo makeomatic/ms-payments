@@ -101,7 +101,7 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   before(function initPlan() {
-    dispatch = simpleDispatcher(payments.router);
+    dispatch = simpleDispatcher(payments);
     return dispatch(createPlan, testPlanData).then((data) => {
       const id = data.plan.id.split('|')[0];
       planId = data.plan.id;
