@@ -134,7 +134,7 @@ describe('Plans suite', function PlansSuite() {
         });
     });
 
-    it.skip('Should fail to activate on an unknown plan id', () => {
+    it('Should fail to activate on an unknown plan id', () => {
       return dispatch(statePlan, { id: 'P-random', state: 'active' })
         .reflect()
         .then((result) => {

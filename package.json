@@ -4,7 +4,7 @@
   "main": "./lib/index.js",
   "scripts": {
     "compile": "babel -d ./lib ./src",
-    "pretest": "rimraf ./ss/*",
+    "pretest": "rimraf ./ss/*; mkdirp ./ss",
     "test": "npm run lint && npm run test:integration",
     "test:integration": "DEBUG=nightmare* mdep test run --node 7.9.0 --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x768x24\\\"'",
     "lint": "eslint ./src",
@@ -61,6 +61,7 @@
     "eslint-plugin-promise": "^3.5.0",
     "json": "^9.0.4",
     "latest-version-cli": "^1.0.0",
+    "mkdirp": "^0.5.1",
     "mocha": "^3.1.2",
     "nightmare": "github:AVVS/nightmare",
     "nyc": "^10.2.0",
