@@ -30,7 +30,10 @@ class Payments extends MService {
    */
   static defaultOpts = {
     debug: process.env.NODE_ENV !== 'production',
-    logger: true,
+    logger: {
+      defaultLogger: true,
+      debug: process.env.NODE_ENV !== 'production',
+    },
     plugins: ['logger', 'validator', 'router', 'amqp', 'redisCluster'],
     amqp: {
       transport: {
@@ -170,7 +173,7 @@ class Payments extends MService {
     // init sales sync
     syncSaleTransactions.call(this, {})
       .then(() => {
-        this.log.info('completed sync of missing transactions');
+        return this.log.info('completed sync of missing transactions');
       })
       .catch((err) => {
         this.log.error('failed to sync sale transactions', err.stack);
@@ -178,7 +181,7 @@ class Payments extends MService {
 
     syncAgreements.call(this, {})
       .then(() => {
-        this.log.info('completed sync of agreements');
+        return this.log.info('completed sync of agreements');
       })
       .catch((err) => {
         this.log.error('failed to sync recurring transactions', err.stack);

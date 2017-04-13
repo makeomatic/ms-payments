@@ -1,20 +1,3 @@
 {
-  "extends": "airbnb-base",
-  "parser": "babel-eslint",
-  "plugins": [
-    "mocha"
-  ],
-  "env": {
-    "mocha": true
-  },
-  "rules": {
-    "no-param-reassign": [2, {"props": false}],
-    "max-len": [2, 150],
-    "prefer-arrow-callback": 0,
-    "arrow-body-style": 0,
-    "newline-per-chained-call": 0,
-    "global-require": 0,
-    "no-underscore-dangle": 0,
-    "import/no-extraneous-dependencies": 0
-  }
+  "extends": "makeomatic"
 }

@@ -32,7 +32,7 @@ module.exports = function listCommonTransactions({ params: opts }) {
   }
 
   return redis
-    .fsort(index, key(TRANSACTIONS_COMMON_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .fsort(index, key(TRANSACTIONS_COMMON_DATA, '*'), criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(TRANSACTIONS_COMMON_DATA, redis))
     .spread(mapResult(offset, limit));
 };

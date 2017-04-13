@@ -20,7 +20,7 @@ function planList({ params: opts }) {
   }
 
   return redis
-    .fsort(index, key(AGREEMENT_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .fsort(index, key(AGREEMENT_DATA, '*'), criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(AGREEMENT_DATA, redis))
     .spread(mapResult(offset, limit));
 }

@@ -16,7 +16,7 @@ function planList({ params: opts }) {
   const meta = key(AGREEMENT_TRANSACTIONS_DATA, '*');
 
   return redis
-    .fsort(AGREEMENT_TRANSACTIONS_INDEX, meta, criteria, order, strFilter, offset, limit)
+    .fsort(AGREEMENT_TRANSACTIONS_INDEX, meta, criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(AGREEMENT_TRANSACTIONS_DATA, redis))
     .spread(mapResult(offset, limit));
 }

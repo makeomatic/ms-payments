@@ -146,6 +146,8 @@ module.exports = function planUpdate({ params }) {
         if (isMember) {
           throw new Errors.HttpStatusError(409, `alias ${alias} already exists`);
         }
+
+        return null;
       });
     })
     .tap(() => {
@@ -153,6 +155,8 @@ module.exports = function planUpdate({ params }) {
         if (!exists) {
           throw new Errors.HttpStatusError(404, `plan ${id} does not exist`);
         }
+
+        return null;
       });
     })
     .then(createSaveToRedis)
