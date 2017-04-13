@@ -75,7 +75,7 @@ describe('Sales suite', function SalesSuite() {
         .wait(selectElement, iframe, emailSelector.el)
         .type(emailSelector, false)
         .wait(1000)
-        .type(emailSelector, 'test@cappacity.com')
+        .type(emailSelector, 'test@cappasity.com')
         .type(passwordSelector, '12345678')
         .wait(3000)
         .screenshot('./ss/after-email.png')

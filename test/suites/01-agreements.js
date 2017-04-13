@@ -72,7 +72,7 @@ describe('Agreements suite', function AgreementSuite() {
         .wait('#login_email')
         .type('#login_email', false)
         .wait(3000)
-        .type('#login_email', 'test@cappacity.com')
+        .type('#login_email', 'test@cappasity.com')
         .type('#login_password', '12345678')
         .wait(3000)
         .screenshot('./ss/after-email.png')
