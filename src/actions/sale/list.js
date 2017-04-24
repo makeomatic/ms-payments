@@ -15,7 +15,7 @@ function saleList({ params: opts }) {
   const limit = opts.limit || 10;
 
   return redis
-    .fsort(SALES_ID_INDEX, key(SALES_DATA_PREFIX, '*'), criteria, order, strFilter, offset, limit)
+    .fsort(SALES_ID_INDEX, key(SALES_DATA_PREFIX, '*'), criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(SALES_DATA_PREFIX, redis))
     .spread(mapResult(offset, limit));
 }

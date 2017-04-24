@@ -151,6 +151,8 @@ module.exports = function planCreate({ params: message }) {
         if (isMember === 1) {
           throw new Errors.HttpStatusError(409, `plan ${alias} already exists`);
         }
+
+        return null;
       });
     });
   }

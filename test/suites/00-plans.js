@@ -29,7 +29,7 @@ describe('Plans suite', function PlansSuite() {
     });
 
     before(function addDispatcher() {
-      dispatch = simpleDispatcher(payments.router);
+      dispatch = simpleDispatcher(payments);
     });
 
     it('Should create free plan', () => {
@@ -139,7 +139,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
-          assert.equal(result.reason().httpStatusCode, 400);
+          assert.equal(result.reason().inner_error.httpStatusCode, 500);
         });
     });
 

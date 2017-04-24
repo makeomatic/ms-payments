@@ -30,11 +30,17 @@ class Payments extends MService {
    */
   static defaultOpts = {
     debug: process.env.NODE_ENV !== 'production',
-    logger: true,
+    logger: {
+      defaultLogger: true,
+      debug: process.env.NODE_ENV !== 'production',
+    },
     plugins: ['logger', 'validator', 'router', 'amqp', 'redisCluster'],
     amqp: {
       transport: {
         queue: 'ms-payments',
+      },
+      router: {
+        enabled: true,
       },
     },
     router: {
@@ -65,7 +71,7 @@ class Payments extends MService {
     paypal: {
       mode: 'sandbox',
       client_id: 'AdwVgBbIvVaPnlauY91S1-ifPMiQ1R2ZFiq7O6biwc60lcJTpdq9O_o-aFSfHTH9Bt2ly34s1lrQ-Dod',
-      client_secret: 'EH0QpMk8BeZRuEumPZ4l2McyYAz66jXDS64bVFJL9d2mT1pJyMOP-dx3jN1yuvcKV_c6U8AaLCkSYptu', //eslint-disable-line
+      client_secret: 'EKO6YQ7VC_56ero33GRm8pz9ZYXGX2uPc6E8QxV7FgiJVq3t_EmPdthONsjN_jRj0Cbi8lYQxv9leZXk', //eslint-disable-line
     },
     validator: ['../schemas'],
     users: {
@@ -170,7 +176,7 @@ class Payments extends MService {
     // init sales sync
     syncSaleTransactions.call(this, {})
       .then(() => {
-        this.log.info('completed sync of missing transactions');
+        return this.log.info('completed sync of missing transactions');
       })
       .catch((err) => {
         this.log.error('failed to sync sale transactions', err.stack);
@@ -178,7 +184,7 @@ class Payments extends MService {
 
     syncAgreements.call(this, {})
       .then(() => {
-        this.log.info('completed sync of agreements');
+        return this.log.info('completed sync of agreements');
       })
       .catch((err) => {
         this.log.error('failed to sync recurring transactions', err.stack);

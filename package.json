@@ -3,12 +3,15 @@
   "description": "Core of the microservice for handling payments",
   "main": "./lib/index.js",
   "scripts": {
-    "compile": "./node_modules/.bin/babel -d ./lib ./src",
-    "prepublish": "npm run compile",
-    "test": "npm run lint && DEBUG=nightmare* ./test/docker.sh",
+    "compile": "babel -d ./lib ./src",
+    "pretest": "rimraf ./ss/*; mkdirp ./ss",
+    "test": "npm run lint && npm run test:integration",
+    "test:integration": "DEBUG=nightmare* mdep test run --node 7.9.0 --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x768x24\\\"'",
     "lint": "eslint ./src",
     "start": "node ./bin/mservice.js | ./node_modules/.bin/bunyan -o short",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "docker-release": "mdep docker release --node 7.9.0",
+    "release": "yarn && npm run semantic-release; npm run docker-release"
   },
   "repository": {
     "type": "git",
@@ -26,50 +29,48 @@
     "bytes": "^2.4.0",
     "cluster-key-slot": "^1.0.8",
     "common-errors": "^1.0.0",
-    "debug": "^2.2.0",
+    "debug": "^2.6.4",
     "ioredis": "^2.4.0",
     "lodash": "^4.16.4",
     "moment": "^2.15.1",
-    "ms-amqp-conf": "^0.2.0",
-    "ms-amqp-transport": "^4.0.0",
-    "ms-mailer-client": "^4.0.0",
-    "ms-mailer-templates": "^0.15.0",
+    "ms-amqp-transport": "^7.1.0",
+    "ms-mailer-client": "^5.0.1",
+    "ms-mailer-templates": "^1.0.0",
     "ms-validation": "^3.0.0",
-    "mservice": "^4.3.2",
-    "node-uuid": "^1.4.6",
+    "mservice": "^6.1.1",
     "paypal-rest-sdk": "^1.6.9",
-    "redis-filtered-sort": "^1.3.1",
+    "redis-filtered-sort": "^2.0.6",
     "request-promise": "^4.1.1",
-    "urlsafe-base64": "^1.0.0"
+    "urlsafe-base64": "^1.0.0",
+    "yargs": "^7.1.0"
   },
   "devDependencies": {
+    "@makeomatic/deploy": "^1.4.0",
     "babel-cli": "^6.16.0",
-    "babel-eslint": "^7.0.0",
+    "babel-eslint": "^7.2.3",
+    "babel-plugin-istanbul": "^4.1.1",
     "babel-plugin-transform-class-properties": "^6.16.0",
-    "babel-plugin-transform-es2015-destructuring": "^6.16.0",
-    "babel-plugin-transform-es2015-parameters": "^6.17.0",
-    "babel-plugin-transform-es2015-shorthand-properties": "^6.8.0",
-    "babel-plugin-transform-es2015-spread": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
     "babel-plugin-transform-strict-mode": "^6.11.3",
-    "babel-preset-es2015": "^6.16.0",
-    "babel-preset-stage-0": "^6.16.0",
     "babel-register": "^6.16.3",
-    "codecov": "^1.0.1",
-    "cz-conventional-changelog": "^1.2.0",
+    "codecov": "^2.1.0",
+    "cross-env": "^4.0.0",
+    "cz-conventional-changelog": "^2.0.0",
     "electron-prebuilt": "^1.4.3",
     "eslint": "^3.7.1",
-    "eslint-config-airbnb-base": "^8.0.0",
-    "eslint-plugin-import": "^2.0.1",
+    "eslint-config-makeomatic": "^1.0.1",
+    "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-mocha": "^4.7.0",
-    "isparta": "^4.0.0",
-    "istanbul": "=0.4.4",
+    "eslint-plugin-promise": "^3.5.0",
     "json": "^9.0.4",
     "latest-version-cli": "^1.0.0",
-    "mocha": "^3.1.2",
-    "nightmare": "github:AVVS/nightmare",
-    "semantic-release": "^4.3.5",
-    "sinon": "^1.17.6"
+    "mkdirp": "^0.5.1",
+    "mocha": "^3.3.0",
+    "nightmare": "AVVS/nightmare",
+    "nyc": "^10.2.0",
+    "rimraf": "^2.6.1",
+    "semantic-release": "^6.3.2",
+    "sinon": "^2.1.0"
   },
   "release": {
     "verifyConditions": []
@@ -78,5 +79,8 @@
     "commitizen": {
       "path": "./node_modules/cz-conventional-changelog"
     }
+  },
+  "engine": {
+    "node": ">= 7.6.0"
   }
 }

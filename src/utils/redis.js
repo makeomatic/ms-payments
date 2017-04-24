@@ -34,18 +34,20 @@ exports.calcSlot = calcSlot;
 /**
  * Handles ioredis pipeline.exec() error
  */
+function responseIterator(data, idx) {
+  const [err, res] = data;
+  if (err) {
+    this.errors.push(err);
+  }
+
+  // collect response no matter what
+  this.response[idx] = res;
+}
+
 exports.handlePipeline = function handlePipelineError(args) {
   const errors = [];
   const response = new Array(args.length);
-  args.forEach((data, idx) => {
-    const [err, res] = data;
-    if (err) {
-      errors.push(err);
-    }
-
-    // collect response no matter what
-    response[idx] = res;
-  });
+  args.forEach(responseIterator, { errors, response });
 
   if (errors.length > 0) {
     const message = errors.map(err => err.message).join('; ');

@@ -92,6 +92,7 @@ function agreementSync({ params: message = {} }) {
           .publishAndWait(getMetadata, request, { timeout: 10000 })
           .then((metadata) => {
             pool.push({ id: username, metadata });
+            return null;
           });
       });
     });

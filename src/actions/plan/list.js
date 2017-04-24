@@ -15,7 +15,7 @@ function planList({ params: opts }) {
   const limit = opts.limit || 10;
 
   return redis
-    .fsort(PLANS_INDEX, key(PLANS_DATA, '*'), criteria, order, strFilter, offset, limit)
+    .fsort(PLANS_INDEX, key(PLANS_DATA, '*'), criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(PLANS_DATA, redis))
     .spread(mapResult(offset, limit));
 }

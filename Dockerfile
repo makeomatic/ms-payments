@@ -1,18 +1,17 @@
-FROM makeomatic/node:6.5.0
+FROM makeomatic/node:$NODE_VERSION
 
 ENV NCONF_NAMESPACE=MS_PAYMENTS \
     NODE_ENV=production
 
 WORKDIR /src
 
-COPY package.json .
+COPY yarn.lock package.json ./
 RUN \
   apk --no-cache add --virtual .buildDeps \
     git \
     curl \
     openssl \
-  && npm install --production \
-  && npm dedupe \
+  && yarn --production \
   && apk del \
     .buildDeps \
     wget \

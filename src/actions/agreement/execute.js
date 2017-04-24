@@ -157,7 +157,11 @@ function verifyToken() {
   return this.redis
     .exists(this.tokenKey)
     .then((exists) => {
-      if (!exists) throw new HttpStatusError(404, `subscription token ${this.token} was not found`);
+      if (!exists) {
+        throw new HttpStatusError(404, `subscription token ${this.token} was not found`);
+      }
+
+      return true;
     });
 }
 
