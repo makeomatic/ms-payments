@@ -9,7 +9,9 @@
     "test:integration": "DEBUG=nightmare* mdep test run --node 7.9.0 --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x768x24\\\"'",
     "lint": "eslint ./src",
     "start": "node ./bin/mservice.js | ./node_modules/.bin/bunyan -o short",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release pre && npm publish && semantic-release post",
+    "docker-release": "mdep docker release --node 7.9.0",
+    "release": "yarn && npm run semantic-release; npm run docker-release"
   },
   "repository": {
     "type": "git",
@@ -27,7 +29,7 @@
     "bytes": "^2.4.0",
     "cluster-key-slot": "^1.0.8",
     "common-errors": "^1.0.0",
-    "debug": "^2.2.0",
+    "debug": "^2.6.4",
     "ioredis": "^2.4.0",
     "lodash": "^4.16.4",
     "moment": "^2.15.1",
@@ -35,16 +37,17 @@
     "ms-mailer-client": "^5.0.1",
     "ms-mailer-templates": "^1.0.0",
     "ms-validation": "^3.0.0",
-    "mservice": "^6.0.1",
+    "mservice": "^6.1.1",
     "paypal-rest-sdk": "^1.6.9",
     "redis-filtered-sort": "^2.0.6",
     "request-promise": "^4.1.1",
-    "urlsafe-base64": "^1.0.0"
+    "urlsafe-base64": "^1.0.0",
+    "yargs": "^7.1.0"
   },
   "devDependencies": {
-    "@makeomatic/deploy": "^1.1.1",
+    "@makeomatic/deploy": "^1.4.0",
     "babel-cli": "^6.16.0",
-    "babel-eslint": "^7.0.0",
+    "babel-eslint": "^7.2.3",
     "babel-plugin-istanbul": "^4.1.1",
     "babel-plugin-transform-class-properties": "^6.16.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
@@ -62,7 +65,7 @@
     "json": "^9.0.4",
     "latest-version-cli": "^1.0.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.1.2",
+    "mocha": "^3.3.0",
     "nightmare": "AVVS/nightmare",
     "nyc": "^10.2.0",
     "rimraf": "^2.6.1",
