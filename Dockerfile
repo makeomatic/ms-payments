@@ -5,9 +5,9 @@ ENV NCONF_NAMESPACE=MS_PAYMENTS \
 
 WORKDIR /src
 
-COPY yarn.lock package.json ./
+COPY package.json yarn.lock ./
 RUN \
-  apk --no-cache add --virtual .buildDeps \
+  apk --update add --virtual .buildDeps \
     git \
     curl \
     openssl \
@@ -18,7 +18,9 @@ RUN \
   && rm -rf \
     /tmp/* \
     /root/.node-gyp \
-    /root/.npm
+    /root/.npm \
+    /etc/apk/cache/* \
+    /var/cache/apk/*
 
 COPY . /src
 RUN  chown -R node /src

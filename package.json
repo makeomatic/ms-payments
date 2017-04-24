@@ -40,7 +40,9 @@
     "mservice": "^6.1.1",
     "paypal-rest-sdk": "^1.6.9",
     "redis-filtered-sort": "^2.0.6",
+    "request": "^2.81.0",
     "request-promise": "^4.1.1",
+    "stdout-stream": "^1.4.0",
     "urlsafe-base64": "^1.0.0",
     "yargs": "^7.1.0"
   },
