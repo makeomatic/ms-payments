@@ -1,5 +1,7 @@
 # Microservice for handling PayPal payments over AMQP transport layer
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/makeomatic/ms-payments.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://semaphoreci.com/api/v1/makeomatic/ms-payments/branches/master/shields_badge.svg)](https://semaphoreci.com/makeomatic/ms-payments)
 [![Code Climate](https://codeclimate.com/github/makeomatic/ms-payments/badges/gpa.svg)](https://codeclimate.com/github/makeomatic/ms-payments)
 [![npm version](https://badge.fury.io/js/ms-payments.svg)](https://badge.fury.io/js/ms-payments)
