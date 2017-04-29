@@ -1,11 +1,14 @@
 {
   "id": "subscription",
   "type": "object",
-  "required": ["name", "models"],
+  "required": ["name", "models", "embeddings"],
   "properties": {
     "models": { "type": "number" },
     "price": { "type": "number" },
-    "name": { "type": "string", "minLength": 1 }
+    "name": { "type": "string", "minLength": 1 },
+    "embeddings": { "type": "number" },
+    "storage": { "type": "number" },
+    "traffic": { "type": "number" }
   },
   "additionalProperties": false
 }

@@ -36,6 +36,18 @@ function prepareUpdate(subscription, plans, period) {
   if (subscription.modelPrice) {
     set(planData, 'subs[0].price', subscription.modelPrice);
   }
+
+  if (subscription.embeddings) {
+    set(planData, 'subs[0].embeddings', subscription.embeddings);
+  }
+
+  if (subscription.traffic) {
+    set(planData, 'subs[0].traffic', subscription.traffic);
+  }
+
+  if (subscription.storage) {
+    set(planData, 'subs[0].storage', subscription.storage);
+  }
 }
 
 function updateSubscriptions(plans, subscriptions) {

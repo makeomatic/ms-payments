@@ -110,9 +110,15 @@ describe('Plans suite', function PlansSuite() {
         subscriptions: {
           monthly: {
             models: 100,
+            embeddings: 20,
+            traffic: 25.5,
+            storage: 12.5,
           },
           yearly: {
             modelPrice: 10.5,
+            embeddings: 200,
+            traffic: 25,
+            storage: 12,
           },
         },
       };
