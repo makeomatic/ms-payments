@@ -39,6 +39,7 @@ describe('Plans suite', function PlansSuite() {
           debug(result);
           assert(result.isFulfilled());
           assert(result.value().plan.id);
+          return null;
         });
     });
 
@@ -49,6 +50,7 @@ describe('Plans suite', function PlansSuite() {
           debug(result);
           assert(result.isFulfilled());
           assert(result.value().alias);
+          return null;
         });
     });
 
@@ -62,6 +64,7 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+          return null;
         });
     });
 
@@ -82,6 +85,8 @@ describe('Plans suite', function PlansSuite() {
 
         assert(billingPlan.plan.id);
         assert.equal(billingPlan.state.toLowerCase(), 'created');
+
+        return null;
       });
     });
 
@@ -91,6 +96,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().statusCode, 400);
+
+          return null;
         });
     });
 
@@ -100,6 +107,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+
+          return null;
         });
     });
 
@@ -115,6 +124,13 @@ describe('Plans suite', function PlansSuite() {
             modelPrice: 10.5,
           },
         },
+        meta: {
+          storage: {
+            description: 'file storage',
+            type: 'number',
+            value: 0.5,
+          },
+        },
       };
 
       return dispatch(updatePlan, updateData)
@@ -122,6 +138,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+
+          return null;
         });
     });
 
@@ -131,6 +149,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+
+          return null;
         });
     });
 
@@ -140,6 +160,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().inner_error.httpStatusCode, 500);
+
+          return null;
         });
     });
 
@@ -149,6 +171,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+
+          return null;
         });
     });
 
@@ -158,6 +182,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+
+          return null;
         });
     });
 
@@ -174,6 +200,8 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
+
+          return null;
         });
     });
 
@@ -183,6 +211,8 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+
+          return null;
         });
     });
 
@@ -191,6 +221,8 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
+
+          return null;
         });
     });
   });

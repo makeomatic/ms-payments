@@ -96,6 +96,7 @@ function createSaveToRedis(redis, message) {
       name: plan.name,
       hidden,
       ...plansData,
+      meta: plan.meta,
     };
 
     if (message.alias !== null && message.alias !== undefined) {

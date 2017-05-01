@@ -76,6 +76,10 @@ function createSaveToRedis(message) {
         additionalData.hidden = message.hidden;
       }
 
+      if ('meta' in message) {
+        additionalData.meta = message.meta;
+      }
+
       return { plans, additionalData };
     });
 }

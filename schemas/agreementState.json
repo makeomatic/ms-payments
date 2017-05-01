@@ -1,11 +1,27 @@
 {
-  "id": "agreement.state",
-  "type": "object",
-  "required": ["owner", "state"],
-  "properties": {
-    "owner": { "type": "string", "minLength": 1 },
-    "state": { "type": "string", "enum": ["suspend", "reactivate", "cancel"]},
-    "note": { "type": "string", "minLength": 1 }
-  },
-  "additionalProperties": false
+    "$id": "agreement.state",
+    "type": "object",
+    "required": [
+        "owner",
+        "state"
+    ],
+    "properties": {
+        "owner": {
+            "type": "string",
+            "minLength": 1
+        },
+        "state": {
+            "type": "string",
+            "enum": [
+                "suspend",
+                "reactivate",
+                "cancel"
+            ]
+        },
+        "note": {
+            "type": "string",
+            "minLength": 1
+        }
+    },
+    "additionalProperties": false
 }

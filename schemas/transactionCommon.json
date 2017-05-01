@@ -1,32 +1,38 @@
 {
-  "id": "transaction.common",
-  "type": "object",
-  "properties": {
-    "offset": {
-      "type": "integer",
-      "minimum": 0
-    },
-    "limit": {
-      "type": "integer",
-      "minimum": 1,
-      "maximum": 100
-    },
-    "order": {
-      "type": "string",
-      "enum": [ "ASC", "DESC" ]
-    },
-    "criteria": {
-      "type": "string"
-    },
-    "owner": {
-      "type": "string"
-    },
-    "type": {
-      "type": "string",
-      "enum": [ "sale", "subscription" ]
-    },
-    "filter": {
-      "$ref": "common#/definitions/filter"
+    "$id": "transaction.common",
+    "type": "object",
+    "properties": {
+        "offset": {
+            "type": "integer",
+            "minimum": 0
+        },
+        "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+        },
+        "order": {
+            "type": "string",
+            "enum": [
+                "ASC",
+                "DESC"
+            ]
+        },
+        "criteria": {
+            "type": "string"
+        },
+        "owner": {
+            "type": "string"
+        },
+        "type": {
+            "type": "string",
+            "enum": [
+                "sale",
+                "subscription"
+            ]
+        },
+        "filter": {
+            "$ref": "common#/definitions/filter"
+        }
     }
-  }
 }

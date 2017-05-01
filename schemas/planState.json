@@ -1,10 +1,24 @@
 {
-	"id": "plan.state",
-	"type": "object",
-	"required": ["id", "state"],
-	"properties": {
-		"id": { "type": "string", "minLength": 1 },
-		"state": { "type": "string", "enum": ["created", "active", "inactive", "deleted"]}
-	},
-  "additionalProperties": false
+    "$id": "plan.state",
+    "type": "object",
+    "required": [
+        "id",
+        "state"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "state": {
+            "type": "string",
+            "enum": [
+                "created",
+                "active",
+                "inactive",
+                "deleted"
+            ]
+        }
+    },
+    "additionalProperties": false
 }

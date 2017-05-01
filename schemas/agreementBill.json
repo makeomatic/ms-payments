@@ -1,15 +1,15 @@
 {
-  "id": "agreement.bill",
-  "type": "object",
-  "properties": {
-    "agreement": {
-      "type": "string"
-    },
-    "nextCycle": {
-      "type": "integer"
-    },
-    "username": {
-      "type": "string"
+    "$id": "agreement.bill",
+    "type": "object",
+    "properties": {
+        "agreement": {
+            "type": "string"
+        },
+        "nextCycle": {
+            "type": "integer"
+        },
+        "username": {
+            "type": "string"
+        }
     }
-  }
 }

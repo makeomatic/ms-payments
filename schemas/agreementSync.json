@@ -1,12 +1,12 @@
 {
-  "id": "agreement.sync",
-  "type": "object",
-  "properties": {
-    "start": {
-      "type": "integer"
-    },
-    "cursor": {
-      "type": "integer"
+    "$id": "agreement.sync",
+    "type": "object",
+    "properties": {
+        "start": {
+            "type": "integer"
+        },
+        "cursor": {
+            "type": "integer"
+        }
     }
-  }
 }
