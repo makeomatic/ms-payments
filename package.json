@@ -37,7 +37,7 @@
     "ms-conf": "^3.1.2",
     "ms-mailer-client": "^5.0.1",
     "ms-mailer-templates": "^1.0.0",
-    "ms-validation": "^3.0.0",
+    "ms-validation": "^4.0.0",
     "mservice": "^6.1.1",
     "paypal-rest-sdk": "^1.6.9",
     "redis-filtered-sort": "^2.0.6",
