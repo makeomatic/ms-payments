@@ -142,7 +142,7 @@ describe('Transactions suite', function TransactionsSuite() {
       })
   ));
 
-  after('cleanUp', () => dispatch(deletePlan, planId));
+  after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
   describe('unit tests', () => {
     it('Should not sync transaction on invalid data', () => (

@@ -110,7 +110,7 @@ describe('Agreements suite', function AgreementSuite() {
   });
 
   after(function cleanup() {
-    return dispatch(deletePlan, planId);
+    return dispatch(deletePlan, planId).reflect();
   });
 
   describe('unit tests', function UnitSuite() {
