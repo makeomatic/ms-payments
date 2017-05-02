@@ -125,12 +125,12 @@ describe('Transactions suite', function TransactionsSuite() {
     approve(agreement.url)
       .then(parsed => (
         dispatch(executeAgreement, { token: parsed.token })
-          .reflect()
-          .then((result) => {
-            debug(result);
-            assert(result.isFulfilled());
-            agreement = result.value();
-          })
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          agreement = result.value();
+        })
       ))
   ));
 
