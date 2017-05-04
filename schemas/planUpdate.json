@@ -39,7 +39,10 @@
         },
         "meta": {
             "$ref": "plan#/definitions/meta"
-        }
+        },
+        "level": {
+            "$ref": "plan#/definitions/level"
+        },
     },
     "definitions": {
         "subscription": {

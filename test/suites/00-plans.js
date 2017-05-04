@@ -131,6 +131,7 @@ describe('Plans suite', function PlansSuite() {
             value: 0.5,
           },
         },
+        level: 10,
       };
 
       return dispatch(updatePlan, updateData)
@@ -138,6 +139,22 @@ describe('Plans suite', function PlansSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+
+          return null;
+        });
+    });
+
+    it('get plan must return updated info', () => {
+      return dispatch(getPlan, billingPlan.plan.id)
+        .then((result) => {
+          assert.equalDeep(result.meta, {
+            storage: {
+              description: 'file storage',
+              type: 'number',
+              value: 0.5,
+            },
+          });
+          assert.equal(result.level, 10);
 
           return null;
         });

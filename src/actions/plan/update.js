@@ -20,6 +20,8 @@ const DATA_HOLDERS = {
   yearly: 'year',
 };
 
+const FIELDS_TO_UPDATE = ['alias', 'hidden', 'meta', 'level'];
+
 function joinPlans(plans) {
   const plan = mergeWith({}, ...plans, merger);
   return { plan, plans };
@@ -68,17 +70,11 @@ function createSaveToRedis(message) {
         setField(plans, 'plan.description', message.description);
       }
 
-      if ('alias' in message) {
-        additionalData.alias = message.alias;
-      }
-
-      if ('hidden' in message) {
-        additionalData.hidden = message.hidden;
-      }
-
-      if ('meta' in message) {
-        additionalData.meta = message.meta;
-      }
+      FIELDS_TO_UPDATE.forEach((field) => {
+        if (field in message) {
+          additionalData[field] = message[field];
+        }
+      });
 
       return { plans, additionalData };
     });

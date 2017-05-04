@@ -80,6 +80,7 @@ exports.freePlanData = {
       value: 0.5,
     },
   },
+  level: 0,
 };
 
 exports.testAgreementData = {

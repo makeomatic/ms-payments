@@ -97,6 +97,7 @@ function createSaveToRedis(redis, message) {
       hidden,
       ...plansData,
       meta: plan.meta,
+      level: plan.level,
     };
 
     if (message.alias !== null && message.alias !== undefined) {
@@ -122,6 +123,8 @@ function createSaveToRedis(redis, message) {
         state: planData.state,
         name: planData.name,
         hidden,
+        meta: plan.meta,
+        level: plan.level,
       };
 
       if (message.alias) {

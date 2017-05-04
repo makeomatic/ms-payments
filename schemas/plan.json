@@ -22,6 +22,9 @@
         "$ref": "#/definitions/feature"
       }
     },
+    "level": {
+      "type": "integer"
+    },
     "feature": {
       "type": "object",
       "properties": {
