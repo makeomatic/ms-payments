@@ -147,7 +147,7 @@ describe('Plans suite', function PlansSuite() {
     it('get plan must return updated info', () => {
       return dispatch(getPlan, billingPlan.plan.id)
         .then((result) => {
-          assert.equalDeep(result.meta, {
+          assert.deepEqual(result.meta, {
             storage: {
               description: 'file storage',
               type: 'number',
