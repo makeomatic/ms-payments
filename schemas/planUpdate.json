@@ -42,7 +42,7 @@
         },
         "level": {
             "$ref": "plan#/definitions/level"
-        },
+        }
     },
     "definitions": {
         "subscription": {
