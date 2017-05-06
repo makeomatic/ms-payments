@@ -40,7 +40,7 @@
     "ms-validation": "^4.0.0",
     "mservice": "^7.0.0",
     "paypal-rest-sdk": "^1.6.9",
-    "redis-filtered-sort": "^2.0.6",
+    "redis-filtered-sort": "^2.1.1",
     "request": "^2.81.0",
     "request-promise": "^4.1.1",
     "stdout-stream": "^1.4.0",
@@ -70,7 +70,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "^3.3.0",
     "nightmare": "AVVS/nightmare",
-    "nyc": "^10.3.0",
+    "nyc": "^10.3.2",
     "rimraf": "^2.6.1",
     "semantic-release": "^6.3.2",
     "sinon": "^2.2.0"
