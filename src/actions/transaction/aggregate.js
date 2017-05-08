@@ -10,7 +10,7 @@ const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constant
  * List files
  * @return {Promise}
  */
-module.exports = function listCommonTransactions({ params }) {
+module.exports = function listAggregateTransactions({ params }) {
   const { redis, config } = this;
   const { owners, filter, aggregate } = params;
 

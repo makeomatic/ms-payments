@@ -1,3 +1,6 @@
+const Promise = require('bluebird');
+const assert = require('assert');
+
 exports.duration = 20 * 1000;
 
 exports.debug = function debug(result) {
@@ -12,5 +15,25 @@ exports.debug = function debug(result) {
 exports.simpleDispatcher = function simpleDispatcher(service) {
   return function dispatch(route, params) {
     return service.amqp.publishAndWait(route, params, { timeout: 60000 });
+  };
+};
+
+exports.inspectPromise = function inspectPromise(mustBeFulfilled = true) {
+  return function inspection(promise) {
+    const isFulfilled = promise.isFulfilled();
+    const isRejected = promise.isRejected();
+
+    try {
+      assert.equal(isFulfilled, mustBeFulfilled);
+    } catch (e) {
+      if (isFulfilled) {
+        return Promise.reject(new Error(JSON.stringify(promise.value())));
+      }
+
+      throw promise.reason();
+    }
+
+    assert.equal(isRejected, !mustBeFulfilled);
+    return mustBeFulfilled ? promise.value() : promise.reason();
   };
 };

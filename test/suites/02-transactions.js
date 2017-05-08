@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const url = require('url');
 const Nightmare = require('nightmare');
-const { debug, duration, simpleDispatcher } = require('../utils');
+const { debug, duration, simpleDispatcher, inspectPromise } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
@@ -16,6 +16,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const deletePlan = 'payments.plan.delete';
   const createAgreement = 'payments.agreement.create';
   const executeAgreement = 'payments.agreement.execute';
+  const transactionsAggregate = 'payments.transactions.aggregate';
 
   this.timeout(duration * 4);
 
@@ -103,6 +104,7 @@ describe('Transactions suite', function TransactionsSuite() {
       const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = data.plan.id;
+      return null;
     });
   });
 
@@ -118,6 +120,7 @@ describe('Transactions suite', function TransactionsSuite() {
         debug(result);
         assert(result.isFulfilled());
         agreement = result.value();
+        return null;
       });
   });
 
@@ -130,6 +133,7 @@ describe('Transactions suite', function TransactionsSuite() {
           debug(result);
           assert(result.isFulfilled());
           agreement = result.value();
+          return null;
         })
       ))
   ));
@@ -139,6 +143,7 @@ describe('Transactions suite', function TransactionsSuite() {
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
+        return null;
       })
   ));
 
@@ -151,6 +156,7 @@ describe('Transactions suite', function TransactionsSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+          return null;
         })
     ));
 
@@ -162,15 +168,30 @@ describe('Transactions suite', function TransactionsSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+          return null;
         });
     });
 
     it('Should list all transactions', () => (
       dispatch(listTransaction, {})
         .reflect()
-        .then((result) => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        })
+        .then(inspectPromise())
+    ));
+
+    it('should return aggregate list of transactions', () => (
+      dispatch(transactionsAggregate, {
+        owners: ['test@test.ru'],
+        aggregate: {
+          amount: 'sum',
+        },
+      })
+      .reflect()
+      .then(inspectPromise())
+      .then((response) => {
+        console.log(response);
+        assert.ok(response[0].amount);
+        return null;
+      })
     ));
   });
 });
