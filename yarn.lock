@@ -3234,9 +3234,9 @@ redis-commands@^1.2.0:
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/redis-commands/-/redis-commands-1.3.1.tgz#81d826f45fa9c8b2011f4cd7a0fe597d241d442b"
 
-redis-filtered-sort@^2.1.1:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/redis-filtered-sort/-/redis-filtered-sort-2.1.1.tgz#099a3adfe072bdcda32dfbdfc878df3694f25c99"
+redis-filtered-sort@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/redis-filtered-sort/-/redis-filtered-sort-2.1.6.tgz#65b638a31143e0e905ea562f4a9d00acd43e3f9e"
   dependencies:
     cluster-key-slot "^1.0.6"
 

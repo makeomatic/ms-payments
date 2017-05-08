@@ -29,7 +29,7 @@ module.exports = function listAggregateTransactions({ params }) {
   return Promise.map(owners, (owner) => {
     const index = key(TRANSACTIONS_INDEX, owner);
     return redis
-      .fsort(index, pattern, null, 'DESC', strFilter, Date.now(), 0, 0, 5000, 1)
+      .fsort(index, pattern, '', 'DESC', strFilter, Date.now(), 0, 10, 5000, true)
       .then(idlist => redis.fsortAggregate(idlist.slice(prefixLength), pattern, agg))
       .then(JSON.parse);
   });

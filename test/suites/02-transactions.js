@@ -17,6 +17,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const createAgreement = 'payments.agreement.create';
   const executeAgreement = 'payments.agreement.execute';
   const transactionsAggregate = 'payments.transaction.aggregate';
+  const listCommonTransactions = 'payments.transaction.common';
 
   this.timeout(duration * 4);
 
@@ -178,9 +179,23 @@ describe('Transactions suite', function TransactionsSuite() {
         .then(inspectPromise())
     ));
 
+    it('Should list common transactions', () => (
+      dispatch(listCommonTransactions, {
+        owner: 'test@test.ru',
+        filter: {
+          status: 'Completed',
+        },
+      })
+      .reflect()
+      .then(inspectPromise())
+    ));
+
     it('should return aggregate list of transactions', () => (
       dispatch(transactionsAggregate, {
         owners: ['test@test.ru'],
+        filter: {
+          status: 'Completed',
+        },
         aggregate: {
           amount: 'sum',
         },
@@ -188,7 +203,6 @@ describe('Transactions suite', function TransactionsSuite() {
       .reflect()
       .then(inspectPromise())
       .then((response) => {
-        console.log(response);
         assert.ok(response[0].amount);
         return null;
       })
