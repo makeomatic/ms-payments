@@ -39,6 +39,13 @@ exports.testPlanData = {
     models: 240,
     price: 5,
   }],
+  meta: {
+    storage: {
+      description: 'file storage limits',
+      type: 'number',
+      value: 10,
+    },
+  },
 };
 
 exports.freePlanData = {
@@ -66,6 +73,14 @@ exports.freePlanData = {
     models: 100,
     price: 0.5,
   }],
+  meta: {
+    storage: {
+      description: 'file storage limits',
+      type: 'number',
+      value: 0.5,
+    },
+  },
+  level: 0,
 };
 
 exports.testAgreementData = {

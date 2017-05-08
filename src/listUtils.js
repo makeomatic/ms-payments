@@ -42,10 +42,11 @@ function passThrough(input) {
   return input;
 }
 
-function hmget(fields, func = passThrough, ctx) {
+function hmget(fields, func = passThrough, ctx, defaults) {
   return function transformer(data) {
     return fields.reduce((acc, field, idx) => {
-      acc[field] = func.call(ctx || this, data[idx]);
+      const datum = data[idx] || defaults;
+      acc[field] = func.call(ctx || this, datum);
       return acc;
     }, {});
   };

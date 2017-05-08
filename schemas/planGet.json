@@ -1,5 +1,5 @@
 {
-  "id": "plan.get",
-  "type": "string",
-  "minLength": 1
+    "$id": "plan.get",
+    "type": "string",
+    "minLength": 1
 }

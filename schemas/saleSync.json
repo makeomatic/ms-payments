@@ -1,10 +1,10 @@
 {
-  "id": "sale.sync",
-  "type": "object",
-  "properties": {
-    "next_id": {
-      "type": "string"
-    }
-  },
-  "additionalProperties": false
+    "$id": "sale.sync",
+    "type": "object",
+    "properties": {
+        "next_id": {
+            "type": "string"
+        }
+    },
+    "additionalProperties": false
 }

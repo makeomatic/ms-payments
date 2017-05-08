@@ -1,12 +1,35 @@
 {
-  "id": "plan.create",
-  "type": "object",
-  "required": ["alias", "hidden", "subscriptions", "plan"],
-  "properties": {
-    "hidden": { "type": "boolean" },
-    "alias": { "type": "string", "minLength": 1 },
-    "subscriptions": { "type": "array", "items": { "$ref": "subscription#" } },
-    "plan": { "$ref": "plan#" }
-  },
-  "additionalProperties": false
+    "$id": "plan.create",
+    "type": "object",
+    "required": [
+        "alias",
+        "hidden",
+        "subscriptions",
+        "plan"
+    ],
+    "properties": {
+        "hidden": {
+            "type": "boolean"
+        },
+        "alias": {
+            "type": "string",
+            "minLength": 1
+        },
+        "level": {
+            "$ref": "plan#/definitions/level"
+        },
+        "subscriptions": {
+            "type": "array",
+            "items": {
+                "$ref": "subscription#"
+            }
+        },
+        "plan": {
+            "$ref": "plan#"
+        },
+        "meta": {
+            "$ref": "plan#/definitions/meta"
+        }
+    },
+    "additionalProperties": false
 }

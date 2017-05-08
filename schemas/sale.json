@@ -1,49 +1,103 @@
 {
-  "id": "sale",
-  "type": "object",
-  "required": ["intent", "payer", "transactions", "redirect_urls"],
-  "properties": {
-    "id": { "type": "string" },
-    "intent": { "type": "string", "enum": ["sale", "authorize", "order"] },
-    "payer": { "$ref": "common#/definitions/payer"},
-    "transactions": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["amount"],
-        "properties": {
-          "reference_id": { "type": "string" },
-          "amount": {
+    "$id": "sale",
+    "type": "object",
+    "required": [
+        "intent",
+        "payer",
+        "transactions",
+        "redirect_urls"
+    ],
+    "properties": {
+        "id": {
+            "type": "string"
+        },
+        "intent": {
+            "type": "string",
+            "enum": [
+                "sale",
+                "authorize",
+                "order"
+            ]
+        },
+        "payer": {
+            "$ref": "common#/definitions/payer"
+        },
+        "transactions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": [
+                    "amount"
+                ],
+                "properties": {
+                    "reference_id": {
+                        "type": "string"
+                    },
+                    "amount": {
+                        "type": "object",
+                        "properties": {
+                            "currency": {
+                                "type": "string"
+                            },
+                            "total": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "note_to_payee": {
+                        "type": "string"
+                    },
+                    "custom": {
+                        "type": "string"
+                    },
+                    "invoice_number": {
+                        "type": "string"
+                    },
+                    "notify_url": {
+                        "type": "string"
+                    },
+                    "order_url": {
+                        "type": "string"
+                    },
+                    "item_list": {
+                        "type": "object",
+                        "required": [
+                            "items"
+                        ],
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "common#/definitions/item"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "billing_agreement_tokens": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "experience_profile_id": {
+            "type": "string"
+        },
+        "redirect_urls": {
             "type": "object",
             "properties": {
-              "currency": { "type": "string" },
-              "total": { "type": "string" }
+                "return_url": {
+                    "type": "string"
+                },
+                "cancel_url": {
+                    "type": "string"
+                }
             }
-          },
-          "description": { "type": "string" },
-          "note_to_payee": { "type": "string" },
-          "custom": { "type": "string" },
-          "invoice_number": { "type": "string" },
-          "notify_url": { "type": "string" },
-          "order_url": { "type": "string" },
-          "item_list": {
-            "type": "object",
-            "required": ["items"],
-            "properties": {
-              "items": { "type": "array", "items": { "$ref": "common#/definitions/item" } }
-            }
-          }
         }
-      }
-    },
-    "billing_agreement_tokens": { "type": "array", "items": { "type": "string" } },
-    "experience_profile_id": { "type": "string" },
-    "redirect_urls": {
-      "type": "object",
-      "properties": {
-        "return_url": { "type": "string" },
-        "cancel_url": { "type": "string" }
-      }
     }
-  }
 }

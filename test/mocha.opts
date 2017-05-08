@@ -1,5 +1,5 @@
 --require babel-register
---timeout 10000
+--timeout 120000
 --bail
 --slow 2000
 -R spec

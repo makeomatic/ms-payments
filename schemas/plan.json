@@ -1,5 +1,5 @@
 {
-	"id": "plan",
+	"$id": "plan",
 	"type": "object",
 	"required": ["name", "description", "type", "payment_definitions"],
 	"properties": {
@@ -14,5 +14,33 @@
 		"terms":                { "type": "array", "items": { "$ref": "common#/definitions/term" } },
 		"merchant_preferences": { "$ref": "common#/definitions/merchant_preferences"},
 		"links":                { "type": "array", "items": { "$ref": "common#/definitions/links" } }
-	}
+	},
+  "definitions": {
+    "meta": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/feature"
+      }
+    },
+    "level": {
+      "type": "integer"
+    },
+    "feature": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "enum": ["boolean", "number"]
+        },
+        "value": {
+          "type": "number",
+          "description": "0/1 for boolean and any other number to compare with for number type"
+        }
+      }
+    }
+  }
 }

@@ -20,7 +20,7 @@ function planState({ params: message }) {
 
   function getPlan() {
     return redis
-      .hgetBuffer(key(PLANS_DATA, id), 'alias')
+      .hget(key(PLANS_DATA, id), 'alias')
       .then(alias => alias && alias.length > 0 && JSON.parse(alias));
   }
 

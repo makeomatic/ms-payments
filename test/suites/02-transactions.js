@@ -3,7 +3,7 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const url = require('url');
 const Nightmare = require('nightmare');
-const { debug, duration, simpleDispatcher } = require('../utils');
+const { debug, duration, simpleDispatcher, inspectPromise } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
@@ -16,6 +16,8 @@ describe('Transactions suite', function TransactionsSuite() {
   const deletePlan = 'payments.plan.delete';
   const createAgreement = 'payments.agreement.create';
   const executeAgreement = 'payments.agreement.execute';
+  const transactionsAggregate = 'payments.transaction.aggregate';
+  const listCommonTransactions = 'payments.transaction.common';
 
   this.timeout(duration * 4);
 
@@ -103,6 +105,7 @@ describe('Transactions suite', function TransactionsSuite() {
       const id = data.plan.id.split('|')[0];
       testAgreementData.plan.id = id;
       planId = data.plan.id;
+      return null;
     });
   });
 
@@ -118,6 +121,7 @@ describe('Transactions suite', function TransactionsSuite() {
         debug(result);
         assert(result.isFulfilled());
         agreement = result.value();
+        return null;
       });
   });
 
@@ -125,12 +129,13 @@ describe('Transactions suite', function TransactionsSuite() {
     approve(agreement.url)
       .then(parsed => (
         dispatch(executeAgreement, { token: parsed.token })
-          .reflect()
-          .then((result) => {
-            debug(result);
-            assert(result.isFulfilled());
-            agreement = result.value();
-          })
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          agreement = result.value();
+          return null;
+        })
       ))
   ));
 
@@ -139,10 +144,11 @@ describe('Transactions suite', function TransactionsSuite() {
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
+        return null;
       })
   ));
 
-  after('cleanUp', () => dispatch(deletePlan, planId));
+  after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
   describe('unit tests', () => {
     it('Should not sync transaction on invalid data', () => (
@@ -151,6 +157,7 @@ describe('Transactions suite', function TransactionsSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+          return null;
         })
     ));
 
@@ -162,15 +169,43 @@ describe('Transactions suite', function TransactionsSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+          return null;
         });
     });
 
     it('Should list all transactions', () => (
       dispatch(listTransaction, {})
         .reflect()
-        .then((result) => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        })
+        .then(inspectPromise())
+    ));
+
+    it('Should list common transactions', () => (
+      dispatch(listCommonTransactions, {
+        owner: 'test@test.ru',
+        filter: {
+          status: 'Completed',
+        },
+      })
+      .reflect()
+      .then(inspectPromise())
+    ));
+
+    it('should return aggregate list of transactions', () => (
+      dispatch(transactionsAggregate, {
+        owners: ['test@test.ru'],
+        filter: {
+          status: 'Completed',
+        },
+        aggregate: {
+          amount: 'sum',
+        },
+      })
+      .reflect()
+      .then(inspectPromise())
+      .then((response) => {
+        assert.ok(response[0].amount);
+        return null;
+      })
     ));
   });
 });

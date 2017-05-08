@@ -1,15 +1,17 @@
 {
-  "id": "sale.get",
-  "type": "object",
-  "required": [ "id" ],
-  "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1
-    },
-    "owner": {
-      "type": "string",
-      "minLength": 1
+    "$id": "sale.get",
+    "type": "object",
+    "required": [
+        "id"
+    ],
+    "properties": {
+        "id": {
+            "type": "string",
+            "minLength": 1
+        },
+        "owner": {
+            "type": "string",
+            "minLength": 1
+        }
     }
-  }
 }
