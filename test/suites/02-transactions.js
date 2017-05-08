@@ -16,7 +16,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const deletePlan = 'payments.plan.delete';
   const createAgreement = 'payments.agreement.create';
   const executeAgreement = 'payments.agreement.execute';
-  const transactionsAggregate = 'payments.transactions.aggregate';
+  const transactionsAggregate = 'payments.transaction.aggregate';
 
   this.timeout(duration * 4);
 
