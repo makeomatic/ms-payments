@@ -14,7 +14,7 @@
             "$ref": "agreement#"
         },
         "trialDiscount": {
-            "type": "interger",
+            "type": "integer",
             "minimum": 0,
             "maximum": 100,
             "default": 0
