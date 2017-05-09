@@ -1,88 +1,158 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
-const paypal = require('paypal-rest-sdk');
 const moment = require('moment');
 const url = require('url');
 const find = require('lodash/find');
 const debug = require('debug')('nightmare:paypal-plan');
 
 // helpers
-const key = require('../../redisKey.js');
-const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants.js');
-const { deserialize } = require('../../utils/redis.js');
+const key = require('../../redisKey');
+const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants');
+const { deserialize } = require('../../utils/redis');
+const { create: billingAgreementCreate, handleError } = require('../../utils/paypal').billing;
 
-// eslint-disable-next-line max-len
-const billingAgreementCreate = Promise.promisify(paypal.billingAgreement.create, { context: paypal.billingAgreement });
+/**
+ * Fetches plan data
+ */
+function fetchPlan() {
+  const { redis, planId } = this;
 
-function agreementCreate({ params: message }) {
-  const { _config, redis } = this;
-  const planId = message.agreement.plan.id;
+  return redis
+    .hgetall(key(PLANS_DATA, planId))
+    .then((data) => {
+      if (!data) {
+        throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
+      }
 
-  function fetchPlan() {
-    return redis
-      .hgetall(key(PLANS_DATA, planId))
-      .then((data) => {
-        if (!data) {
-          throw new Errors.HttpStatusError(404, `plan ${planId} not found`);
-        }
+      return deserialize(data);
+    })
+    .tap((data) => {
+      if (data.state.toLowerCase() !== 'active') {
+        throw new Errors.HttpStatusError(412, `plan ${planId} is inactive`);
+      }
+    });
+}
 
-        return deserialize(data);
-      })
-      .tap((data) => {
-        if (data.state.toLowerCase() !== 'active') {
-          throw new Errors.HttpStatusError(412, `plan ${planId} is inactive`);
-        }
-      });
+/**
+ * Sends request to paypal
+ * @param  {Object} plan
+ */
+function sendRequest(rawPlanData) {
+  const {
+    agreement,
+    trialDiscount,
+    trialCycle,
+  } = this;
+
+  const [subscription] = rawPlanData.subs;
+  const regularPayment = subscription.definition.amount;
+
+  const planData = {
+    ...agreement,
+    start_date: moment().add(1, subscription.name).format(PAYPAL_DATE_FORMAT),
+    override_merchant_preferences: {
+      setup_fee: regularPayment,
+      initial_fail_amount_action: 'CANCEL',
+    },
+  };
+
+  // if we grant a discount - create plan with it now
+  const normalizedTrialCycle = subscription.name === 'year'
+    ? Math.ceil(trialCycle / 12) - 1
+    : trialCycle - 1;
+
+  if (trialDiscount > 0) {
+    planData.override_merchant_preferences.setup_fee = Number(regularPayment * (trialDiscount / 100)).toFixed(2);
+
+    if (normalizedTrialCycle > 0) {
+      // compose trial plan
+      const paymentDefinitions = rawPlanData.plan.payment_definitions;
+      const regularDefinition = paymentDefinitions[0];
+      const trialDefinition = {
+        ...regularDefinition,
+        type: 'TRIAL',
+        cycles: normalizedTrialCycle,
+        amount: {
+          ...regularDefinition.amount,
+          value: planData.override_merchant_preferences.setup_fee,
+        },
+      };
+
+      planData.plan.payment_definitions = [trialDefinition, regularDefinition];
+    }
   }
 
-  function sendRequest(plan) {
-    const planData = {
-      ...message.agreement,
-      start_date: moment().add(1, plan.subs[0].name).format(PAYPAL_DATE_FORMAT),
-      override_merchant_preferences: {
-        setup_fee: plan.subs[0].definition.amount,
-        initial_fail_amount_action: 'CANCEL',
-      },
-    };
+  debug('init plan %j', planData);
 
-    debug('init plan %j', planData);
+  return billingAgreementCreate(planData, this.config.paypal)
+    .catch(handleError)
+    .then((newAgreement) => {
+      const approval = find(newAgreement.links, { rel: 'approval_url' });
+      if (approval === null) {
+        throw new Errors.NotSupportedError('Unexpected PayPal response!');
+      }
 
-    return billingAgreementCreate(planData, _config.paypal)
-      .catch((err) => {
-        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-      })
-      .then((newAgreement) => {
-        const approval = find(newAgreement.links, { rel: 'approval_url' });
-        if (approval === null) {
-          throw new Errors.NotSupportedError('Unexpected PayPal response!');
-        }
+      const token = url.parse(approval.href, true).query.token;
+      return {
+        token,
+        url: approval.href,
+        agreement: newAgreement,
+      };
+    });
+}
 
-        const token = url.parse(approval.href, true).query.token;
-        return {
-          token,
-          url: approval.href,
-          agreement: newAgreement,
-        };
-      });
-  }
+/**
+ * Sets token for later approval
+ * @param {Object} response
+ */
+function setToken(response) {
+  const tokenKey = key('subscription-token', response.token);
+  const { owner, planId, redis } = this;
 
-  function setToken(response) {
-    const owner = message.owner;
-    const tokenKey = key('subscription-token', response.token);
+  return redis
+    .pipeline()
+    .hmset(tokenKey, { planId, owner })
+    .expire(tokenKey, 3600 * 24)
+    .exec()
+    .return(response);
+}
 
-    return redis
-      .pipeline()
-      .hmset(tokenKey, { planId, owner })
-      .expire(tokenKey, 3600 * 24)
-      .exec()
-      .return(response);
-  }
+/**
+ * @api {amqp} <prefix>.agreement.create Creates agreement for approval
+ * @apiVersion 1.0.0
+ * @apiName createAgreement
+ * @apiGroup Agreement
+ *
+ * @apiDescription Creates agreement for approval through paypal and sends link back
+ *
+ * @apiParam (Payload) {Object} agreement agreement data
+ * @apiParam (Payload) {Object} agreement.plan plan data
+ * @apiParam (Payload) {String} agreement.plan.id plan id
+ * @apiParam (Payload) {String} owner user, for which we create the agreement for
+ * @apiParam (Payload) {Number{0..100}=0} [trialDiscount] defines discount for a trial period
+ * @apiParam (Payload) {Number{0..}=12} [trialCycle] cycle for trial payments
+ */
+module.exports = function agreementCreate({ params }) {
+  const { config, redis } = this;
+  const { owner, agreement, trialDiscount, trialCycle } = params;
+  const { plan: { id: planId } } = agreement;
+
+  const ctx = {
+    // basic data
+    config,
+    redis,
+
+    // input params
+    planId,
+    owner,
+    agreement,
+    trialDiscount,
+    trialCycle,
+  };
 
   return Promise
-    .bind(this)
+    .bind(ctx)
     .then(fetchPlan)
     .then(sendRequest)
     .then(setToken);
-}
-
-module.exports = agreementCreate;
+};
