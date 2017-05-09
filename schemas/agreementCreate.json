@@ -12,6 +12,17 @@
         },
         "agreement": {
             "$ref": "agreement#"
+        },
+        "trialDiscount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "default": 0
+        },
+        "trialCycle": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 12
         }
     },
     "additionalProperties": false
