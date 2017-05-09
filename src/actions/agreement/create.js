@@ -46,12 +46,13 @@ function sendRequest(rawPlanData) {
 
   const [subscription] = rawPlanData.subs;
   const regularPayment = subscription.definition.amount;
+  const setupFee = { ...regularPayment };
 
   const planData = {
     ...agreement,
     start_date: moment().add(1, subscription.name).format(PAYPAL_DATE_FORMAT),
     override_merchant_preferences: {
-      setup_fee: regularPayment,
+      setup_fee: setupFee,
       initial_fail_amount_action: 'CANCEL',
     },
   };
@@ -62,7 +63,7 @@ function sendRequest(rawPlanData) {
     : trialCycle - 1;
 
   if (trialDiscount > 0) {
-    planData.override_merchant_preferences.setup_fee = Number(regularPayment * (trialDiscount / 100)).toFixed(2);
+    setupFee.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
 
     if (normalizedTrialCycle > 0) {
       // compose trial plan
@@ -72,10 +73,7 @@ function sendRequest(rawPlanData) {
         ...regularDefinition,
         type: 'TRIAL',
         cycles: normalizedTrialCycle,
-        amount: {
-          ...regularDefinition.amount,
-          value: planData.override_merchant_preferences.setup_fee,
-        },
+        amount: { ...setupFee },
       };
 
       planData.plan.payment_definitions = [trialDefinition, regularDefinition];
