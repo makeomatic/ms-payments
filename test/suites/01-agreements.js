@@ -106,6 +106,7 @@ describe('Agreements suite', function AgreementSuite() {
       const id = data.plan.id.split('|')[0];
       planId = data.plan.id;
       testAgreementData.plan.id = id;
+      return null;
     });
   });
 
@@ -120,6 +121,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+          return null;
         });
     });
 
@@ -130,6 +132,7 @@ describe('Agreements suite', function AgreementSuite() {
           debug(result);
           assert(result.isFulfilled());
           assert.equal(result.value().id, 'free');
+          return null;
         });
     });
 
@@ -145,6 +148,7 @@ describe('Agreements suite', function AgreementSuite() {
           debug(result);
           assert(result.isFulfilled());
           billingAgreement = result.value();
+          return null;
         });
     });
 
@@ -153,6 +157,7 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
+          return null;
         });
     });
 
@@ -161,6 +166,7 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
+          return null;
         });
     });
 
@@ -173,6 +179,38 @@ describe('Agreements suite', function AgreementSuite() {
               debug(result);
               assert(result.isFulfilled());
               billingAgreement.id = result.value().id;
+              return null;
+            });
+        });
+    });
+
+    it('Should create a trial agreement', () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'test@test.ru',
+        trialDiscount: 10,
+      };
+
+      return dispatch(createAgreement, data)
+        .reflect()
+        .then((result) => {
+          debug(result);
+          assert(result.isFulfilled());
+          billingAgreement = result.value();
+          return null;
+        });
+    });
+
+    it('Should execute an approved trial agreement', () => {
+      return approve(billingAgreement.url)
+        .then((params) => {
+          return dispatch(executeAgreement, { token: params.token })
+            .reflect()
+            .then((result) => {
+              debug(result);
+              assert(result.isFulfilled());
+              billingAgreement.id = result.value().id;
+              return null;
             });
         });
     });
@@ -192,6 +230,7 @@ describe('Agreements suite', function AgreementSuite() {
           debug(result);
           assert(result.isFulfilled());
           assert.equal(result.value().agreement.id, billingAgreement.id);
+          return null;
         });
     });
 
@@ -203,6 +242,7 @@ describe('Agreements suite', function AgreementSuite() {
           .reflect()
           .then((result) => {
             assert(result.isFulfilled());
+            return null;
           })
           .then(() => {
             return dispatch(getAgreement, { id: billingAgreement.id });
@@ -226,6 +266,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           debug(result);
           assert(result.isFulfilled());
+          return null;
         });
     });
 
@@ -235,6 +276,7 @@ describe('Agreements suite', function AgreementSuite() {
         .then((result) => {
           assert(result.isFulfilled());
           assert.equal(result.value().id, 'free');
+          return null;
         });
     });
   });
