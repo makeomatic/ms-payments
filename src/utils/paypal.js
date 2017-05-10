@@ -23,5 +23,5 @@ exports.plan = {
 };
 
 exports.handleError = (err) => {
-  throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
+  throw new HttpStatusError(err.httpStatusCode, get(err, 'response.message', err.message), get(err, 'response.name', err.name));
 };

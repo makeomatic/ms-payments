@@ -81,7 +81,7 @@ function sendRequest(rawPlanData) {
     }
 
     // compose trial plan
-    const trialPlan = omit(rawPlanData.plan, 'id');
+    const trialPlan = omit(rawPlanData.plan, ['id', 'state', 'hidden']);
     const paymentDefinitions = trialPlan.payment_definitions;
     const regularDefinition = paymentDefinitions[0];
     const trialDefinition = {
@@ -94,12 +94,14 @@ function sendRequest(rawPlanData) {
     trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
     trialPlan.payment_definitions = [trialDefinition, regularDefinition];
 
+    console.log(trialPlan);
+
     return billingPlanCreate(trialPlan, this.config.paypal)
-      .catch(handleError)
       .get('id')
       .tap(planId => (
         billingPlanUpdate(planId, [{ op: 'replace', path: '/', value: { state: active } }], this.config.paypal)
-      ));
+      ))
+      .catch(handleError);
   })
   .then((planId) => {
     planData.plan.id = planId;
