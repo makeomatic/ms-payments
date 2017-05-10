@@ -25,3 +25,5 @@ exports.plan = {
 exports.handleError = (err) => {
   throw new HttpStatusError(err.httpStatusCode, get(err, 'response.message', err.message), get(err, 'response.name', err.name));
 };
+
+exports.blacklistedProps = ['id', 'state', 'hidden', 'create_time', 'update_time', 'links', 'httpStatusCode'];

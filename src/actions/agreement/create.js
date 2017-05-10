@@ -16,6 +16,7 @@ const {
   handleError,
   is,
   states: { active },
+  blacklistedProps,
 } = require('../../utils/paypal');
 
 /**
@@ -61,6 +62,7 @@ function sendRequest(rawPlanData) {
     override_merchant_preferences: {
       setup_fee: setupFee,
       initial_fail_amount_action: 'CANCEL',
+      max_fail_attempts: 3,
     },
   };
 
@@ -81,7 +83,7 @@ function sendRequest(rawPlanData) {
     }
 
     // compose trial plan
-    const trialPlan = omit(rawPlanData.plan, ['id', 'state', 'hidden']);
+    const trialPlan = omit(rawPlanData.plan, blacklistedProps);
     const paymentDefinitions = trialPlan.payment_definitions;
     const regularDefinition = paymentDefinitions[0];
     const trialDefinition = {
@@ -93,8 +95,6 @@ function sendRequest(rawPlanData) {
 
     trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
     trialPlan.payment_definitions = [trialDefinition, regularDefinition];
-
-    console.log(trialPlan);
 
     return billingPlanCreate(trialPlan, this.config.paypal)
       .get('id')
