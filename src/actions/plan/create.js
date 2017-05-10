@@ -1,5 +1,4 @@
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const merge = require('lodash/merge');
 const cloneDeep = require('lodash/cloneDeep');
@@ -7,16 +6,15 @@ const reduce = require('lodash/reduce');
 const find = require('lodash/find');
 
 // internal actions
-const statePlan = require('./state.js');
+const statePlan = require('./state');
 
 // helpers
-const key = require('../../redisKey.js');
-const { cleanupCache } = require('../../listUtils.js');
-const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
-const { serialize } = require('../../utils/redis.js');
-const { createJoinPlans } = require('../../utils/plans.js');
-
-const billingPlanCreate = Promise.promisify(paypal.billingPlan.create, { context: paypal.billingPlan }); // eslint-disable-line max-len
+const key = require('../../redisKey');
+const { cleanupCache } = require('../../listUtils');
+const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants');
+const { plan: { create: billingPlanCreate }, handleError, is, states: { active } } = require('../../utils/paypal');
+const { serialize } = require('../../utils/redis');
+const { createJoinPlans } = require('../../utils/plans');
 
 function sendRequest(config, message) {
   const defaultMerchantPreferences = {
@@ -32,31 +30,26 @@ function sendRequest(config, message) {
   plan.merchant_preferences = merge(defaultMerchantPreferences, merchatPref || {});
 
   // divide single plan definition into as many as payment_definitions present
-  const plans = payment_definitions.map((definition) => {
+  const plans = Promise.map(payment_definitions, (definition) => {
     const partialPlan = {
       ...cloneDeep(plan),
       name: `${plan.name}-${definition.frequency.toLowerCase()}`,
       payment_definitions: [definition],
     };
 
-    return billingPlanCreate(partialPlan, config.paypal)
-      .catch((err) => {
-        throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-      });
+    return billingPlanCreate(partialPlan, config.paypal).catch(handleError);
   });
 
-  const promise = Promise.all(plans);
-  const { state } = message.plan;
-  if (state && state.toLowerCase() !== 'active') {
-    return promise;
+  if (is.active(message.plan) === false) {
+    return plans;
   }
 
   // activate the plan if we requested it
-  return promise.map((planData) => {
+  return plans.map((planData) => {
     const id = planData.id;
-    planData.state = 'active';
+    planData.state = active;
     return statePlan
-      .call(this, { params: { id, state: 'active' } })
+      .call(this, { params: { id, state: active } })
       .return(planData);
   });
 }

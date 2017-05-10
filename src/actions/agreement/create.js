@@ -3,13 +3,20 @@ const Errors = require('common-errors');
 const moment = require('moment');
 const url = require('url');
 const find = require('lodash/find');
+const omit = require('lodash/omit');
 const debug = require('debug')('nightmare:paypal-plan');
 
 // helpers
 const key = require('../../redisKey');
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants');
 const { deserialize } = require('../../utils/redis');
-const { create: billingAgreementCreate, handleError } = require('../../utils/paypal').billing;
+const {
+  agreement: { create: billingAgreementCreate },
+  plan: { create: billingPlanCreate, update: billingPlanUpdate },
+  handleError,
+  is,
+  states: { active },
+} = require('../../utils/paypal');
 
 /**
  * Fetches plan data
@@ -27,7 +34,7 @@ function fetchPlan() {
       return deserialize(data);
     })
     .tap((data) => {
-      if (data.state.toLowerCase() !== 'active') {
+      if (is.active(data) !== true) {
         throw new Errors.HttpStatusError(412, `plan ${planId} is inactive`);
       }
     });
@@ -57,46 +64,63 @@ function sendRequest(rawPlanData) {
     },
   };
 
-  // if we grant a discount - create plan with it now
-  const normalizedTrialCycle = subscription.name === 'year'
-    ? Math.ceil(trialCycle / 12) - 1
-    : trialCycle - 1;
+  return Promise.try(() => {
+    // if we grant a discount - create plan with it now
+    const normalizedTrialCycle = subscription.name === 'year'
+      ? Math.ceil(trialCycle / 12) - 1
+      : trialCycle - 1;
 
-  if (trialDiscount > 0) {
+    if (trialDiscount === 0) {
+      return planData.plan.id;
+    }
+
     setupFee.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
 
-    if (normalizedTrialCycle > 0) {
-      // compose trial plan
-      const paymentDefinitions = rawPlanData.plan.payment_definitions;
-      const regularDefinition = paymentDefinitions[0];
-      const trialDefinition = {
-        ...regularDefinition,
-        type: 'TRIAL',
-        cycles: normalizedTrialCycle,
-        amount: { ...setupFee },
-      };
-
-      planData.plan.payment_definitions = [trialDefinition, regularDefinition];
+    if (normalizedTrialCycle === 0) {
+      return planData.plan.id;
     }
-  }
 
-  debug('init plan %j', planData);
+    // compose trial plan
+    const trialPlan = omit(rawPlanData.plan, 'id');
+    const paymentDefinitions = trialPlan.payment_definitions;
+    const regularDefinition = paymentDefinitions[0];
+    const trialDefinition = {
+      ...regularDefinition,
+      type: 'TRIAL',
+      cycles: normalizedTrialCycle,
+      amount: { ...setupFee },
+    };
 
-  return billingAgreementCreate(planData, this.config.paypal)
-    .catch(handleError)
-    .then((newAgreement) => {
-      const approval = find(newAgreement.links, { rel: 'approval_url' });
-      if (approval === null) {
-        throw new Errors.NotSupportedError('Unexpected PayPal response!');
-      }
+    trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
+    trialPlan.payment_definitions = [trialDefinition, regularDefinition];
 
-      const token = url.parse(approval.href, true).query.token;
-      return {
-        token,
-        url: approval.href,
-        agreement: newAgreement,
-      };
-    });
+    return billingPlanCreate(trialPlan, this.config.paypal)
+      .catch(handleError)
+      .get('id')
+      .tap(planId => (
+        billingPlanUpdate(planId, [{ op: 'replace', path: '/', value: { state: active } }], this.config.paypal)
+      ));
+  })
+  .then((planId) => {
+    planData.plan.id = planId;
+    debug('init plan %j', planData);
+
+    return billingAgreementCreate(planData, this.config.paypal)
+      .catch(handleError)
+      .then((newAgreement) => {
+        const approval = find(newAgreement.links, { rel: 'approval_url' });
+        if (approval === null) {
+          throw new Errors.NotSupportedError('Unexpected PayPal response!');
+        }
+
+        const token = url.parse(approval.href, true).query.token;
+        return {
+          token,
+          url: approval.href,
+          agreement: newAgreement,
+        };
+      });
+  });
 }
 
 /**
