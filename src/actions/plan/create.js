@@ -57,6 +57,7 @@ function sendRequest(config, message) {
 function createSaveToRedis(redis, message) {
   return function saveToRedis(data) {
     const { plan, plans } = data;
+    const { meta, level } = message;
     const aliasedId = message.alias || plan.id;
     const hidden = message.hidden || false;
 
@@ -89,8 +90,8 @@ function createSaveToRedis(redis, message) {
       name: plan.name,
       hidden,
       ...plansData,
-      meta: plan.meta,
-      level: plan.level,
+      meta,
+      level,
     };
 
     if (message.alias !== null && message.alias !== undefined) {
@@ -116,8 +117,8 @@ function createSaveToRedis(redis, message) {
         state: planData.state,
         name: planData.name,
         hidden,
-        meta: plan.meta,
-        level: plan.level,
+        meta,
+        level,
       };
 
       if (message.alias) {
