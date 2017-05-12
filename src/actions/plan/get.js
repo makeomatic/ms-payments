@@ -7,7 +7,7 @@ const { PLANS_DATA } = require('../../constants');
 const { handlePipeline } = require('../../utils/redis');
 
 // constants
-const EXTRACT_FIELDS = ['plan', 'subs', 'alias', 'hidden', 'meta', 'level'];
+const EXTRACT_FIELDS = ['plan', 'subs', 'alias', 'hidden', 'meta', 'level', 'year', 'month'];
 const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON, null);
 
 function planGet({ params: id }) {
