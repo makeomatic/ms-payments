@@ -1,4 +1,5 @@
 const Promise = require('bluebird');
+const { HttpStatusError } = require('bluebird');
 
 // internal actions
 const setState = require('./state.js');
@@ -41,7 +42,7 @@ function actualDelete(id) {
 
 function planDelete({ params: id }) {
   if (id === FREE_PLAN_ID) {
-    return Promise.resolve(1);
+    return Promise.reject(new HttpStatusError(400, 'unable to delete free plan'));
   }
 
   const ids = id.split('|');

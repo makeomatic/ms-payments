@@ -11,7 +11,24 @@
             "minLength": 1
         },
         "agreement": {
-            "$ref": "agreement#"
+            "allOf": [{
+                "$ref": "agreement#"
+            }, {
+                "type": "object",
+                "properties": {
+                    "plan": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["id"],
+                        "properties": {
+                            "id": {
+                                "type": "string",
+                                "pattern": "^P-[A-Z0-9]+$"
+                            }
+                        }
+                    }
+                }
+            }]
         },
         "trialDiscount": {
             "type": "integer",
