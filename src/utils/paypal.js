@@ -4,8 +4,29 @@ const { HttpStatusError } = require('common-errors');
 const { billingAgreement, billingPlan, payment } = require('paypal-rest-sdk');
 
 // helpers
+const retryTimeout = parseInt(process.env.PAYPAL_RETRY_TIMEOUT || 6000, 10);
+const retryCounter = parseInt(process.env.PAYPAL_RETRY_COUNT || 5, 10);
+const retryDelay = parseInt(process.env.PAYPAL_RETRY_DELAY || 250, 10);
+const invalidServerResponsePredicate = { httpStatusCode: 200, response: '' };
 const promisify = (ops, context) => ops.reduce((acc, op) => {
-  acc[op] = Promise.promisify(billingAgreement[op], { context });
+  const opAsync = Promise.promisify(billingAgreement[op], { context });
+
+  // init retry op
+  acc[op] = function retryPaypalRequest(...args) {
+    const tryOp = (counter = 0) => (
+      opAsync(...args).catch(invalidServerResponsePredicate, (err) => {
+        if (counter > retryCounter) throw err;
+
+        // increment counter
+        return Promise.resolve(counter + 1).delay(retryDelay).then(tryOp);
+      })
+    );
+
+    // ensure that we also have a timeout
+    // for now hardcode at 6000
+    return tryOp().timeout(retryTimeout);
+  };
+
   return acc;
 }, {});
 
