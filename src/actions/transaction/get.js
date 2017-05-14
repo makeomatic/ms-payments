@@ -1,4 +1,5 @@
 const Errors = require('common-errors');
+const is = require('is');
 
 // helpers
 const key = require('../../redisKey.js');
@@ -13,7 +14,7 @@ module.exports = function saleGet({ params: opts }) {
   return redis
     .hgetall(transactionData)
     .then((data) => {
-      if (!data) {
+      if (is.empty(data)) {
         throw new Errors.HttpStatusError(404, `transaction id ${id} missing`);
       }
 

@@ -133,6 +133,7 @@ function setToken(response) {
   const tokenKey = key('subscription-token', response.token);
   const { owner, planId, redis } = this;
 
+  // during trial original plan id is returned, however, payment model is different
   return redis
     .pipeline()
     .hmset(tokenKey, { planId, owner })
