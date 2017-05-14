@@ -9,7 +9,7 @@ const retryCounter = parseInt(process.env.PAYPAL_RETRY_COUNT || 5, 10);
 const retryDelay = parseInt(process.env.PAYPAL_RETRY_DELAY || 250, 10);
 const invalidServerResponsePredicate = { httpStatusCode: 200, response: '' };
 const promisify = (ops, context) => ops.reduce((acc, op) => {
-  const opAsync = Promise.promisify(billingAgreement[op], { context });
+  const opAsync = Promise.promisify(context[op], { context });
 
   // init retry op
   acc[op] = function retryPaypalRequest(...args) {
