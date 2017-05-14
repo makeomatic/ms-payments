@@ -2,7 +2,7 @@ const Promise = require('bluebird');
 const { HttpStatusError } = require('bluebird');
 
 // internal actions
-const setState = require('./state.js');
+const setState = require('./state');
 
 // helpers
 const key = require('../../redisKey.js');

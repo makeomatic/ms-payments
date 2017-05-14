@@ -1,7 +1,6 @@
 const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const moment = require('moment');
-const paypal = require('paypal-rest-sdk');
 const find = require('lodash/find');
 
 // helpers
@@ -10,25 +9,17 @@ const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constan
 const { serialize } = require('../../utils/redis.js');
 
 // internal actions
+const { agreement: { execute, get }, handleError } = require('../../utils/paypal');
 const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
 const getPlan = require('../plan/get');
 
-// eslint-disable-next-line max-len
-const billingAgreement = Promise.promisifyAll(paypal.billingAgreement, { context: paypal.billingAgreement });
-
-// internal context will be created for promise execution
 function sendRequest() {
-  return billingAgreement
-    .executeAsync(this.token, {}, this.paypal)
-    .catch((err) => {
-      throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-    })
-    .get('id');
+  return execute(this.token, {}, this.paypal).catch(handleError).get('id');
 }
 
 function fetchUpdatedAgreement(id) {
-  return billingAgreement.getAsync(id, this.paypal);
+  return get(id, this.paypal);
 }
 
 function fetchPlan(agreement) {

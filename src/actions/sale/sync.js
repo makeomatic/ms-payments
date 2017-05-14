@@ -1,5 +1,4 @@
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
 const moment = require('moment');
 const forEach = require('lodash/forEach');
 
@@ -8,12 +7,11 @@ const salelist = require('./list');
 
 // helpers
 const key = require('../../redisKey.js');
-const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants.js');
+const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
-const { serialize } = require('../../utils/redis.js');
+const { serialize } = require('../../utils/redis');
+const { payment: { list: listTransactions } } = require('../../utils/paypal');
 
-// eslint-disable-next-line max-len
-const listTransactions = Promise.promisify(paypal.payment.list, { context: paypal.payment });
 const TRANSACTIONS_LIMIT = 20;
 
 function transactionSync({ params: message = {} }) {

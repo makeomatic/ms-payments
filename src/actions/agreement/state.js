@@ -1,19 +1,14 @@
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
 const Errors = require('common-errors');
 const moment = require('moment');
 
-// paypal
-const operations = ['suspend', 'reactivate', 'cancel'].reduce((ops, op) => {
-  ops[op] = Promise.promisify(paypal.billingAgreement[op], { context: paypal.billingAgreement });
-  return ops;
-}, {});
 
 // internal actions
 const syncTransactions = require('../transaction/sync.js');
 
 // helpers
 const key = require('../../redisKey.js');
+const { agreement: operations } = require('../../utils/paypal');
 const resetToFreePlan = require('../../utils/resetToFreePlan.js');
 const { serialize } = require('../../utils/redis.js');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');

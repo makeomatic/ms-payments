@@ -1,6 +1,5 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
-const paypal = require('paypal-rest-sdk');
 const forEach = require('lodash/forEach');
 
 // helpers
@@ -8,10 +7,7 @@ const key = require('../../redisKey.js');
 const { serialize } = require('../../utils/redis.js');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
 const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
-
-// paypal
-const searchTransactions = Promise.promisify(paypal.billingAgreement.searchTransactions, { context: paypal.billingAgreement });
-const getAgreement = Promise.promisify(paypal.billingAgreement.get, { context: paypal.billingAgreement });
+const { agreement: { get: getAgreement, searchTransactions } } = require('../../utils/paypal');
 
 function transactionSync({ params: message }) {
   const { _config, redis, amqp, log } = this;

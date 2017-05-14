@@ -1,17 +1,14 @@
 const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
-const paypal = require('paypal-rest-sdk');
 const render = require('ms-mailer-templates');
 const pick = require('lodash/pick');
 
 // helpers
 const key = require('../../redisKey');
-const { serialize } = require('../../utils/redis.js');
-const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants.js');
-const { saveCommon, parseSale, getOwner } = require('../../utils/transactions.js');
-
-// paypal
-const paypalPaymentExecute = Promise.promisify(paypal.payment.execute, { context: paypal.payment });
+const { serialize } = require('../../utils/redis');
+const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants');
+const { saveCommon, parseSale, getOwner } = require('../../utils/transactions');
+const { payment: { execute: executePayment } } = require('../../utils/paypal');
 
 // parse json
 function parseInput(data, fallback) {
@@ -21,7 +18,7 @@ function parseInput(data, fallback) {
 // send paypal request
 function sendRequest({ payer_id, payment_id }) {
   const { config, log } = this;
-  return paypalPaymentExecute(payment_id, { payer_id }, config.paypal)
+  return executePayment(payment_id, { payer_id }, config.paypal)
     .catch((err) => {
       log.warn('failed to bill payment', err.response);
       throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
