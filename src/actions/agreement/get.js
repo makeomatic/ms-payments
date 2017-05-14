@@ -1,5 +1,6 @@
 const key = require('../../redisKey.js');
 const Errors = require('common-errors');
+const is = require('is');
 
 // helpers
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
@@ -22,7 +23,7 @@ module.exports = function getAgreement({ params: message }) {
   return redis
     .hgetall(agreementKey)
     .then((data) => {
-      if (!data) {
+      if (is.empty(data)) {
         throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
       }
 
