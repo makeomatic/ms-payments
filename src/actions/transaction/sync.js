@@ -3,107 +3,163 @@ const Errors = require('common-errors');
 const forEach = require('lodash/forEach');
 
 // helpers
-const key = require('../../redisKey.js');
-const { serialize } = require('../../utils/redis.js');
+const key = require('../../redisKey');
+const { serialize, handlePipeline } = require('../../utils/redis');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
-const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants.js');
-const { agreement: { get: getAgreement, searchTransactions } } = require('../../utils/paypal');
+const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants');
+const { agreement: { get: getAgreement, searchTransactions }, handleError } = require('../../utils/paypal');
 
-function transactionSync({ params: message }) {
-  const { _config, redis, amqp, log } = this;
-  const { paypal: paypalConfig } = _config;
-  const { users: { prefix, postfix, audience } } = _config;
-  const path = `${prefix}.${postfix.list}`;
-  const agreementId = message.id;
+/**
+ * Helper functions
+ */
 
-  // perform search of transactions
-  function sendRequest() {
-    return Promise.props({
-      agreement: getAgreement(agreementId, paypalConfig),
-      transactions: searchTransactions(agreementId, message.start || '', message.end || '', paypalConfig).get('agreement_transaction_list'),
-    })
-    .catch((err) => {
-      throw new Errors.HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-    });
-  }
+/**
+ * Gets transactions for the passed agreementId
+ * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
+ */
+function sendRequest() {
+  const { agreementId, paypalConfig, start, end } = this;
 
-  // find owner of transaction by asking users.list
-  function findOwner() {
-    if (message.owner) {
-      return message.owner;
-    }
+  return Promise.props({
+    agreement: getAgreement(agreementId, paypalConfig)
+       .catch(handleError),
+    transactions: searchTransactions(agreementId, start, end, paypalConfig)
+       .catch(handleError)
+       .get('agreement_transaction_list'),
+  });
+}
 
-    const getRequest = {
-      audience,
-      offset: 0,
-      limit: 1,
-      filter: {
-        agreement: {
-          eq: JSON.stringify(agreementId),
-        },
+/**
+ * Fetch owner of transactions from ms-users
+ * @return {Promise<String>}
+ */
+function findOwner() {
+  // verify if we already have passed owner
+  const owner = this.owner;
+  if (owner) return owner;
+
+  const getRequest = {
+    audience: this.audience,
+    offset: 0,
+    limit: 1,
+    filter: {
+      agreement: {
+        eq: JSON.stringify(this.agreementId),
       },
-    };
+    },
+  };
 
-    return amqp
-      .publishAndWait(path, getRequest, { timeout: 5000 })
-      .get('users')
-      .then((users) => {
-        if (users.length > 0) {
-          return users[0].id;
-        }
+  return this.amqp
+     .publishAndWait(this.path, getRequest, { timeout: 5000 })
+     .get('users')
+     .then((users) => {
+       if (users.length > 0) {
+         return users[0].id;
+       }
 
-        throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${agreementId}`);
-      });
-  }
+       throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
+     });
+}
 
-  // insert data about transaction into common list of sales and
-  function updateCommon(transaction, owner) {
-    return Promise
-      .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
-      .then(saveCommon)
-      .catch((err) => {
-        log.error('failed to insert common transaction data', err);
-      })
-      .return(transaction);
-  }
-
-  // save transaction's data to redis
-  function saveToRedis(owner, { agreement, transactions }) {
-    const pipeline = redis.pipeline();
-    const updates = [];
-    const agreementKey = key(AGREEMENT_DATA, agreement.id);
-
-    // update current agreement details
-    pipeline.hmset(agreementKey, serialize({ agreement, state: agreement.state }));
-
-    // gather updates
-    forEach(transactions, (transaction) => {
-      const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
-      const data = {
-        transaction,
-        owner,
-        agreement: agreementId,
-        status: transaction.status,
-        transaction_type: transaction.transaction_type,
-        payer_email: transaction.payer_email || undefined,
-        time_stamp: new Date(transaction.time_stamp).getTime(),
-      };
-
-      pipeline.hmset(transactionKey, serialize(data));
-      pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
-
-      updates.push(updateCommon.call(this, transaction, owner));
-    });
-
-    // gather pipeline transaction
-    updates.push(pipeline.exec());
-
-    return Promise.all(updates).return({ agreement, transactions });
-  }
+/**
+ * Insert data about transaction into common list of sales and
+ * @param  {Transaction} transaction
+ * @param  {String} owner
+ * @return {Promise<Transaction>}
+ */
+function updateCommon(transaction, owner) {
+  const { agreementId, log } = this;
 
   return Promise
-    .join(findOwner(), sendRequest())
-    .bind(this)
+     .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
+     .then(saveCommon)
+     .catch((err) => {
+       log.error('failed to insert common transaction data', err);
+     })
+     .return(transaction);
+}
+
+/**
+ * Save transaction's data to redis
+ * @param  {String}  owner
+ * @param  {Object<{ agreement, transactions }>}  paypalData
+ * @return {Promise<{ agreement, transactions }>}
+ */
+function saveToRedis(owner, paypalData) {
+  const { redis, agreementId } = this;
+  const { agreement, transactions } = paypalData;
+
+  const pipeline = redis.pipeline();
+  const updates = [];
+  const agreementKey = key(AGREEMENT_DATA, agreement.id);
+
+   // update current agreement details
+  pipeline.hmset(agreementKey, serialize({ agreement, state: agreement.state }));
+
+   // gather updates
+  forEach(transactions, (transaction) => {
+    const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
+    const data = {
+      transaction,
+      owner,
+      agreement: agreementId,
+      status: transaction.status,
+      transaction_type: transaction.transaction_type,
+      payer_email: transaction.payer_email || undefined,
+      time_stamp: new Date(transaction.time_stamp).getTime(),
+    };
+
+    pipeline.hmset(transactionKey, serialize(data));
+    pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
+
+    updates.push(updateCommon.call(this, transaction, owner));
+  });
+
+   // gather pipeline transaction
+  updates.push(pipeline.exec().then(handlePipeline));
+
+  return Promise.all(updates).return({ agreement, transactions });
+}
+
+/**
+ * Invokes function
+ * @param  {Function} fn
+ * @return {Promise}
+ */
+function invoke(fn) {
+  return fn.call(this);
+}
+
+/**
+ * Syncs transactions for agreements
+ * @param  {Object} params
+ * @return {Promise}
+ */
+function transactionSync({ params }) {
+  const { config, redis, amqp, log } = this;
+  const { paypal: paypalConfig } = config;
+  const { users: { prefix, postfix, audience } } = config;
+  const path = `${prefix}.${postfix.list}`;
+  const agreementId = params.id;
+
+  const ctx = {
+    // services
+    log,
+    redis,
+    amqp,
+    paypalConfig,
+
+    // input attributes
+    agreementId,
+    path,
+    audience,
+    start: params.start || '',
+    end: params.end || '',
+  };
+
+  return Promise
+    .bind(ctx, [findOwner, sendRequest])
+    .map(invoke)
     .spread(saveToRedis);
 }
 
