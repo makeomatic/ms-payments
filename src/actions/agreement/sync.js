@@ -45,7 +45,7 @@ function agreementSync({ params: message = {} }) {
         });
 
         if (page < pages) {
-          return getUsers({ start: current, offset: cursor });
+          return getUsers({ start: current, cursor });
         }
 
         return pool;
