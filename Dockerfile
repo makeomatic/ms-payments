@@ -11,6 +11,8 @@ RUN \
     git \
     curl \
     openssl \
+    g++ \
+    make \
   && yarn --production \
   && apk del \
     .buildDeps \
