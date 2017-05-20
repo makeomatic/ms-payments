@@ -866,9 +866,9 @@ debug-log@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/debug-log/-/debug-log-1.0.1.tgz#2307632d4c04382b8df8a32f70b895046d52745f"
 
-debug@*, debug@2, debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.3, debug@^2.6.6, debug@^2.6.7:
-  version "2.6.7"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.7.tgz#92bad1f6d05bbb6bba22cca88bcd0ec894c2861e"
+debug@*, debug@2, debug@^2.1.1, debug@^2.1.3, debug@^2.2.0, debug@^2.6.0, debug@^2.6.3, debug@^2.6.6, debug@^2.6.8:
+  version "2.6.8"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
   dependencies:
     ms "2.0.0"
 
@@ -934,6 +934,10 @@ delegates@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delegates/-/delegates-1.0.0.tgz#84c6e159b81904fdca59a0ef44cd870d31250f9a"
 
+denque@^1.1.0:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/denque/-/denque-1.1.1.tgz#10229c2b88eec1bd15ff82c5fde356e7beb6db9e"
+
 detect-indent@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-4.0.0.tgz#f76d064352cdf43a1cb6ce619c4ee3a9475de208"
@@ -968,10 +972,6 @@ doctrine@^2.0.0:
 dotenv@^4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-4.0.0.tgz#864ef1379aced55ce6f95debecdce179f7a0cd1d"
-
-double-ended-queue@^2.1.0-0:
-  version "2.1.0-0"
-  resolved "https://registry.yarnpkg.com/double-ended-queue/-/double-ended-queue-2.1.0-0.tgz#103d3527fd31528f40188130c841efdd78264e5c"
 
 dtrace-provider@~0.8:
   version "0.8.1"
@@ -1723,6 +1723,10 @@ hawk@~3.1.3:
     hoek "2.x.x"
     sntp "1.x.x"
 
+heapdump@^0.3.9:
+  version "0.3.9"
+  resolved "https://registry.yarnpkg.com/heapdump/-/heapdump-0.3.9.tgz#03c74eb0df5d67be0982e83429ba9c9d2b3b7f78"
+
 hoek@2.x.x:
   version "2.16.3"
   resolved "https://registry.yarnpkg.com/hoek/-/hoek-2.16.3.tgz#20bb7403d3cea398e91dc4710a8ff1b8274a25ed"
@@ -1823,18 +1827,18 @@ invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
 
-ioredis@^2.4.0:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-2.5.0.tgz#fb6fdf0a1a7e0974614c67b6e5e11308a8cf95b9"
+ioredis@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-3.0.0.tgz#ecbfd5e1e89df94f55723bb4d81761b183609a0d"
   dependencies:
     bluebird "^3.3.4"
     cluster-key-slot "^1.0.6"
     debug "^2.2.0"
-    double-ended-queue "^2.1.0-0"
+    denque "^1.1.0"
     flexbuffer "0.0.6"
     lodash "^4.8.2"
     redis-commands "^1.2.0"
-    redis-parser "^1.3.0"
+    redis-parser "^2.4.0"
 
 is-arrayish@^0.2.1:
   version "0.2.1"
@@ -3228,9 +3232,9 @@ redis-filtered-sort@^2.2.1:
   dependencies:
     cluster-key-slot "^1.0.6"
 
-redis-parser@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/redis-parser/-/redis-parser-1.3.0.tgz#806ebe7bbfb7d34e4d7c1e9ef282efcfad04126a"
+redis-parser@^2.4.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/redis-parser/-/redis-parser-2.6.0.tgz#52ed09dacac108f1a631c07e9b69941e7a19504b"
 
 regenerator-runtime@^0.10.0:
   version "0.10.5"

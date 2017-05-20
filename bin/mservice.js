@@ -7,11 +7,12 @@
 const configuration = require('ms-conf').get('/');
 
 let dir;
-if (process.env.NODE_ENV === 'production') {
-  dir = '../lib';
-} else {
-  dir = '../src';
+try {
+  require('heapdump');
   require('babel-register');
+  dir = '../src';
+} catch (e) {
+  dir = '../lib';
 }
 
 const Service = require(dir);
