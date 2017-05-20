@@ -13,6 +13,7 @@ RUN \
     openssl \
     g++ \
     make \
+    python \
   && yarn --production \
   && apk del \
     .buildDeps \
