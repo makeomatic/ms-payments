@@ -71,7 +71,7 @@
     "mkdirp": "^0.5.1",
     "mocha": "^3.3.0",
     "nightmare": "AVVS/nightmare",
-    "nyc": "^10.3.2",
+    "nyc": "^11.0.2",
     "rimraf": "^2.6.1",
     "semantic-release": "^6.3.6",
     "sinon": "^2.2.0"
