@@ -22,10 +22,10 @@ function sendRequest() {
 
   return Promise.props({
     agreement: getAgreement(agreementId, paypalConfig)
-       .catch(handleError),
+      .catch(handleError),
     transactions: searchTransactions(agreementId, start, end, paypalConfig)
-       .catch(handleError)
-       .get('agreement_transaction_list'),
+      .catch(handleError)
+      .get('agreement_transaction_list'),
   });
 }
 
@@ -50,15 +50,15 @@ function findOwner() {
   };
 
   return this.amqp
-     .publishAndWait(this.path, getRequest, { timeout: 5000 })
-     .get('users')
-     .then((users) => {
-       if (users.length > 0) {
-         return users[0].id;
-       }
+    .publishAndWait(this.path, getRequest, { timeout: 5000 })
+    .get('users')
+    .then((users) => {
+      if (users.length > 0) {
+        return users[0].id;
+      }
 
-       throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
-     });
+      throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
+    });
 }
 
 /**
@@ -71,12 +71,12 @@ function updateCommon(transaction, owner) {
   const { agreementId, log } = this;
 
   return Promise
-     .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
-     .then(saveCommon)
-     .catch((err) => {
-       log.error('failed to insert common transaction data', err);
-     })
-     .return(transaction);
+    .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
+    .then(saveCommon)
+    .catch((err) => {
+      log.error('failed to insert common transaction data', err);
+    })
+    .return(transaction);
 }
 
 /**
@@ -93,10 +93,10 @@ function saveToRedis(owner, paypalData) {
   const updates = [];
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
 
-   // update current agreement details
+  // update current agreement details
   pipeline.hmset(agreementKey, serialize({ agreement, state: agreement.state }));
 
-   // gather updates
+  // gather updates
   forEach(transactions, (transaction) => {
     const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
     const data = {
@@ -115,7 +115,7 @@ function saveToRedis(owner, paypalData) {
     updates.push(updateCommon.call(this, transaction, owner));
   });
 
-   // gather pipeline transaction
+  // gather pipeline transaction
   updates.push(pipeline.exec().then(handlePipeline));
 
   return Promise.all(updates).return({ agreement, transactions });

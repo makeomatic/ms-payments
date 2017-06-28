@@ -24,7 +24,6 @@ const { FREE_PLAN_ID } = require('./constants.js');
  * @extends MService
  */
 class Payments extends MService {
-
   /**
    * Configuration options for the service
    * @type {Object}
@@ -152,23 +151,23 @@ class Payments extends MService {
     this.log.info('Creating plans');
     const { defaultPlans } = this.config;
     return Promise
-    .bind(this, defaultPlans)
-    .map(plan => createPlan.call(this, { params: plan }).reflect())
-    .map(function iterateOverPlans(plan) {
-      if (plan.isFulfilled()) {
-        this.log.info('Created plan %s', plan.value().name);
+      .bind(this, defaultPlans)
+      .map(plan => createPlan.call(this, { params: plan }).reflect())
+      .map(function iterateOverPlans(plan) {
+        if (plan.isFulfilled()) {
+          this.log.info('Created plan %s', plan.value().name);
+          return null;
+        }
+
+        const err = plan.reason();
+        if (err.status !== 409) {
+          this.log.error('Error creating plan', err.stack);
+        } else {
+          this.log.warn(err.message);
+        }
+
         return null;
-      }
-
-      const err = plan.reason();
-      if (err.status !== 409) {
-        this.log.error('Error creating plan', err.stack);
-      } else {
-        this.log.warn(err.message);
-      }
-
-      return null;
-    });
+      });
   }
 
   syncTransactions() {
@@ -193,7 +192,6 @@ class Payments extends MService {
 
     return null;
   }
-
 }
 
 module.exports = Payments;

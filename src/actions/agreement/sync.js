@@ -56,46 +56,47 @@ function agreementSync({ params: message = {} }) {
   function getPendingAgreements(opts = {}) {
     const offset = opts.cursor || 0;
 
-    return listAgreements.call(this, {
-      params:
-      {
-        offset,
-        limit: FETCH_USERS_LIMIT,
-        filter: {
-          state: {
-            eq: AGREEMENT_PENDING_STATUS,
+    return listAgreements
+      .call(this, {
+        params:
+        {
+          offset,
+          limit: FETCH_USERS_LIMIT,
+          filter: {
+            state: {
+              eq: AGREEMENT_PENDING_STATUS,
+            },
           },
         },
-      },
-    })
-    .then((response) => {
-      const { items: agreements, cursor, page, pages } = response;
+      })
+      .then((response) => {
+        const { items: agreements, cursor, page, pages } = response;
 
-      agreements.forEach((agreement) => {
-        const { owner } = agreement;
-        if (!pulledUsers.has(owner)) {
-          missingUsers.add(owner);
+        agreements.forEach((agreement) => {
+          const { owner } = agreement;
+          if (!pulledUsers.has(owner)) {
+            missingUsers.add(owner);
+          }
+        });
+
+        if (page < pages) {
+          return getPendingAgreements.call(this, { cursor });
         }
+
+        if (missingUsers.size === 0) {
+          return null;
+        }
+
+        return Promise.map(missingUsers, (username) => {
+          const request = { username, audience };
+          return amqp
+            .publishAndWait(getMetadata, request, { timeout: 10000 })
+            .then((metadata) => {
+              pool.push({ id: username, metadata });
+              return null;
+            });
+        });
       });
-
-      if (page < pages) {
-        return getPendingAgreements.call(this, { cursor });
-      }
-
-      if (missingUsers.size === 0) {
-        return null;
-      }
-
-      return Promise.map(missingUsers, (username) => {
-        const request = { username, audience };
-        return amqp
-          .publishAndWait(getMetadata, request, { timeout: 10000 })
-          .then((metadata) => {
-            pool.push({ id: username, metadata });
-            return null;
-          });
-      });
-    });
   }
 
   // 3. bill users
