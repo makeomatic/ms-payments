@@ -40,4 +40,5 @@ services:
       - ${PWD}:/src
     environment:
       NODE_ENV: "test"
+      PAYPAL_RETRY_TIMEOUT: 10000
     command: tail -f /dev/null
