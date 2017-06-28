@@ -1,10 +1,11 @@
 const Promise = require('bluebird');
-const MService = require('mservice');
+const MService = require('@microfleet/core');
 const path = require('path');
 const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
 const Mailer = require('ms-mailer-client');
-const routerExtension = require('mservice').routerExtension;
+
+const routerExtension = MService.routerExtension;
 
 // plugins
 const autoSchema = routerExtension('validate/schemaLessAction');
