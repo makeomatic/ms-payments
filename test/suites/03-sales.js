@@ -85,6 +85,7 @@ describe('Sales suite', function SalesSuite() {
         .screenshot('./ss/after-submit.png')
         .wait('#confirmButtonTop')
         .screenshot('./ss/pre-confirm.png')
+        .wait(3000)
         .click('#confirmButtonTop')
         .wait(3000)
         .screenshot('./ss/after-confirm.png')
