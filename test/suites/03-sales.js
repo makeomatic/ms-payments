@@ -56,6 +56,7 @@ describe('Sales suite', function SalesSuite() {
       }
 
       browser
+        .viewport(1024, 1280)
         .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
           _debug('redirect to %s', newUrl);
           parseURL(newUrl);
@@ -112,6 +113,7 @@ describe('Sales suite', function SalesSuite() {
         .then((result) => {
           assert(result.isRejected());
           assert.equal(result.reason().name, 'ValidationError');
+          return null;
         });
     });
 
@@ -122,6 +124,7 @@ describe('Sales suite', function SalesSuite() {
           debug(result);
           assert(result.isFulfilled());
           sale = result.value();
+          return null;
         });
     });
 
@@ -130,6 +133,7 @@ describe('Sales suite', function SalesSuite() {
         .reflect()
         .then((result) => {
           assert(result.isRejected());
+          return null;
         });
     });
 
@@ -142,6 +146,7 @@ describe('Sales suite', function SalesSuite() {
             .then((result) => {
               debug(result);
               assert(result.isFulfilled());
+              return null;
             });
         });
     });
@@ -153,6 +158,7 @@ describe('Sales suite', function SalesSuite() {
           debug(result);
           assert(result.isFulfilled());
           sale = result.value();
+          return null;
         });
     });
 
@@ -171,6 +177,8 @@ describe('Sales suite', function SalesSuite() {
 
               debug(result);
               assert(result.isFulfilled());
+
+              return null;
             });
         });
     });

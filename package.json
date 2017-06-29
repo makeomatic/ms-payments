@@ -6,7 +6,7 @@
     "compile": "babel -d ./lib ./src",
     "pretest": "rimraf ./ss/*; mkdirp ./ss",
     "test": "npm run lint && npm run test:integration",
-    "test:integration": "DEBUG=nightmare* mdep test run --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x1024x24\\\"'",
+    "test:integration": "DEBUG=nightmare* mdep test run --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x1280x24\\\"'",
     "lint": "eslint ./src",
     "start": "node ./bin/mservice.js | ./node_modules/.bin/bunyan -o short",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
