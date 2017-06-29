@@ -4,7 +4,7 @@ services:
   redis:
     hostname: redis
     container_name: redis
-    image: makeomatic/redis-cluster:3.2.8
+    image: makeomatic/redis-cluster:3.2.9
 
   rabbitmq:
     image: makeomatic/rabbitmq:3.6.9
@@ -17,7 +17,7 @@ services:
     links:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:7.9.0
+    image: makeomatic/ms-users:8.1.0-6.9.0
     hostname: ms-users
     container_name: ms-users
     volumes:
@@ -40,5 +40,5 @@ services:
       - ${PWD}:/src
     environment:
       NODE_ENV: "test"
-      PAYPAL_RETRY_TIMEOUT: 10000
+      PAYPAL_RETRY_TIMEOUT: 15000
     command: tail -f /dev/null

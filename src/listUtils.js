@@ -66,7 +66,8 @@ function cleanupCache(_index) {
   // this has possibility of throwing, but not likely to since previous operations
   // would've been rejected already, in a promise this will result in a rejection
   const nodeKeys = redis.slots[slot];
-  const masterNode = nodeKeys.reduce((node, key) => node || redis.connectionPool.nodes.master[key], null);
+  const masters = redis.connectionPool.nodes.master;
+  const masterNode = nodeKeys.reduce((node, key) => node || masters[key], null);
 
   function scan(node, cursor = '0') {
     return node
