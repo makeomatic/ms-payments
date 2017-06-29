@@ -12,4 +12,11 @@ module.exports = {
   hooks: {
     'users:activate': mixPlan,
   },
+  oauth: {
+    providers: {
+      facebook: {
+        password: Array.from({ length: 64 }).join('_'),
+      },
+    },
+  },
 };

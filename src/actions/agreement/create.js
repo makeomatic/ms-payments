@@ -66,63 +66,64 @@ function sendRequest(rawPlanData) {
     },
   };
 
-  return Promise.try(() => {
-    // if we grant a discount - create plan with it now
-    const normalizedTrialCycle = subscription.name === 'year'
-      ? Math.ceil(trialCycle / 12) - 1
-      : trialCycle - 1;
+  return Promise
+    .try(() => {
+      // if we grant a discount - create plan with it now
+      const normalizedTrialCycle = subscription.name === 'year'
+        ? Math.ceil(trialCycle / 12) - 1
+        : trialCycle - 1;
 
-    if (trialDiscount === 0) {
-      return planData.plan.id;
-    }
+      if (trialDiscount === 0) {
+        return planData.plan.id;
+      }
 
-    setupFee.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
+      setupFee.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
 
-    if (normalizedTrialCycle === 0) {
-      return planData.plan.id;
-    }
+      if (normalizedTrialCycle === 0) {
+        return planData.plan.id;
+      }
 
-    // compose trial plan
-    const trialPlan = omit(rawPlanData.plan, blacklistedProps);
-    const paymentDefinitions = trialPlan.payment_definitions;
-    const regularDefinition = paymentDefinitions[0];
-    const trialDefinition = {
-      ...regularDefinition,
-      type: 'TRIAL',
-      cycles: normalizedTrialCycle,
-      amount: { ...setupFee },
-    };
+      // compose trial plan
+      const trialPlan = omit(rawPlanData.plan, blacklistedProps);
+      const paymentDefinitions = trialPlan.payment_definitions;
+      const regularDefinition = paymentDefinitions[0];
+      const trialDefinition = {
+        ...regularDefinition,
+        type: 'TRIAL',
+        cycles: normalizedTrialCycle,
+        amount: { ...setupFee },
+      };
 
-    trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
-    trialPlan.payment_definitions = [trialDefinition, regularDefinition];
+      trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
+      trialPlan.payment_definitions = [trialDefinition, regularDefinition];
 
-    return billingPlanCreate(trialPlan, this.config.paypal)
-      .get('id')
-      .tap(planId => (
-        billingPlanUpdate(planId, [{ op: 'replace', path: '/', value: { state: active } }], this.config.paypal)
-      ))
-      .catch(handleError);
-  })
-  .then((planId) => {
-    planData.plan.id = planId;
-    debug('init plan %j', planData);
+      return billingPlanCreate(trialPlan, this.config.paypal)
+        .get('id')
+        .tap(planId => (
+          billingPlanUpdate(planId, [{ op: 'replace', path: '/', value: { state: active } }], this.config.paypal)
+        ))
+        .catch(handleError);
+    })
+    .then((planId) => {
+      planData.plan.id = planId;
+      debug('init plan %j', planData);
 
-    return billingAgreementCreate(planData, this.config.paypal)
-      .catch(handleError)
-      .then((newAgreement) => {
-        const approval = find(newAgreement.links, { rel: 'approval_url' });
-        if (approval === null) {
-          throw new Errors.NotSupportedError('Unexpected PayPal response!');
-        }
+      return billingAgreementCreate(planData, this.config.paypal)
+        .catch(handleError)
+        .then((newAgreement) => {
+          const approval = find(newAgreement.links, { rel: 'approval_url' });
+          if (approval === null) {
+            throw new Errors.NotSupportedError('Unexpected PayPal response!');
+          }
 
-        const token = url.parse(approval.href, true).query.token;
-        return {
-          token,
-          url: approval.href,
-          agreement: newAgreement,
-        };
-      });
-  });
+          const token = url.parse(approval.href, true).query.token;
+          return {
+            token,
+            url: approval.href,
+            agreement: newAgreement,
+          };
+        });
+    });
 }
 
 /**

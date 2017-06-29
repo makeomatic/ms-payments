@@ -13,7 +13,7 @@ const {
   TRANSACTION_TYPE_3D,
   TRANSACTIONS_INDEX,
   TRANSACTIONS_COMMON_DATA,
-  } = require('../constants.js');
+} = require('../constants.js');
 
 function getTransactionType(type) {
   switch (type) {
