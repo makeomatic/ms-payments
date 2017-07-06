@@ -5,6 +5,12 @@ services:
     hostname: redis
     container_name: redis
     image: makeomatic/redis-cluster:3.2.9
+    # @TODO remove
+    volumes:
+      - ./backup/7000/dump.rdb:/redis-data/7010/dump.rdb
+      - ./backup/7000/redis.conf:/redis-data/7010/redis.conf
+      - ./backup/7002/dump.rdb:/redis-data/7012/dump.rdb
+      - ./backup/7002/redis.conf:/redis-data/7012/redis.conf
 
   rabbitmq:
     image: makeomatic/rabbitmq:3.6.9
@@ -17,7 +23,8 @@ services:
     links:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:8.1.0-6.9.0
+    # @TODO wrong version
+    image: makeomatic/ms-users:8.1.0-7.0.0-rc.1
     hostname: ms-users
     container_name: ms-users
     volumes:
@@ -26,6 +33,8 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
+      # @TODO remove
+      MS_USERS__LOGGER__DEFAULT_LOGGER: 'true'
 
   tester:
     image: makeomatic/nightmare

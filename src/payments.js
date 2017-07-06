@@ -78,9 +78,10 @@ class Payments extends MService {
       audience: '*.localhost',
       prefix: 'users',
       postfix: {
-        updateMetadata: 'updateMetadata',
+        getInternalData: 'getInternalData',
         getMetadata: 'getMetadata',
         list: 'list',
+        updateMetadata: 'updateMetadata',
       },
     },
     defaultPlans: [{
@@ -125,6 +126,9 @@ class Payments extends MService {
       to: '',
       subject: '',
     },
+    migrations: {
+      enabled: false,
+    },
   };
 
   /**
@@ -142,6 +146,13 @@ class Payments extends MService {
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
     });
+
+    // add migration connector
+    if (this.config.migrations.enabled === true) {
+      this.addConnector(MService.ConnectorsTypes.migration, () => (
+        this.migrate('redis', `${__dirname}/migrations`)
+      ));
+    }
   }
 
   /**
