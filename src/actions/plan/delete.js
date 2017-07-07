@@ -5,16 +5,16 @@ const { HttpStatusError } = require('bluebird');
 const setState = require('./state');
 
 // helpers
-const key = require('../../redisKey.js');
-const { cleanupCache } = require('../../listUtils.js');
-const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
+const key = require('../../redisKey');
+const { cleanupCache } = require('../../listUtils');
+const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID, PLAN_ALIAS_FIELD } = require('../../constants');
 
 function deleteFromRedis(id, redis) {
   // and delete plan from redis
   const planKey = key(PLANS_DATA, id);
   const pipeline = redis.pipeline();
 
-  return redis.hget(planKey, 'alias').then((alias) => {
+  return redis.hget(planKey, PLAN_ALIAS_FIELD).then((alias) => {
     const aliasedId = alias && alias.length > 0 ? JSON.parse(alias) : id;
 
     pipeline.del(planKey);

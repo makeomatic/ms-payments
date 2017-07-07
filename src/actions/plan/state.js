@@ -6,7 +6,7 @@ const compact = require('lodash/compact');
 
 // helpers
 const key = require('../../redisKey');
-const { PLANS_DATA } = require('../../constants');
+const { PLANS_DATA, PLAN_ALIAS_FIELD } = require('../../constants');
 const { serialize } = require('../../utils/redis');
 const { plan: { update } } = require('../../utils/paypal');
 
@@ -17,7 +17,7 @@ function planState({ params: message }) {
 
   function getPlan() {
     return redis
-      .hget(key(PLANS_DATA, id), 'alias')
+      .hget(key(PLANS_DATA, id), PLAN_ALIAS_FIELD)
       .then(alias => alias && alias.length > 0 && JSON.parse(alias));
   }
 
