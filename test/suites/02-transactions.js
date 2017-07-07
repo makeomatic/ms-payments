@@ -25,6 +25,7 @@ describe('Transactions suite', function TransactionsSuite() {
   let agreement;
   let planId;
   let dispatch;
+  let userId;
 
   function approve(saleUrl) {
     const browser = new Nightmare({
@@ -109,10 +110,18 @@ describe('Transactions suite', function TransactionsSuite() {
     });
   });
 
+  before('get user id', () => {
+    const { config } = payments;
+    const route = `${config.users.prefix}.${config.users.postfix.getInternalData}`;
+
+    return dispatch(route, { username: 'test@test.ru', fields: ['id'] })
+      .then(({ id }) => (userId = id));
+  });
+
   before('createAgreement', () => {
     const data = {
       agreement: testAgreementData,
-      owner: 'test@test.ru',
+      owner: userId,
     };
 
     return dispatch(createAgreement, data)
@@ -140,7 +149,7 @@ describe('Transactions suite', function TransactionsSuite() {
   ));
 
   before('getAgreement', () => (
-    dispatch(getAgreement, { user: 'test@test.ru' })
+    dispatch(getAgreement, { user: userId })
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
@@ -181,7 +190,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
     it('Should list common transactions', () => (
       dispatch(listCommonTransactions, {
-        owner: 'test@test.ru',
+        owner: userId,
         filter: {
           status: 'Completed',
         },
@@ -192,7 +201,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
     it('should return aggregate list of transactions', () => (
       dispatch(transactionsAggregate, {
-        owners: ['test@test.ru'],
+        owners: [userId],
         filter: {
           status: 'Completed',
         },
