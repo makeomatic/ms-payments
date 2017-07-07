@@ -17,4 +17,7 @@ module.exports = {
   PLANS_DATA: 'plans-data',
   PLANS_INDEX: 'plans-index',
   FREE_PLAN_ID: 'free',
+
+  // field constant
+  PLAN_ALIAS_FIELD: 'alias',
 };

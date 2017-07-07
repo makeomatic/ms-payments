@@ -1,5 +1,21 @@
 {
-    "$id": "plan.get",
+  "$id": "plan.get",
+  "anyOf": [{
     "type": "string",
-    "minLength": 1
+    "minLength": 1,
+    "maxLength": 100
+  }, {
+    "type": "object",
+    "required": ["id"],
+    "properties": {
+      "id": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      },
+      "fetchParent": {
+        "type": "boolean"
+      }
+    }
+  }]
 }

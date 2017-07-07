@@ -1,7 +1,8 @@
 const TEST_CONFIG = require('../config');
 const assert = require('assert');
 const Promise = require('bluebird');
-const { debug, duration, simpleDispatcher } = require('../utils');
+const { duration, simpleDispatcher } = require('../utils');
+const { inspectPromise } = require('@makeomatic/deploy');
 
 describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
@@ -20,6 +21,7 @@ describe('Plans suite', function PlansSuite() {
     let payments;
     let billingPlan;
     let dispatch;
+    let monthlyPlanId;
 
     before('delay for ms-users', () => Promise.delay(2000));
 
@@ -35,10 +37,9 @@ describe('Plans suite', function PlansSuite() {
     it('Should create free plan', () => {
       return dispatch(createPlan, freePlanData)
         .reflect()
+        .then(inspectPromise())
         .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-          assert(result.value().plan.id);
+          assert(result.plan.id);
           return null;
         });
     });
@@ -46,10 +47,9 @@ describe('Plans suite', function PlansSuite() {
     it('Should get free plan', () => {
       return dispatch(getPlan, 'free')
         .reflect()
+        .then(inspectPromise())
         .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-          assert(result.value().alias);
+          assert(result.alias);
           return null;
         });
     });
@@ -61,9 +61,9 @@ describe('Plans suite', function PlansSuite() {
 
       return dispatch(createPlan, data)
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.name, 'ValidationError');
           return null;
         });
     });
@@ -76,27 +76,24 @@ describe('Plans suite', function PlansSuite() {
           state: 'CREATED',
         },
       })
-      .reflect()
-      .then((result) => {
-        debug(result);
-        assert(result.isFulfilled());
+        .reflect()
+        .then(inspectPromise())
+        .then((response) => {
+          billingPlan = response;
 
-        billingPlan = result.value();
+          assert(billingPlan.plan.id);
+          assert.equal(billingPlan.state.toLowerCase(), 'created');
 
-        assert(billingPlan.plan.id);
-        assert.equal(billingPlan.state.toLowerCase(), 'created');
-
-        return null;
-      });
+          return null;
+        });
     });
 
     it('Should fail to update on an unknown plan id', () => {
       return dispatch(updatePlan, { id: 'P-veryrandomid', hidden: true })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().statusCode, 400);
-
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.statusCode, 400);
           return null;
         });
     });
@@ -104,10 +101,9 @@ describe('Plans suite', function PlansSuite() {
     it('Should fail to update on invalid plan schema', () => {
       return dispatch(updatePlan, { id: billingPlan.plan.id, plan: { invalid: true } })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
-
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.name, 'ValidationError');
           return null;
         });
     });
@@ -136,12 +132,7 @@ describe('Plans suite', function PlansSuite() {
 
       return dispatch(updatePlan, updateData)
         .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('get plan must return updated info', () => {
@@ -154,8 +145,24 @@ describe('Plans suite', function PlansSuite() {
               value: 0.5,
             },
           });
+
           assert.equal(result.level, 10);
 
+          // capture monthly id
+          monthlyPlanId = result.month;
+
+          return null;
+        });
+    });
+
+    it('must return parent plan for a monthly plan', () => {
+      return dispatch(getPlan, { id: monthlyPlanId, fetchParent: true })
+        .then((result) => {
+          assert.equal(billingPlan.plan.id, result.plan.id);
+          assert.equal(billingPlan.month, result.month);
+
+          // ensure we don't return the same plan
+          assert.notEqual(monthlyPlanId, billingPlan.plan.id);
           return null;
         });
     });
@@ -163,10 +170,9 @@ describe('Plans suite', function PlansSuite() {
     it('Should fail to activate on an invalid state', () => {
       return dispatch(statePlan, { id: 'P-random', state: 'invalid' })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
-
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.name, 'ValidationError');
           return null;
         });
     });
@@ -174,10 +180,9 @@ describe('Plans suite', function PlansSuite() {
     it('Should fail to activate on an unknown plan id', () => {
       return dispatch(statePlan, { id: 'P-random', state: 'active' })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().inner_error.httpStatusCode, 500);
-
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.inner_error.httpStatusCode, 500);
           return null;
         });
     });
@@ -185,21 +190,15 @@ describe('Plans suite', function PlansSuite() {
     it('Should activate the plan', () => {
       return dispatch(statePlan, { id: billingPlan.plan.id, state: 'active' })
         .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('Should fail to list on invalid query schema', () => {
       return dispatch(listPlan, { status: 'invalid' })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
-
+        .then(inspectPromise(false))
+        .then((error) => {
+          assert.equal(error.name, 'ValidationError');
           return null;
         });
     });
@@ -207,40 +206,25 @@ describe('Plans suite', function PlansSuite() {
     it('Should list all plans', () => {
       return dispatch(listPlan, {})
         .reflect()
-        .then((result) => {
-          return result.isFulfilled() ? result.value() : Promise.reject(result.reason());
-        });
+        .then(inspectPromise());
     });
 
     it('Should fail to delete on an unknown plan id', () => {
       return dispatch(deletePlan, 'P-random')
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-
-          return null;
-        });
+        .then(inspectPromise(false));
     });
 
     it('Should delete plan', () => {
       return dispatch(deletePlan, billingPlan.plan.id)
         .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('Should delete free plan', () => {
       return dispatch(deletePlan, 'free')
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-
-          return null;
-        });
+        .then(inspectPromise(false));
     });
   });
 });

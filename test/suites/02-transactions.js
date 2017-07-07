@@ -3,7 +3,8 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const url = require('url');
 const Nightmare = require('nightmare');
-const { debug, duration, simpleDispatcher, inspectPromise } = require('../utils');
+const { inspectPromise } = require('@makeomatic/deploy');
+const { debug, duration, simpleDispatcher } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
