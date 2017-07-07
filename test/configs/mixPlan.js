@@ -3,7 +3,7 @@ const moment = require('/src/node_modules/moment');
 const setMetadata = require('/src/lib/utils/updateMetadata.js');
 const FREE_PLAN_ID = 'free';
 
-module.exports = exports = function mixPlan(username, params) {
+module.exports = exports = function mixPlan(userId, params) {
   const id = FREE_PLAN_ID;
   const plan = {
     plan: {
@@ -42,7 +42,7 @@ module.exports = exports = function mixPlan(username, params) {
   const subscription = ld.find(plan.subs, { name: 'month' });
   const nextCycle = moment().add(1, 'month').format();
   const update = {
-    username,
+    userId,
     audience: params.audience,
     metadata: {
       $set: {

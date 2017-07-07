@@ -129,6 +129,8 @@ describe('Agreements suite', function AgreementSuite() {
       return dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
         .then((result) => {
+          console.log(result.value())
+
           debug(result);
           assert(result.isFulfilled());
           assert.equal(result.value().id, 'free');

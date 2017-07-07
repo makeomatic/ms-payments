@@ -33,8 +33,7 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
-      # @TODO remove
-      MS_USERS__LOGGER__DEFAULT_LOGGER: 'true'
+    command: node ./bin/mservice.js
 
   tester:
     image: makeomatic/nightmare
