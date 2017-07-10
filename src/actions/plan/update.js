@@ -8,11 +8,11 @@ const get = require('lodash/get');
 const each = require('lodash/each');
 
 // helpers
-const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants.js');
-const { serialize, deserialize } = require('../../utils/redis.js');
-const { merger } = require('../../utils/plans.js');
-const { cleanupCache } = require('../../listUtils.js');
-const key = require('../../redisKey.js');
+const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID, PLAN_ALIAS_FIELD } = require('../../constants');
+const { serialize, deserialize } = require('../../utils/redis');
+const { merger } = require('../../utils/plans');
+const { cleanupCache } = require('../../listUtils');
+const key = require('../../redisKey');
 
 // constants
 const DATA_HOLDERS = {
@@ -20,7 +20,7 @@ const DATA_HOLDERS = {
   yearly: 'year',
 };
 
-const FIELDS_TO_UPDATE = ['alias', 'hidden', 'meta', 'level'];
+const FIELDS_TO_UPDATE = [PLAN_ALIAS_FIELD, 'hidden', 'meta', 'level'];
 
 function joinPlans(plans) {
   const plan = mergeWith({}, ...plans, merger);

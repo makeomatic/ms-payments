@@ -16,8 +16,6 @@ services:
     image: makeomatic/rabbitmq:3.6.9
     container_name: rabbitmq
     hostname: rabbitmq
-    volumes:
-      - ./docker-configs/rabbitmq.config:/usr/lib/rabbitmq/etc/rabbitmq/rabbitmq.config
 
   ms-users:
     links:
@@ -36,7 +34,7 @@ services:
     command: node ./bin/mservice.js
 
   tester:
-    image: makeomatic/nightmare
+    image: makeomatic/nightmare:8.1.3
     links:
       - redis
       - rabbitmq

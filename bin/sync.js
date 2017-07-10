@@ -15,7 +15,7 @@ const argv = require('yargs')
 // Deps
 const Promise = require('bluebird');
 const Payments = require('../lib/index');
-const AMQPTransport = require('ms-amqp-transport');
+const AMQPTransport = require('@microfleet/transport-amqp');
 const omit = require('lodash/omit');
 const merge = require('lodash/merge');
 const configOverride = require('ms-conf').get('/');
