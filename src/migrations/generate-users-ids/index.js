@@ -204,6 +204,11 @@ function processKeys(amqp) {
 
       const parts = getKeyParts(key);
 
+      // temp keys
+      if (parts[1] === '' && parts[2] === 'fsort_temp_keys') {
+        return Promise.resolve();
+      }
+
       switch (parts[0]) {
         // "{ms-payments}plans-data:abcd"
         case 'plans-data':
