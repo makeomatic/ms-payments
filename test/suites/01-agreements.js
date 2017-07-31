@@ -30,6 +30,7 @@ describe('Agreements suite', function AgreementSuite() {
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 15000,
+      electronPath: require('electron'),
       webPreferences: {
         preload: '/src/test/data/preload.js',
       },
