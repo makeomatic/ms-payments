@@ -50,6 +50,7 @@ function sendRequest(rawPlanData) {
     agreement,
     trialDiscount,
     trialCycle,
+    log,
   } = this;
 
   const [subscription] = rawPlanData.subs;
@@ -96,6 +97,8 @@ function sendRequest(rawPlanData) {
 
       trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
       trialPlan.payment_definitions = [trialDefinition, regularDefinition];
+
+      log.info('init discounted plan', trialPlan);
 
       return billingPlanCreate(trialPlan, this.config.paypal)
         .get('id')
@@ -158,7 +161,7 @@ function setToken(response) {
  * @apiParam (Payload) {Number{0..100}=0} [trialDiscount] defines discount for a trial period
  * @apiParam (Payload) {Number{0..}=12} [trialCycle] cycle for trial payments
  */
-module.exports = function agreementCreate({ params }) {
+module.exports = function agreementCreate({ log, params }) {
   const { config, redis } = this;
   const { owner, agreement, trialDiscount, trialCycle } = params;
   const { plan: { id: planId } } = agreement;
@@ -167,6 +170,7 @@ module.exports = function agreementCreate({ params }) {
     // basic data
     config,
     redis,
+    log: log.child({ owner }),
 
     // input params
     planId,

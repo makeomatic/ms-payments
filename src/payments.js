@@ -13,11 +13,11 @@ const auditLog = routerExtension('audit/log');
 
 // internal actions
 const createPlan = require('./actions/plan/create');
-const syncSaleTransactions = require('./actions/sale/sync.js');
-const syncAgreements = require('./actions/agreement/sync.js');
+const syncSaleTransactions = require('./actions/sale/sync');
+const syncAgreements = require('./actions/agreement/sync');
 
 // constants
-const { FREE_PLAN_ID } = require('./constants.js');
+const { FREE_PLAN_ID } = require('./constants');
 
 /**
  * Class representing payments handling
@@ -142,6 +142,17 @@ class Payments extends MService {
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
     });
+
+    // init plans and sync transactions during startup of production
+    // service
+    if (process.env.NODE_ENV === 'production') {
+      this.addConnector(MService.ConnectorsTypes.application, () => (
+        Promise
+          .bind(this)
+          .then(this.initPlans)
+          .then(this.syncTransactions)
+      ));
+    }
   }
 
   /**
