@@ -10,6 +10,7 @@
     "test:integration": "DEBUG=nightmare* mdep test run --custom_run 'xvfb-run --server-args=\\\"-screen 0 1024x1280x24\\\"'",
     "lint": "eslint ./src",
     "start": "mfleet",
+    "prepublishOnly": "npm run compile",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post",
     "docker-release": "mdep docker release",
     "release": "yarn && npm run semantic-release && npm run docker-release",
