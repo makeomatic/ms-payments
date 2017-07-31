@@ -70,7 +70,7 @@
     "json": "^9.0.4",
     "latest-version-cli": "^1.0.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.3.0",
+    "mocha": "^3.5.0",
     "nightmare": "AVVS/nightmare",
     "nyc": "^11.1.0",
     "rimraf": "^2.6.1",

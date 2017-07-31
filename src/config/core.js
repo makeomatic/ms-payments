@@ -44,7 +44,7 @@ exports.plugins = [
  */
 exports.router = {
   routes: {
-    directory: path.join(__dirname, 'actions'),
+    directory: path.resolve(__dirname, '..', 'actions'),
     prefix: 'payments',
     setTransportsAsDefault: true,
     transports: ['amqp'],
