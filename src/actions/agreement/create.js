@@ -87,7 +87,12 @@ function sendRequest(rawPlanData) {
       // compose trial plan
       const trialPlan = omit(rawPlanData.plan, blacklistedProps);
       const paymentDefinitions = trialPlan.payment_definitions;
-      const regularDefinition = paymentDefinitions[0];
+
+      // copy basic payment definition
+      const regularDefinition = omit(paymentDefinitions[0], ['id', 'charge_models']);
+      // set to uppercase as paypal requests
+      regularDefinition.frequency = regularDefinition.frequency.toUpperCase();
+
       const trialDefinition = {
         ...regularDefinition,
         type: 'TRIAL',
@@ -98,7 +103,7 @@ function sendRequest(rawPlanData) {
       trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
       trialPlan.payment_definitions = [trialDefinition, regularDefinition];
 
-      log.info('init discounted plan', trialPlan);
+      log.info({ trialPlan }, 'init discounted plan');
 
       return billingPlanCreate(trialPlan, this.config.paypal)
         .get('id')
