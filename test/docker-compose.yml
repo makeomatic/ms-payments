@@ -22,7 +22,7 @@ services:
       - redis
       - rabbitmq
     # @TODO wrong version
-    image: makeomatic/ms-users:8.1.0-7.0.0-rc.1
+    image: makeomatic/ms-users:8.1.0-7.0.0-rc.6
     hostname: ms-users
     container_name: ms-users
     volumes:
