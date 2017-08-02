@@ -50,6 +50,7 @@ function sendRequest(rawPlanData) {
     agreement,
     trialDiscount,
     trialCycle,
+    log,
   } = this;
 
   const [subscription] = rawPlanData.subs;
@@ -86,7 +87,12 @@ function sendRequest(rawPlanData) {
       // compose trial plan
       const trialPlan = omit(rawPlanData.plan, blacklistedProps);
       const paymentDefinitions = trialPlan.payment_definitions;
-      const regularDefinition = paymentDefinitions[0];
+
+      // copy basic payment definition
+      const regularDefinition = omit(paymentDefinitions[0], ['id', 'charge_models']);
+      // set to uppercase as paypal requests
+      regularDefinition.frequency = regularDefinition.frequency.toUpperCase();
+
       const trialDefinition = {
         ...regularDefinition,
         type: 'TRIAL',
@@ -96,6 +102,8 @@ function sendRequest(rawPlanData) {
 
       trialPlan.name = `${trialPlan.name}-${trialDiscount}`;
       trialPlan.payment_definitions = [trialDefinition, regularDefinition];
+
+      log.info({ trialPlan }, 'init discounted plan');
 
       return billingPlanCreate(trialPlan, this.config.paypal)
         .get('id')
@@ -158,7 +166,7 @@ function setToken(response) {
  * @apiParam (Payload) {Number{0..100}=0} [trialDiscount] defines discount for a trial period
  * @apiParam (Payload) {Number{0..}=12} [trialCycle] cycle for trial payments
  */
-module.exports = function agreementCreate({ params }) {
+module.exports = function agreementCreate({ log, params }) {
   const { config, redis } = this;
   const { owner, agreement, trialDiscount, trialCycle } = params;
   const { plan: { id: planId } } = agreement;
@@ -167,6 +175,7 @@ module.exports = function agreementCreate({ params }) {
     // basic data
     config,
     redis,
+    log: log.child({ owner }),
 
     // input params
     planId,

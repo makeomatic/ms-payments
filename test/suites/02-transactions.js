@@ -31,6 +31,7 @@ describe('Transactions suite', function TransactionsSuite() {
   function approve(saleUrl) {
     const browser = new Nightmare({
       waitTimeout: 15000,
+      electronPath: require('electron'),
       webPreferences: {
         preload: '/src/test/data/preload.js',
       },
@@ -139,13 +140,13 @@ describe('Transactions suite', function TransactionsSuite() {
     approve(agreement.url)
       .then(parsed => (
         dispatch(executeAgreement, { token: parsed.token })
-        .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-          agreement = result.value();
-          return null;
-        })
+          .reflect()
+          .then((result) => {
+            debug(result);
+            assert(result.isFulfilled());
+            agreement = result.value();
+            return null;
+          })
       ))
   ));
 
@@ -196,8 +197,8 @@ describe('Transactions suite', function TransactionsSuite() {
           status: 'Completed',
         },
       })
-      .reflect()
-      .then(inspectPromise())
+        .reflect()
+        .then(inspectPromise())
     ));
 
     it('should return aggregate list of transactions', () => (
@@ -210,12 +211,12 @@ describe('Transactions suite', function TransactionsSuite() {
           amount: 'sum',
         },
       })
-      .reflect()
-      .then(inspectPromise())
-      .then((response) => {
-        assert.ok(response[0].amount);
-        return null;
-      })
+        .reflect()
+        .then(inspectPromise())
+        .then((response) => {
+          assert.ok(response[0].amount);
+          return null;
+        })
     ));
   });
 });
