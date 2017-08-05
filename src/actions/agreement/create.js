@@ -4,7 +4,7 @@ const moment = require('moment');
 const url = require('url');
 const find = require('lodash/find');
 const omit = require('lodash/omit');
-const debug = require('debug')('nightmare:paypal-plan');
+const debug = require('debug')('ms-payments:paypal-plan');
 
 // helpers
 const key = require('../../redisKey');
