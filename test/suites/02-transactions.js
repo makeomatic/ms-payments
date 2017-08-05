@@ -100,8 +100,8 @@ describe('Transactions suite', function TransactionsSuite() {
       });
   });
 
-  it('executeAgreement', () => (
-    approve(agreement.url).then(parsed => (
+  it('executeAgreement', function test() {
+    return approve.call(this, agreement.url).then(parsed => (
       dispatch(executeAgreement, { token: parsed.token })
         .reflect()
         .then(inspectPromise())
@@ -109,8 +109,8 @@ describe('Transactions suite', function TransactionsSuite() {
           agreement = result;
           return null;
         })
-    ))
-  ));
+    ));
+  });
 
   it('getAgreement', () => (
     dispatch(getAgreement, { user: 'test@test.ru' })
