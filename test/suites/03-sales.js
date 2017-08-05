@@ -100,8 +100,8 @@ describe('Sales suite', function SalesSuite() {
         .then(inspectPromise(false));
     });
 
-    it('Should execute approved sale', () => {
-      return approve(sale.url).then(query => (
+    it('Should execute approved sale', function test() {
+      return approve.call(this, sale.url).then(query => (
         dispatch(executeSale, query)
           .reflect()
           .then(inspectPromise())
@@ -118,8 +118,8 @@ describe('Sales suite', function SalesSuite() {
         });
     });
 
-    it('Should approve & execute 3d printing sale', () => {
-      return approve(sale.url).then((query) => {
+    it('Should approve & execute 3d printing sale', function test() {
+      return approve.call(this, sale.url).then((query) => {
         sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
 
         return dispatch(executeSale, query)
