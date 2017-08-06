@@ -221,7 +221,7 @@ describe('Plans suite', function PlansSuite() {
         .then(inspectPromise());
     });
 
-    it('Should delete free plan', () => {
+    it('Should fail to delete free plan', () => {
       return dispatch(deletePlan, 'free')
         .reflect()
         .then(inspectPromise(false));

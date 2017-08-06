@@ -1,7 +1,4 @@
 {
   "node": "8.2.1",
-  "fail": "docker logs ms-users && docker logs redis",
-  "pre": [
-    "docker exec tester npm rebuild electron"
-  ]
+  "fail": "docker logs ms-users && docker logs redis"
 }

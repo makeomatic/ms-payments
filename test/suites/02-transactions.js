@@ -2,9 +2,9 @@ const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
 const url = require('url');
-const Nightmare = require('nightmare');
+const { init, clean, captureScreenshot, type, submit, wait, captureRedirect, scrollTo } = require('@makeomatic/deploy/bin/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
-const { debug, duration, simpleDispatcher } = require('../utils');
+const { duration, simpleDispatcher } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
@@ -28,73 +28,47 @@ describe('Transactions suite', function TransactionsSuite() {
   let dispatch;
   let userId;
 
+  // headless testing
+  before('launch chrome', init);
+  after('clean chrome', clean);
+
   function approve(saleUrl) {
-    const browser = new Nightmare({
-      waitTimeout: 15000,
-      electronPath: require('electron'),
-      webPreferences: {
-        preload: '/src/test/data/preload.js',
-      },
-    });
+    const { Page } = this.protocol;
 
-    return new Promise((resolve, reject) => {
-      const _debug = require('debug')('nightmare');
+    Page.navigate({ url: saleUrl });
 
-      function parseURL(newUrl) {
-        if (newUrl.indexOf('cappasity') >= 0) {
-          const parsed = url.parse(newUrl, true);
-          const data = {
-            payer_id: parsed.query.PayerID,
-            payment_id: parsed.query.paymentId,
-            token: parsed.query.token,
+    return Page.loadEventFired().then(() => (
+      // sometimes input is flaky, how do we determine that everything has loaded?
+      Promise
+        .bind(this, '#loadLogin, #login_email')
+        .tap(wait)
+        .return([0, 0])
+        .spread(scrollTo)
+        .return('#loadLogin, #login_email')
+        .then(submit)
+        .return(['#login_email', 'test@cappasity.com'])
+        .spread(type)
+        .return(['#login_password', '12345678'])
+        .spread(type)
+        .return('#submitLogin')
+        .then(submit)
+        .return('#continue')
+        .then(wait)
+        .return('#continue')
+        .then(submit)
+        .return(/paypal-subscription-return\?/)
+        .then(captureRedirect)
+        .catch(captureScreenshot)
+        .then((response) => {
+          // actual test verification goes on here
+          const data = url.parse(response, true).query;
+          return {
+            payer_id: data.PayerID,
+            payment_id: data.paymentId,
+            token: data.token,
           };
-
-          _debug('resolved data', data);
-          resolve(data);
-        }
-      }
-
-      browser
-        .on('did-get-redirect-request', (events, oldUrl, newUrl) => {
-          _debug('redirect to %s', newUrl);
-          parseURL(newUrl);
         })
-        .on('did-get-response-details', (event, status, newUrl) => {
-          _debug('response from %s', newUrl);
-          parseURL(newUrl);
-        })
-        .on('will-navigate', (event, newUrl) => {
-          _debug('navigate to %s', newUrl);
-          parseURL(newUrl);
-        })
-        .goto(saleUrl)
-        .screenshot('./ss/pre-email.png')
-        .wait('#loadLogin, #login_email')
-        .click('#loadLogin, #login_email')
-        .wait('#login_email')
-        .type('#login_email', false)
-        .wait(3000)
-        .type('#login_email', 'test@cappasity.com')
-        .type('#login_password', '12345678')
-        .wait(3000)
-        .screenshot('./ss/after-email.png')
-        .click('#submitLogin')
-        .screenshot('./ss/right-after-submit.png')
-        .wait(3000)
-        .screenshot('./ss/after-submit.png')
-        .wait('#continue')
-        .screenshot('./ss/pre-confirm.png')
-        .click('#continue')
-        .screenshot('./ss/right-after-confirm.png')
-        .wait(3000)
-        .screenshot('./ss/after-confirm.png')
-        .end()
-        .then(() => _debug('finished running'))
-        .catch((err) => {
-          _debug('failed with error', err);
-          reject(err);
-        });
-    });
+    ));
   }
 
   before(() => {
@@ -117,7 +91,10 @@ describe('Transactions suite', function TransactionsSuite() {
     const route = `${config.users.prefix}.${config.users.postfix.getInternalData}`;
 
     return dispatch(route, { username: 'test@test.ru', fields: ['id'] })
-      .then(({ id }) => (userId = id));
+      .then(({ id }) => {
+        userId = id;
+        return null;
+      });
   });
 
   before('createAgreement', () => {
@@ -128,27 +105,24 @@ describe('Transactions suite', function TransactionsSuite() {
 
     return dispatch(createAgreement, data)
       .reflect()
+      .then(inspectPromise())
       .then((result) => {
-        debug(result);
-        assert(result.isFulfilled());
-        agreement = result.value();
+        agreement = result;
         return null;
       });
   });
 
-  before('executeAgreement', () => (
-    approve(agreement.url)
-      .then(parsed => (
-        dispatch(executeAgreement, { token: parsed.token })
-          .reflect()
-          .then((result) => {
-            debug(result);
-            assert(result.isFulfilled());
-            agreement = result.value();
-            return null;
-          })
-      ))
-  ));
+  it('executeAgreement', function test() {
+    return approve.call(this, agreement.url).then(parsed => (
+      dispatch(executeAgreement, { token: parsed.token })
+        .reflect()
+        .then(inspectPromise())
+        .then((result) => {
+          agreement = result;
+          return null;
+        })
+    ));
+  });
 
   before('getAgreement', () => (
     dispatch(getAgreement, { user: userId })
@@ -177,11 +151,7 @@ describe('Transactions suite', function TransactionsSuite() {
       const end = '2016-12-31';
       return dispatch(syncTransaction, { id: agreement.id, start, end })
         .reflect()
-        .then((result) => {
-          debug(result);
-          assert(result.isFulfilled());
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('Should list all transactions', () => (
