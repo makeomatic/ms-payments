@@ -112,7 +112,7 @@ describe('Transactions suite', function TransactionsSuite() {
       });
   });
 
-  it('executeAgreement', function test() {
+  before('executeAgreement', function test() {
     return approve.call(this, agreement.url).then(parsed => (
       dispatch(executeAgreement, { token: parsed.token })
         .reflect()
@@ -135,7 +135,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
   after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
-  describe('unit tests', () => {
+  describe('transactions tests', () => {
     it('Should not sync transaction on invalid data', () => (
       dispatch(syncTransaction, { wrong: 'data' })
         .reflect()
