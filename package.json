@@ -32,7 +32,7 @@
     "bluebird": "^3.4.6",
     "bunyan": "^1.8.12",
     "bunyan-sentry-stream": "^1.1.0",
-    "bytes": "^2.4.0",
+    "bytes": "^3.0.0",
     "cluster-key-slot": "^1.0.8",
     "common-errors": "^1.0.4",
     "debug": "^2.6.8",
