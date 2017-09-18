@@ -50,7 +50,7 @@
     "request-promise": "^4.2.1",
     "stdout-stream": "^1.4.0",
     "urlsafe-base64": "^1.0.0",
-    "yargs": "^8.0.2"
+    "yargs": "^9.0.1"
   },
   "devDependencies": {
     "@makeomatic/deploy": "^4.1.3",
