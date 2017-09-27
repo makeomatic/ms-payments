@@ -51,8 +51,8 @@
     lodash "^4.17.4"
 
 "@microfleet/core@^9.7.2":
-  version "9.7.2"
-  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-9.7.2.tgz#0a78aeffb91e7ac5efd7cbc7ce6d5d2865d4fd60"
+  version "9.7.3"
+  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-9.7.3.tgz#d6ca9ac67d2e2edd860743d18db2ecc21c2203b0"
   dependencies:
     bluebird "^3.5.0"
     callsite "^1.0.0"

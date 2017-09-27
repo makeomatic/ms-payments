@@ -44,6 +44,8 @@ function fetchUpdatedAgreement(id, attempt = 0) {
         .spread(fetchUpdatedAgreement);
     }
 
+    this.log.error('Client tried to execute failed agreement: %j', agreement);
+
     throw new HttpStatusError(412, `paypal agreement in state: ${state}, not "active"`);
   });
 }
