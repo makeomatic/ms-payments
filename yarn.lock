@@ -51,8 +51,8 @@
     lodash "^4.17.4"
 
 "@microfleet/core@^9.7.2":
-  version "9.7.3"
-  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-9.7.3.tgz#d6ca9ac67d2e2edd860743d18db2ecc21c2203b0"
+  version "9.7.4"
+  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-9.7.4.tgz#03e094bbc550ee55ad32fd0ef0cb8d2ebfed577e"
   dependencies:
     bluebird "^3.5.0"
     callsite "^1.0.0"
@@ -68,8 +68,8 @@
     stdout-stream "^1.4.0"
 
 "@microfleet/transport-amqp@^12.2.1":
-  version "12.3.0"
-  resolved "https://registry.yarnpkg.com/@microfleet/transport-amqp/-/transport-amqp-12.3.0.tgz#49670bc6b419943fd5df2f88f52b952b6d6ca84a"
+  version "12.3.1"
+  resolved "https://registry.yarnpkg.com/@microfleet/transport-amqp/-/transport-amqp-12.3.1.tgz#7e2b90243831f155bcebb96171b7eda0ae7c6d9b"
   dependencies:
     "@microfleet/amqp-coffee" "^1.1.0"
     bluebird "^3.5.0"
@@ -1505,8 +1505,8 @@ eslint-scope@^3.7.1:
     estraverse "^4.1.1"
 
 eslint@^4.5.0:
-  version "4.7.2"
-  resolved "https://registry.yarnpkg.com/eslint/-/eslint-4.7.2.tgz#ff6f5f5193848a27ee9b627be3e73fb9cb5e662e"
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/eslint/-/eslint-4.8.0.tgz#229ef0e354e0e61d837c7a80fdfba825e199815e"
   dependencies:
     ajv "^5.2.0"
     babel-code-frame "^6.22.0"
@@ -4129,8 +4129,8 @@ request@2.81.0, request@^2.74.0, request@^2.78.0:
     uuid "^3.0.0"
 
 request@^2.81.0:
-  version "2.82.0"
-  resolved "https://registry.yarnpkg.com/request/-/request-2.82.0.tgz#2ba8a92cd7ac45660ea2b10a53ae67cd247516ea"
+  version "2.83.0"
+  resolved "https://registry.yarnpkg.com/request/-/request-2.83.0.tgz#ca0b65da02ed62935887808e6f510381034e3356"
   dependencies:
     aws-sign2 "~0.7.0"
     aws4 "^1.6.0"
@@ -4151,7 +4151,7 @@ request@^2.81.0:
     qs "~6.5.1"
     safe-buffer "^5.1.1"
     stringstream "~0.0.5"
-    tough-cookie "~2.3.2"
+    tough-cookie "~2.3.3"
     tunnel-agent "^0.6.0"
     uuid "^3.1.0"
 
@@ -4767,7 +4767,7 @@ tough-cookie@>=2.3.0, tough-cookie@~2.3.0:
   dependencies:
     punycode "^1.4.1"
 
-tough-cookie@>=2.3.3, tough-cookie@~2.3.2:
+tough-cookie@>=2.3.3, tough-cookie@~2.3.3:
   version "2.3.3"
   resolved "https://registry.yarnpkg.com/tough-cookie/-/tough-cookie-2.3.3.tgz#0b618a5565b6dea90bf3425d04d55edc475a7561"
   dependencies:
