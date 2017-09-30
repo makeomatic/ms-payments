@@ -7,7 +7,7 @@ services:
     image: makeomatic/redis-cluster:3.2.9
 
   rabbitmq:
-    image: makeomatic/rabbitmq:3.6.9
+    image: makeomatic/rabbitmq:3.6.12
     container_name: rabbitmq
     hostname: rabbitmq
 
@@ -15,7 +15,7 @@ services:
     links:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:8.2.1-7.0.0
+    image: makeomatic/ms-users:8.6.0-7.0.3
     hostname: ms-users
     container_name: ms-users
     volumes:
@@ -27,7 +27,7 @@ services:
 
   tester:
     container_name: tester
-    image: makeomatic/node:8.5.0-chrome-tester
+    image: makeomatic/node:8.6.0-chrome-tester
     links:
       - redis
       - rabbitmq
