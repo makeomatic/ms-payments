@@ -69,7 +69,7 @@
     "eslint-plugin-mocha": "^4.7.0",
     "eslint-plugin-promise": "^3.5.0",
     "mkdirp": "^0.5.1",
-    "mocha": "^3.5.0",
+    "mocha": "^4.0.0",
     "nyc": "^11.1.0",
     "rimraf": "^2.6.1",
     "semantic-release": "^8.0.3",
