@@ -9,7 +9,7 @@ const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constan
 const { serialize } = require('../../utils/redis.js');
 
 // internal actions
-const { agreement: { execute, get }, handleError } = require('../../utils/paypal');
+const { agreement: { execute, get: getAgreement }, handleError } = require('../../utils/paypal');
 const pullTransactionsData = require('../transaction/sync.js');
 const setState = require('./state');
 const getPlan = require('../plan/get');
@@ -18,8 +18,36 @@ function sendRequest() {
   return execute(this.token, {}, this.paypal).catch(handleError).get('id');
 }
 
-function fetchUpdatedAgreement(id) {
-  return get(id, this.paypal);
+/**
+ * Fetches updated agreement from paypal.
+ * We must make sure that state is 'active'.
+ * If it's pending -> retry until it becomes either active or cancelled
+ * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
+ * @param  {string} id - Agreement Id.
+ */
+function fetchUpdatedAgreement(id, attempt = 0) {
+  return getAgreement(id, this.paypal).then((agreement) => {
+    const state = String(agreement.state).toLowerCase();
+
+    if (state === 'active') {
+      return agreement;
+    }
+
+    if (state === 'pending') {
+      if (attempt > 20) {
+        throw new HttpStatusError(504, 'paypal agreement stuck in pending state');
+      }
+
+      return Promise
+        .bind(this, [id, attempt + 1])
+        .delay(250)
+        .spread(fetchUpdatedAgreement);
+    }
+
+    this.log.error('Client tried to execute failed agreement: %j', agreement);
+
+    throw new HttpStatusError(412, `paypal agreement in state: ${state}, not "active"`);
+  });
 }
 
 function fetchPlan(agreement) {
