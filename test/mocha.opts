@@ -3,3 +3,4 @@
 --bail
 --slow 2000
 -R spec
+--exit
