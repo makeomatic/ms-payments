@@ -136,6 +136,11 @@ function agreementBill({ params: input }) {
   }
 
   function saveToRedis(data) {
+    // no updates yet - skip to next
+    if (data.shouldUpdate === false) {
+      return data;
+    }
+
     const path = `${prefix}.${postfix.updateMetadata}`;
     const planFreq = get(data, 'agreement.plan.payment_definitions[0].frequency', 'month').toLowerCase();
     const sub = find(data.subs, { name: planFreq });
