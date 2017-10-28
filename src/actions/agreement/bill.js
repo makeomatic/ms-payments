@@ -167,6 +167,10 @@ function agreementBill({ params: input }) {
     .catch(NotPermitted, (e) => {
       log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
       return resetToFreePlan.call(this, username);
+    })
+    .catch((e) => {
+      log.warn({ err: e }, 'Failed to sync', username, id);
+      throw e;
     });
 }
 
