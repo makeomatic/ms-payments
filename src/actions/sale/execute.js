@@ -8,7 +8,7 @@ const key = require('../../redisKey');
 const { serialize } = require('../../utils/redis');
 const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions');
-const { payment: { execute: executePayment } } = require('../../utils/paypal');
+const { payment: { execute: executePayment }, handleError } = require('../../utils/paypal');
 
 // parse json
 function parseInput(data, fallback) {
@@ -17,12 +17,9 @@ function parseInput(data, fallback) {
 
 // send paypal request
 function sendRequest({ payer_id, payment_id }) {
-  const { config, log } = this;
+  const { config } = this;
   return executePayment(payment_id, { payer_id }, config.paypal)
-    .catch((err) => {
-      log.warn('failed to bill payment', err.response);
-      throw new HttpStatusError(err.httpStatusCode, err.response.message, err.response.name);
-    });
+    .catch(handleError);
 }
 
 // save data to redis
