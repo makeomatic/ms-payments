@@ -36,7 +36,7 @@ function actualDelete(id) {
   }
 
   return setState
-    .call(this, { params: { id, state: 'deleted' } })
+    .call(this, { params: { id, state: 'inactive' } })
     .then(() => deleteFromRedis(id, redis));
 }
 

@@ -136,6 +136,11 @@ function agreementBill({ params: input }) {
   }
 
   function saveToRedis(data) {
+    // no updates yet - skip to next
+    if (data.shouldUpdate === false) {
+      return data;
+    }
+
     const path = `${prefix}.${postfix.updateMetadata}`;
     const planFreq = get(data, 'agreement.plan.payment_definitions[0].frequency', 'month').toLowerCase();
     const sub = find(data.subs, { name: planFreq });
@@ -167,6 +172,10 @@ function agreementBill({ params: input }) {
     .catch(NotPermitted, (e) => {
       log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
       return resetToFreePlan.call(this, username);
+    })
+    .catch((e) => {
+      log.warn({ err: e }, 'Failed to sync', username, id);
+      throw e;
     });
 }
 
