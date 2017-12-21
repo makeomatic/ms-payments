@@ -82,6 +82,7 @@ function getCurrentAgreement(data) {
     .then(metadata => ({
       data,
       oldAgreement: metadata.agreement,
+      subscriptionType: metadata.subscriptionType,
       subscriptionInterval: metadata.subscriptionInterval,
     }));
 }
@@ -100,11 +101,15 @@ function syncTransactions({ agreement, owner, subscriptionInterval }) {
 }
 
 function checkAndDeleteAgreement(input) {
-  const { data, oldAgreement } = input;
+  const { data, oldAgreement, subscriptionType } = input;
 
   this.log.info('checking agreement data %j', input);
+  const oldAgreementIsNotFree = oldAgreement !== FREE_PLAN_ID;
+  const oldAgreementIsNotNew = oldAgreement !== data.agreement.id;
+  const oldAgreementIsPresent = oldAgreement && oldAgreementIsNotFree && oldAgreementIsNotNew;
+  const subscriptionTypeIsPaypal = subscriptionType == null || subscriptionType === 'paypal';
 
-  if (oldAgreement && oldAgreement !== FREE_PLAN_ID && oldAgreement !== data.agreement.id) {
+  if (oldAgreementIsPresent && subscriptionTypeIsPaypal) {
     // should we really cancel the agreement?
     this.log.warn('cancelling agreement %s, because of new agreement %j', oldAgreement, data.agreement);
 
