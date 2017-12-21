@@ -124,7 +124,7 @@ function sendRequest(rawPlanData) {
             throw new Errors.NotSupportedError('Unexpected PayPal response!');
           }
 
-          const token = url.parse(approval.href, true).query.token;
+          const { token } = url.parse(approval.href, true).query;
           return {
             token,
             url: approval.href,
@@ -168,7 +168,9 @@ function setToken(response) {
  */
 module.exports = function agreementCreate({ log, params }) {
   const { config, redis } = this;
-  const { owner, agreement, trialDiscount, trialCycle } = params;
+  const {
+    owner, agreement, trialDiscount, trialCycle,
+  } = params;
   const { plan: { id: planId } } = agreement;
 
   const ctx = {

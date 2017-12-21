@@ -182,7 +182,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false))
         .then((error) => {
-          assert.equal(error.inner_error.httpStatusCode, 500);
+          assert.equal(error.inner_error.httpStatusCode, 400);
           return null;
         });
     });

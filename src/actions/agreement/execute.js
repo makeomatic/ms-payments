@@ -61,7 +61,9 @@ function fetchSubscription(data) {
 
   return getPlan.call(this.service, { params: planId }).then((plan) => {
     const subscription = find(plan.subs, { name: subscriptionName });
-    return { agreement, subscription, planId, owner };
+    return {
+      agreement, subscription, planId, owner,
+    };
   });
 }
 
@@ -124,7 +126,9 @@ function checkAndDeleteAgreement(input) {
 }
 
 function updateMetadata({ data, subscriptionInterval }) {
-  const { subscription, agreement, planId, owner } = data;
+  const {
+    subscription, agreement, planId, owner,
+  } = data;
   const { prefix, postfix, audience } = this.users;
   const path = `${prefix}.${postfix.updateMetadata}`;
 
@@ -137,6 +141,7 @@ function updateMetadata({ data, subscriptionInterval }) {
         agreement: agreement.id,
         plan: planId,
         modelPrice: subscription.price,
+        subscriptionType: 'paypal',
         subscriptionPrice: agreement.plan.payment_definitions[0].amount.value,
         subscriptionInterval: agreement.plan.payment_definitions[0].frequency.toLowerCase(),
       },
@@ -148,10 +153,14 @@ function updateMetadata({ data, subscriptionInterval }) {
 
   return this.service.amqp
     .publishAndWait(path, updateRequest, { timeout: 5000 })
-    .return({ agreement, owner, planId, subscriptionInterval });
+    .return({
+      agreement, owner, planId, subscriptionInterval,
+    });
 }
 
-function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
+function updateRedis({
+  agreement, owner, planId, subscriptionInterval,
+}) {
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
   const pipeline = this.service.redis.pipeline();

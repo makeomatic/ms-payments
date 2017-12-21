@@ -8,6 +8,7 @@ const listAgreements = require('./list.js');
 // constants
 const FETCH_USERS_LIMIT = 20;
 const AGREEMENT_PENDING_STATUS = JSON.stringify('Pending');
+const SUBSCRIPTION_TYPE = JSON.stringify('capp');
 
 function agreementSync({ params: message = {} }) {
   const { _config, amqp, log } = this;
@@ -31,13 +32,21 @@ function agreementSync({ params: message = {} }) {
         nextCycle: {
           lte: current,
         },
+        subscriptionType: {
+          ne: SUBSCRIPTION_TYPE,
+        },
       },
     };
 
     return amqp
       .publishAndWait(usersList, getRequest, { timeout: 5000 })
       .then((response) => {
-        const { users, cursor, page, pages } = response;
+        const {
+          users,
+          cursor,
+          page,
+          pages,
+        } = response;
 
         users.forEach((user) => {
           pulledUsers.add(user.id);
@@ -58,8 +67,7 @@ function agreementSync({ params: message = {} }) {
 
     return listAgreements
       .call(this, {
-        params:
-        {
+        params: {
           offset,
           limit: FETCH_USERS_LIMIT,
           filter: {
@@ -70,7 +78,9 @@ function agreementSync({ params: message = {} }) {
         },
       })
       .then((response) => {
-        const { items: agreements, cursor, page, pages } = response;
+        const {
+          items: agreements, cursor, page, pages,
+        } = response;
 
         agreements.forEach((agreement) => {
           const { owner } = agreement;

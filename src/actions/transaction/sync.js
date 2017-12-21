@@ -18,7 +18,9 @@ const { agreement: { get: getAgreement, searchTransactions }, handleError } = re
  * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
  */
 function sendRequest() {
-  const { agreementId, paypalConfig, start, end } = this;
+  const {
+    agreementId, paypalConfig, start, end,
+  } = this;
 
   return Promise.props({
     agreement: getAgreement(agreementId, paypalConfig)
@@ -35,8 +37,10 @@ function sendRequest() {
  */
 function findOwner() {
   // verify if we already have passed owner
-  const owner = this.owner;
-  if (owner) return owner;
+  const { owner } = this;
+  if (owner) {
+    return owner;
+  }
 
   const getRequest = {
     audience: this.audience,
@@ -136,7 +140,9 @@ function invoke(fn) {
  * @return {Promise}
  */
 function transactionSync({ params }) {
-  const { config, redis, amqp, log } = this;
+  const {
+    config, redis, amqp, log,
+  } = this;
   const { paypal: paypalConfig } = config;
   const { users: { prefix, postfix, audience } } = config;
   const path = `${prefix}.${postfix.list}`;

@@ -63,8 +63,10 @@ module.exports = function planGet({ params }) {
   if (is.string(params)) {
     id = params;
   } else {
+    /* eslint-disable prefer-destructuring */
     id = params.id;
     fetchParent = params.fetchParent;
+    /* eslint-enable prefer-destructuring */
   }
 
   return retrievePlan(this.redis, id, fetchParent);

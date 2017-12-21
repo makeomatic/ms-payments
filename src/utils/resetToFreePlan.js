@@ -18,6 +18,7 @@ module.exports = function resetToFreePlan(owner) {
         subscriptionInterval: 'month',
         modelPrice: find(config.defaultPlans, { id: FREE_PLAN_ID }).subscriptions[0].price,
       },
+      $remove: ['subscriptionType'],
     },
   };
 
