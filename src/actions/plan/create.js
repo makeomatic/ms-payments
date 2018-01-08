@@ -12,7 +12,9 @@ const statePlan = require('./state');
 const key = require('../../redisKey');
 const { cleanupCache } = require('../../listUtils');
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants');
-const { plan: { create: billingPlanCreate }, handleError, is, states: { active } } = require('../../utils/paypal');
+const {
+  plan: { create: billingPlanCreate }, handleError, is, states: { active },
+} = require('../../utils/paypal');
 const { serialize } = require('../../utils/redis');
 const { createJoinPlans } = require('../../utils/plans');
 
@@ -26,11 +28,11 @@ function sendRequest(config, message) {
 
   // setup default merchant preferences
   const { plan } = message;
-  const { merchant_preferences: merchatPref, payment_definitions } = plan;
+  const { merchant_preferences: merchatPref, payment_definitions: paymentDefinitions } = plan;
   plan.merchant_preferences = merge(defaultMerchantPreferences, merchatPref || {});
 
   // divide single plan definition into as many as payment_definitions present
-  const plans = Promise.map(payment_definitions, (definition) => {
+  const plans = Promise.map(paymentDefinitions, (definition) => {
     const partialPlan = {
       ...cloneDeep(plan),
       name: `${plan.name}-${definition.frequency.toLowerCase()}`,
@@ -46,7 +48,7 @@ function sendRequest(config, message) {
 
   // activate the plan if we requested it
   return plans.map((planData) => {
-    const id = planData.id;
+    const { id } = planData;
     planData.state = active;
     return statePlan
       .call(this, { params: { id, state: active } })
@@ -64,7 +66,7 @@ function createSaveToRedis(redis, message) {
     const pipeline = redis.pipeline();
     const planKey = key(PLANS_DATA, aliasedId);
     const plansData = reduce(plans, (a, p) => {
-      const frequency = p.payment_definitions[0].frequency;
+      const { frequency } = p.payment_definitions[0];
       a[frequency.toLowerCase()] = p.id;
       return a;
     }, {});

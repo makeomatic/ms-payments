@@ -58,7 +58,7 @@ function transform(keys, prefixLength) {
 
 function cleanupCache(_index) {
   const { redis, config } = this;
-  const keyPrefix = config.redis.options.keyPrefix;
+  const { keyPrefix } = config.redis.options;
   const keyPrefixLength = keyPrefix.length;
   const index = `${keyPrefix}${_index}`;
   const cacheKeys = [];

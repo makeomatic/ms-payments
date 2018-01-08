@@ -23,7 +23,9 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 // check agreement bill
 function agreementBill({ params: input }) {
   const { agreement: id, subscriptionInterval, username } = input;
-  const { _config, redis, amqp, log } = this;
+  const {
+    _config, redis, amqp, log,
+  } = this;
   const { users: { prefix, postfix } } = _config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
@@ -45,7 +47,9 @@ function agreementBill({ params: input }) {
     return redis
       .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
       .then((data) => {
-        const { agreement, plan, owner, state } = agreementParser(data);
+        const {
+          agreement, plan, owner, state,
+        } = agreementParser(data);
         if (state.toLowerCase() === 'cancelled') {
           throw new NotPermitted('Operation not permitted on cancelled agreements.');
         }

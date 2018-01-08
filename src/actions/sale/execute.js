@@ -16,6 +16,7 @@ function parseInput(data, fallback) {
 }
 
 // send paypal request
+// eslint-disable-next-line camelcase
 function sendRequest({ payer_id, payment_id }) {
   const { config } = this;
   return executePayment(payment_id, { payer_id }, config.paypal)

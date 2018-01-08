@@ -47,8 +47,8 @@ function saleCreate({ params: message }) {
       if (approval === null) {
         throw new NotSupportedError('Unexpected PayPal response!');
       }
-      const token = url.parse(approval.href, true).query.token;
 
+      const { token } = url.parse(approval.href, true).query;
       return {
         token,
         url: approval.href,

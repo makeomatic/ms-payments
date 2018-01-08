@@ -62,7 +62,9 @@ function saveCommon(data) {
 }
 
 function formatItemList({ items }) {
-  return items.map(({ name, price, quantity, currency }) => (
+  return items.map(({
+    name, price, quantity, currency,
+  }) => (
     `${name} x${quantity} for ${parseFloat(price) * quantity} ${currency}.`
   )).join('\n');
 }

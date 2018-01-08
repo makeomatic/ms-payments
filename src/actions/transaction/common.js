@@ -12,7 +12,7 @@ const key = require('../../redisKey.js');
 module.exports = function listCommonTransactions({ params: opts }) {
   const { redis } = this;
   const { owner, type, filter } = opts;
-  const criteria = opts.criteria;
+  const { criteria } = opts;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;

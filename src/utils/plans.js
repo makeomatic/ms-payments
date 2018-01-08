@@ -1,4 +1,4 @@
-const isArray = Array.isArray;
+const { isArray } = Array;
 const mergeWith = require('lodash/mergeWith');
 const compact = require('lodash/compact');
 

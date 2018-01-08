@@ -7,8 +7,7 @@ const key = require('../../redisKey.js');
 
 function planList({ params: opts }) {
   const { redis } = this;
-  const { filter, owner } = opts;
-  const criteria = opts.criteria;
+  const { filter, owner, criteria } = opts;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;

@@ -39,10 +39,14 @@ function agreementState({ params: message }) {
   }
 
   function sendRequest(meta) {
-    const { agreement: id, subscriptionInterval } = meta;
+    const { agreement: id, subscriptionInterval, subscriptionType } = meta;
 
     if (id === FREE_PLAN_ID) {
       throw new Errors.NotPermittedError('User has free plan/agreement');
+    }
+
+    if (subscriptionType === 'capp') {
+      throw new Errors.NotPermittedError('Must use capp payments service');
     }
 
     return operations[state]

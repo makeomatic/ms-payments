@@ -61,7 +61,9 @@ function fetchSubscription(data) {
 
   return getPlan.call(this.service, { params: planId }).then((plan) => {
     const subscription = find(plan.subs, { name: subscriptionName });
-    return { agreement, subscription, planId, owner };
+    return {
+      agreement, subscription, planId, owner,
+    };
   });
 }
 
@@ -80,6 +82,7 @@ function getCurrentAgreement(data) {
     .then(metadata => ({
       data,
       oldAgreement: metadata.agreement,
+      subscriptionType: metadata.subscriptionType,
       subscriptionInterval: metadata.subscriptionInterval,
     }));
 }
@@ -98,11 +101,15 @@ function syncTransactions({ agreement, owner, subscriptionInterval }) {
 }
 
 function checkAndDeleteAgreement(input) {
-  const { data, oldAgreement } = input;
+  const { data, oldAgreement, subscriptionType } = input;
 
   this.log.info('checking agreement data %j', input);
+  const oldAgreementIsNotFree = oldAgreement !== FREE_PLAN_ID;
+  const oldAgreementIsNotNew = oldAgreement !== data.agreement.id;
+  const oldAgreementIsPresent = oldAgreement && oldAgreementIsNotFree && oldAgreementIsNotNew;
+  const subscriptionTypeIsPaypal = subscriptionType == null || subscriptionType === 'paypal';
 
-  if (oldAgreement && oldAgreement !== FREE_PLAN_ID && oldAgreement !== data.agreement.id) {
+  if (oldAgreementIsPresent && subscriptionTypeIsPaypal) {
     // should we really cancel the agreement?
     this.log.warn('cancelling agreement %s, because of new agreement %j', oldAgreement, data.agreement);
 
@@ -124,7 +131,9 @@ function checkAndDeleteAgreement(input) {
 }
 
 function updateMetadata({ data, subscriptionInterval }) {
-  const { subscription, agreement, planId, owner } = data;
+  const {
+    subscription, agreement, planId, owner,
+  } = data;
   const { prefix, postfix, audience } = this.users;
   const path = `${prefix}.${postfix.updateMetadata}`;
 
@@ -137,6 +146,7 @@ function updateMetadata({ data, subscriptionInterval }) {
         agreement: agreement.id,
         plan: planId,
         modelPrice: subscription.price,
+        subscriptionType: 'paypal',
         subscriptionPrice: agreement.plan.payment_definitions[0].amount.value,
         subscriptionInterval: agreement.plan.payment_definitions[0].frequency.toLowerCase(),
       },
@@ -148,10 +158,14 @@ function updateMetadata({ data, subscriptionInterval }) {
 
   return this.service.amqp
     .publishAndWait(path, updateRequest, { timeout: 5000 })
-    .return({ agreement, owner, planId, subscriptionInterval });
+    .return({
+      agreement, owner, planId, subscriptionInterval,
+    });
 }
 
-function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
+function updateRedis({
+  agreement, owner, planId, subscriptionInterval,
+}) {
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
   const pipeline = this.service.redis.pipeline();

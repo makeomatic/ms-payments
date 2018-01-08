@@ -1,4 +1,4 @@
 {
-  "node": "9.1.0",
+  "node": "9.3.0",
   "fail": "docker logs ms-users && docker logs redis"
 }

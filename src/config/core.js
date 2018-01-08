@@ -7,7 +7,7 @@ const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
 
 // plugins
-const routerExtension = mservice.routerExtension;
+const { routerExtension } = mservice;
 const autoSchema = routerExtension('validate/schemaLessAction');
 const auditLog = routerExtension('audit/log');
 

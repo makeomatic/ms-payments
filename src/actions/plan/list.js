@@ -7,8 +7,7 @@ const { PLANS_DATA, PLANS_INDEX } = require('../../constants.js');
 
 function planList({ params: opts }) {
   const { redis } = this;
-  const { filter } = opts;
-  const criteria = opts.criteria;
+  const { filter, criteria } = opts;
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;

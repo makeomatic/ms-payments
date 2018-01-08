@@ -8,7 +8,9 @@ const get = require('lodash/get');
 const each = require('lodash/each');
 
 // helpers
-const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID, PLAN_ALIAS_FIELD } = require('../../constants');
+const {
+  PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID, PLAN_ALIAS_FIELD,
+} = require('../../constants');
 const { serialize, deserialize } = require('../../utils/redis');
 const { merger } = require('../../utils/plans');
 const { cleanupCache } = require('../../listUtils');
