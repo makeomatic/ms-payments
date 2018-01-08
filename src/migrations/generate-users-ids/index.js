@@ -18,12 +18,12 @@ function getAMQPTransport(amqpConfig) {
  *
  */
 function getRedisMasterNode(redis, config) {
-  const keyPrefix = config.redis.options.keyPrefix;
+  const { keyPrefix } = config.redis.options;
   const slot = calcSlot(keyPrefix);
   const nodeKeys = redis.slots[slot];
-  const masters = redis.connectionPool.nodes.master;
+  const { master } = redis.connectionPool.nodes;
 
-  return nodeKeys.reduce((node, key) => node || masters[key], null);
+  return nodeKeys.reduce((node, key) => node || master[key], null);
 }
 
 /**
@@ -189,10 +189,12 @@ function processTransactions(key) {
  */
 function processKeys(amqp) {
   const { config, log, redis } = this;
-  const keyPrefix = config.redis.options.keyPrefix;
+  const { keyPrefix } = config.redis.options;
   const masterNode = getRedisMasterNode(redis, config);
   const pipeline = redis.pipeline();
-  const context = { pipeline, log, amqp, redis, config };
+  const context = {
+    pipeline, log, amqp, redis, config,
+  };
 
   log.info('Starting keys processing');
 
