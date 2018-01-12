@@ -28,7 +28,7 @@
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
     "@microfleet/core": "^10.1.2",
-    "@microfleet/transport-amqp": "^12.3.2",
+    "@microfleet/transport-amqp": "^13.0.0",
     "bluebird": "^3.5.1",
     "bunyan": "^1.8.12",
     "bunyan-sentry-stream": "^1.1.0",
