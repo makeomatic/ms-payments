@@ -199,7 +199,7 @@ function processKeys(amqp) {
   log.info('Starting keys processing');
 
   return masterNode
-    .keys('*')
+    .keys(`${keyPrefix}*`)
     .map(key => key.replace(keyPrefix, ''))
     .each((key) => {
       log.info('Process key:', key);
