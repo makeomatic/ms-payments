@@ -42,7 +42,7 @@
     "ms-conf": "^3.1.2",
     "ms-mailer-client": "^6.0.2",
     "ms-mailer-templates": "^1.4.4",
-    "ms-validation": "^6.0.2",
+    "ms-validation": "^7.0.0",
     "paypal-rest-sdk": "^1.8.1",
     "raven": "^2.3.0",
     "redis-filtered-sort": "^2.2.1",
