@@ -40,7 +40,7 @@
     "lodash": "^4.16.4",
     "moment": "^2.20.1",
     "ms-conf": "^3.1.2",
-    "ms-mailer-client": "^6.0.2",
+    "ms-mailer-client": "^7.0.0",
     "ms-mailer-templates": "^1.4.4",
     "ms-validation": "^6.0.2",
     "paypal-rest-sdk": "^1.8.1",
