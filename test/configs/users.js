@@ -1,6 +1,10 @@
 const mixPlan = require('./mixPlan.js');
 
 module.exports = {
+  logger: {
+    defaultLogger: true,
+    debug: true,
+  },
   admins: [
     {
       username: 'test@test.ru',

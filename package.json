@@ -4,7 +4,7 @@
   "version": "0.0.0-development",
   "main": "./lib/index.js",
   "scripts": {
-    "compile": "babel -d ./lib ./src",
+    "compile": "rimraf ./lib && babel -d ./lib --copy-files ./src",
     "pretest": "rimraf ./ss/*; mkdirp ./ss",
     "test": "npm run lint && npm run test:e2e",
     "test:e2e": "mdep test run",

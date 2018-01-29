@@ -37,6 +37,13 @@ class Payments extends MService {
       this.mailer = new Mailer(amqp, this.config.mailer);
     });
 
+    // add migration connector
+    if (this.config.migrations.enabled === true) {
+      this.addConnector(MService.ConnectorsTypes.migration, () => (
+        this.migrate('redis', `${__dirname}/migrations`)
+      ));
+    }
+
     // init plans and sync transactions during startup of production
     // service
     if (process.env.NODE_ENV === 'production') {

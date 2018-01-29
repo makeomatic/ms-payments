@@ -91,9 +91,10 @@ exports.users = {
   audience: '*.localhost',
   prefix: 'users',
   postfix: {
-    updateMetadata: 'updateMetadata',
+    getInternalData: 'getInternalData',
     getMetadata: 'getMetadata',
     list: 'list',
+    updateMetadata: 'updateMetadata',
   },
 };
 

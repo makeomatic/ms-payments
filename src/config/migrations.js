@@ -1,0 +1,3 @@
+exports.migrations = {
+  enabled: false,
+};

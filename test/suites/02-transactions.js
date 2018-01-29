@@ -26,6 +26,7 @@ describe('Transactions suite', function TransactionsSuite() {
   let agreement;
   let planId;
   let dispatch;
+  let userId;
 
   // headless testing
   before('launch chrome', init);
@@ -85,10 +86,21 @@ describe('Transactions suite', function TransactionsSuite() {
     });
   });
 
+  before('get user id', () => {
+    const { config } = payments;
+    const route = `${config.users.prefix}.${config.users.postfix.getInternalData}`;
+
+    return dispatch(route, { username: 'test@test.ru', fields: ['id'] })
+      .then(({ id }) => {
+        userId = id;
+        return null;
+      });
+  });
+
   before('createAgreement', () => {
     const data = {
       agreement: testAgreementData,
-      owner: 'test@test.ru',
+      owner: userId,
     };
 
     return dispatch(createAgreement, data)
@@ -100,7 +112,7 @@ describe('Transactions suite', function TransactionsSuite() {
       });
   });
 
-  it('executeAgreement', function test() {
+  before('executeAgreement', function test() {
     return approve.call(this, agreement.url).then(parsed => (
       dispatch(executeAgreement, { token: parsed.token })
         .reflect()
@@ -112,8 +124,8 @@ describe('Transactions suite', function TransactionsSuite() {
     ));
   });
 
-  it('getAgreement', () => (
-    dispatch(getAgreement, { user: 'test@test.ru' })
+  before('getAgreement', () => (
+    dispatch(getAgreement, { user: userId })
       .get('agreement')
       .then((result) => {
         assert(agreement.id, result.id);
@@ -123,7 +135,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
   after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
-  describe('unit tests', () => {
+  describe('transactions tests', () => {
     it('Should not sync transaction on invalid data', () => (
       dispatch(syncTransaction, { wrong: 'data' })
         .reflect()
@@ -150,7 +162,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
     it('Should list common transactions', () => (
       dispatch(listCommonTransactions, {
-        owner: 'test@test.ru',
+        owner: userId,
         filter: {
           status: 'Completed',
         },
@@ -161,7 +173,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
     it('should return aggregate list of transactions', () => (
       dispatch(transactionsAggregate, {
-        owners: ['test@test.ru'],
+        owners: [userId],
         filter: {
           status: 'Completed',
         },
