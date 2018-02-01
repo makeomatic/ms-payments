@@ -6,6 +6,7 @@
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?style=flat-square)](https://github.com/semantic-release/semantic-release)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/)
 [![codecov.io](https://codecov.io/github/makeomatic/ms-payments/coverage.svg?branch=master)](https://codecov.io/github/makeomatic/ms-payments?branch=master)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments?ref=badge_shield)
 
 ## Plans
 
@@ -84,3 +85,7 @@ Charge model allows you to apply tax and shipping (not applicable for us).
   }
 }
 ```
+
+
+## License
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments?ref=badge_large)
