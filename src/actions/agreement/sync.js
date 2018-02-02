@@ -120,7 +120,7 @@ function agreementSync({ params: message = {} }) {
     .tap((users) => {
       log.info('fetched %d users to bill', users.length);
     })
-    .map(billUser);
+    .map(billUser, { concurrency: 10 }); /* to not add too much load */
 }
 
 module.exports = agreementSync;
