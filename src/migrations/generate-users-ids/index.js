@@ -155,6 +155,11 @@ function processAllTransactions(key) {
 function processAgreementsIndex(key) {
   const parts = getKeyParts(key);
 
+  // "{ms-payments}agreements-index:ASC"
+  if (parts[1] === 'ASC') {
+    return Promise.resolve();
+  }
+
   // "{ms-payments}agreements-index:foo@bar.baz"
   if (parts[1] !== undefined) {
     return renameKey.call(this, parts[1], key);
