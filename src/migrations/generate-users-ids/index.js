@@ -144,6 +144,10 @@ function processAllTransactions(key) {
       return changeOwner.call(this, key);
 
     default:
+      if (/^\d+$/.test(parts[1])) {
+        return Promise.resolve();
+      }
+
       // "{ms-payments}all-transactions:foo@bar.baz"
       return renameKey.call(this, parts[1], key);
   }
