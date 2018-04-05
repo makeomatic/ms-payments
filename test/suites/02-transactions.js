@@ -1,8 +1,6 @@
 const TEST_CONFIG = require('../config');
-const Promise = require('bluebird');
 const assert = require('assert');
-const url = require('url');
-const { init, clean, captureScreenshot, type, submit, wait, captureRedirect, scrollTo } = require('@makeomatic/deploy/bin/chrome');
+const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
@@ -29,122 +27,65 @@ describe('Transactions suite', function TransactionsSuite() {
   let userId;
 
   // headless testing
-  before('launch chrome', init);
-  after('clean chrome', clean);
+  // need to relaunch each time for clean contexts
+  before('init Chrome', initChrome);
+  after('close chrome', closeChrome);
 
-  function approve(saleUrl) {
-    const { Page } = this.protocol;
-
-    Page.navigate({ url: saleUrl });
-
-    return Page.loadEventFired().then(() => (
-      // sometimes input is flaky, how do we determine that everything has loaded?
-      Promise
-        .bind(this, '#loadLogin, #login_email')
-        .tap(wait)
-        .return([0, 0])
-        .spread(scrollTo)
-        .return('#loadLogin, #login_email')
-        .then(submit)
-        .return(['#login_email', 'test@cappasity.com'])
-        .spread(type)
-        .return(['#login_password', '12345678'])
-        .spread(type)
-        .return('#submitLogin')
-        .then(submit)
-        .return('#continue')
-        .then(wait)
-        .return('#continue')
-        .then(submit)
-        .return(/paypal-subscription-return\?/)
-        .then(captureRedirect)
-        .catch(captureScreenshot)
-        .then((response) => {
-          // actual test verification goes on here
-          const data = url.parse(response, true).query;
-          return {
-            payer_id: data.PayerID,
-            payment_id: data.paymentId,
-            token: data.token,
-          };
-        })
-    ));
-  }
-
-  before(() => {
+  before(async () => {
     payments = new Payments(TEST_CONFIG);
-    return payments.connect();
-  });
-
-  before('initPlan', () => {
+    await payments.connect();
     dispatch = simpleDispatcher(payments);
-    return dispatch(createPlan, testPlanData).then((data) => {
-      const id = data.plan.id.split('|')[0];
-      testAgreementData.plan.id = id;
-      planId = data.plan.id;
-      return null;
-    });
   });
 
-  before('get user id', () => {
+  before('initPlan', async () => {
+    const data = await dispatch(createPlan, testPlanData);
+    const id = data.plan.id.split('|')[0];
+    testAgreementData.plan.id = id;
+    planId = data.plan.id;
+  });
+
+  before('get user id', async () => {
     const { config } = payments;
     const route = `${config.users.prefix}.${config.users.postfix.getInternalData}`;
-
-    return dispatch(route, { username: 'test@test.ru', fields: ['id'] })
-      .then(({ id }) => {
-        userId = id;
-        return null;
-      });
+    const { id } = await dispatch(route, { username: 'test@test.ru', fields: ['id'] });
+    userId = id;
   });
 
-  before('createAgreement', () => {
+  before('createAgreement', async () => {
     const data = {
       agreement: testAgreementData,
       owner: userId,
     };
 
-    return dispatch(createAgreement, data)
+    agreement = await dispatch(createAgreement, data)
       .reflect()
-      .then(inspectPromise())
-      .then((result) => {
-        agreement = result;
-        return null;
-      });
+      .then(inspectPromise());
   });
 
-  before('executeAgreement', function test() {
-    return approve.call(this, agreement.url).then(parsed => (
-      dispatch(executeAgreement, { token: parsed.token })
-        .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          agreement = result;
-          return null;
-        })
-    ));
+  before('executeAgreement', async () => {
+    const parsed = await approveSubscription(agreement.url);
+    agreement = await dispatch(executeAgreement, { token: parsed.token })
+      .reflect()
+      .then(inspectPromise());
   });
 
-  before('getAgreement', () => (
-    dispatch(getAgreement, { user: userId })
-      .get('agreement')
-      .then((result) => {
-        assert(agreement.id, result.id);
-        return null;
-      })
-  ));
+  before('getAgreement', async () => {
+    const result = await dispatch(getAgreement, { user: userId })
+      .get('agreement');
+
+    assert(agreement.id, result.id);
+  });
 
   after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
   describe('transactions tests', () => {
-    it('Should not sync transaction on invalid data', () => (
-      dispatch(syncTransaction, { wrong: 'data' })
+    it('Should not sync transaction on invalid data', async () => {
+      const error = await dispatch(syncTransaction, { wrong: 'data' })
         .reflect()
-        .then((result) => {
-          assert(result.isRejected());
-          assert.equal(result.reason().name, 'ValidationError');
-          return null;
-        })
-    ));
+        .then(inspectPromise(false));
+
+      assert.equal(error.name, 'ValidationError');
+    });
 
     it('Should sync transactions', () => {
       const start = '2015-01-01';
@@ -171,8 +112,8 @@ describe('Transactions suite', function TransactionsSuite() {
         .then(inspectPromise())
     ));
 
-    it('should return aggregate list of transactions', () => (
-      dispatch(transactionsAggregate, {
+    it('should return aggregate list of transactions', async () => {
+      const opts = {
         owners: [userId],
         filter: {
           status: 'Completed',
@@ -180,13 +121,13 @@ describe('Transactions suite', function TransactionsSuite() {
         aggregate: {
           amount: 'sum',
         },
-      })
+      };
+
+      const [response] = await dispatch(transactionsAggregate, opts)
         .reflect()
-        .then(inspectPromise())
-        .then((response) => {
-          assert.ok(response[0].amount);
-          return null;
-        })
-    ));
+        .then(inspectPromise());
+
+      assert.ok(response.amount);
+    });
   });
 });
