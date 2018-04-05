@@ -1,9 +1,8 @@
 const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
-const url = require('url');
 const sinon = require('sinon');
-const { init, clean, captureScreenshot, type, submit, wait, captureRedirect } = require('@makeomatic/deploy/bin/chrome');
+const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
 
@@ -22,76 +21,28 @@ describe('Sales suite', function SalesSuite() {
   let sale;
   let dispatch;
 
-  function approve(saleUrl) {
-    const { Page } = this.protocol;
-
-    // test case scenario
-    Page.navigate({ url: saleUrl });
-    return Page.loadEventFired().then(() => (
-      // sometimes input is flaky, how do we determine that everything has loaded?
-      Promise
-        .bind(this, [{ iframe: '[name=injectedUl]', el: '#email' }, 'test@cappasity.com'])
-        .delay(2000)
-        .spread(type)
-        .delay(500)
-        .return([{ iframe: '[name=injectedUl]', el: '#password' }, '12345678'])
-        .spread(type)
-        .delay(500)
-        .return({ iframe: '[name=injectedUl]', el: '#btnLogin' })
-        .then(submit)
-        .delay(500)
-        .return('#confirmButtonTop')
-        .then(wait)
-        .delay(5000)
-        .return('#confirmButtonTop')
-        .then(submit)
-        .return(/paypal-sale-return\?/)
-        .then(captureRedirect)
-        .catch(captureScreenshot)
-        .then((response) => {
-          // actual test verification goes on here
-          const data = url.parse(response, true).query;
-          return {
-            payer_id: data.PayerID,
-            payment_id: data.paymentId,
-            token: data.token,
-          };
-        })
-    ));
-  }
-
-  before(() => {
+  before('start service', async () => {
     payments = new Payments(TEST_CONFIG);
-    return payments.connect();
-  });
-
-  before(() => {
+    await payments.connect();
     dispatch = simpleDispatcher(payments);
   });
 
-  // headless testing
-  beforeEach('launch chrome', init);
-  afterEach('clean chrome', clean);
+  beforeEach('init Chrome', initChrome);
+  afterEach('close chrome', closeChrome);
 
   describe('Sales tests', function UnitSuite() {
-    it('Should fail to create sale on invalid arguments', () => {
-      return dispatch(createSale, { wrong: 'data' })
+    it('Should fail to create sale on invalid arguments', async () => {
+      const error = await dispatch(createSale, { wrong: 'data' })
         .reflect()
-        .then(inspectPromise(false))
-        .then((error) => {
-          assert.equal(error.name, 'ValidationError');
-          return null;
-        });
+        .then(inspectPromise(false));
+
+      assert.equal(error.name, 'ValidationError');
     });
 
-    it('Should create sale', () => {
-      return dispatch(createSale, testSaleData)
+    it('Should create sale', async () => {
+      sale = await dispatch(createSale, testSaleData)
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          sale = result;
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('Should fail to execute unapproved sale', () => {
@@ -100,37 +51,32 @@ describe('Sales suite', function SalesSuite() {
         .then(inspectPromise(false));
     });
 
-    it('Should execute approved sale', function test() {
-      return approve.call(this, sale.url).then(query => (
-        dispatch(executeSale, query)
-          .reflect()
-          .then(inspectPromise())
-      ));
-    });
-
-    it('Should create 3d printing sale', () => {
-      return dispatch(createDynamicSale, testDynamicSaleData)
+    it('Should execute approved sale', async () => {
+      const query = await approveSale(sale.url);
+      return dispatch(executeSale, query)
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          sale = result;
-          return null;
-        });
+        .then(inspectPromise());
     });
 
-    it('Should approve & execute 3d printing sale', function test() {
-      return approve.call(this, sale.url).then((query) => {
-        sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
+    it('Should create 3d printing sale', async () => {
+      sale = await dispatch(createDynamicSale, testDynamicSaleData)
+        .reflect()
+        .then(inspectPromise());
+    });
 
-        return dispatch(executeSale, query)
+    it('Should approve & execute 3d printing sale', async () => {
+      const query = await approveSale(sale.url);
+
+      sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
+
+      try {
+        await dispatch(executeSale, query)
           .reflect()
-          .then(inspectPromise())
-          .finally(() => {
-            assert.ok(payments.mailer.send.calledOnce);
-            payments.mailer.send.restore();
-            return null;
-          });
-      });
+          .then(inspectPromise());
+        assert.ok(payments.mailer.send.calledOnce);
+      } finally {
+        payments.mailer.send.restore();
+      }
     });
 
     it('Should list all sales', () => (

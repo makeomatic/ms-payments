@@ -1,6 +1,10 @@
 {
   "branch": "master",
-  "verifyConditions": ["@semantic-release/npm", "@semantic-release/github"],
+  "publish": [
+    { "path": "@semantic-release/exec", "cmd": "yarn docker-release" },
+    "@semantic-release/npm",
+    "@semantic-release/github"
+  ],
   "analyzeCommits": {
     "preset": "angular",
     "releaseRules": [

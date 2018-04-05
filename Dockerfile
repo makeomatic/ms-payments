@@ -14,7 +14,7 @@ RUN \
     g++ \
     make \
     python \
-  && yarn --production \
+  && yarn --production --frozen-lockfile \
   && apk del \
     .buildDeps \
     wget \

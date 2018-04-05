@@ -1,10 +1,9 @@
 const Promise = require('bluebird');
 const assert = require('assert');
-const { init, clean, captureScreenshot, type, submit, wait, captureRedirect, scrollTo } = require('@makeomatic/deploy/bin/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
+const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
 const TEST_CONFIG = require('../config');
-const url = require('url');
 
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
@@ -28,102 +27,53 @@ describe('Agreements suite', function AgreementSuite() {
 
   this.timeout(duration * 8);
 
-  function approve(saleUrl) {
-    const { Page } = this.protocol;
-
-    Page.navigate({ url: saleUrl });
-
-    return Page.loadEventFired().then(() => (
-      // sometimes input is flaky, how do we determine that everything has loaded?
-      Promise
-        .bind(this, '#loadLogin, #login_email')
-        .tap(wait)
-        .return([0, 0])
-        .spread(scrollTo)
-        .return('#loadLogin, #login_email')
-        .then(submit)
-        .return(['#login_email', 'test@cappasity.com'])
-        .spread(type)
-        .return(['#login_password', '12345678'])
-        .spread(type)
-        .return('#submitLogin')
-        .then(submit)
-        .return('#continue')
-        .then(wait)
-        .return('#continue')
-        .then(submit)
-        .return(/paypal-subscription-return\?/)
-        .then(captureRedirect)
-        .catch(captureScreenshot)
-        .then((response) => {
-          // actual test verification goes on here
-          const data = url.parse(response, true).query;
-          return {
-            payer_id: data.PayerID,
-            payment_id: data.paymentId,
-            token: data.token,
-          };
-        })
-    ));
-  }
-
-  before(function startService() {
+  before('startService', async () => {
     payments = new Payments(TEST_CONFIG);
-    return payments.connect();
-  });
-
-  before(function initPlan() {
+    await payments.connect();
     dispatch = simpleDispatcher(payments);
-    return dispatch(createPlan, testPlanData).then((data) => {
-      const id = data.plan.id.split('|')[0];
-      planId = data.plan.id;
-      testAgreementData.plan.id = id;
-      return null;
-    });
   });
 
-  after(function cleanup() {
+  before('initPlan', async () => {
+    const data = await dispatch(createPlan, testPlanData);
+    const id = data.plan.id.split('|')[0];
+
+    planId = data.plan.id;
+    testAgreementData.plan.id = id;
+  });
+
+  after(() => {
     return dispatch(deletePlan, planId).reflect();
   });
 
-  // headless testing
-  beforeEach('launch chrome', init);
-  afterEach('clean chrome', clean);
+  beforeEach('init Chrome', initChrome);
+  afterEach('close chrome', closeChrome);
 
   describe('unit tests', function UnitSuite() {
-    it('Should fail to create agreement on invalid schema', () => {
-      return dispatch(createAgreement, { random: true })
+    it('Should fail to create agreement on invalid schema', async () => {
+      const error = await dispatch(createAgreement, { random: true })
         .reflect()
-        .then(inspectPromise(false))
-        .then((error) => {
-          assert.equal(error.name, 'ValidationError');
-          return null;
-        });
+        .then(inspectPromise(false));
+
+      assert.equal(error.name, 'ValidationError');
     });
 
-    it('By default user should have free agreement', () => {
-      return dispatch(forUserAgreement, { user: 'test@test.ru' })
+    it('By default user should have free agreement', async () => {
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          assert.equal(result.id, 'free');
-          return null;
-        });
+        .then(inspectPromise());
+
+      assert.equal(result.id, 'free');
     });
 
-    it('Should create an agreement', () => {
+    it('Should create an agreement', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
       };
 
-      return dispatch(createAgreement, data)
+      billingAgreement = await dispatch(createAgreement, data)
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          billingAgreement = result;
-          return null;
-        });
+        .then(inspectPromise());
     });
 
     it('Should fail to execute on an unknown token', () => {
@@ -138,44 +88,34 @@ describe('Agreements suite', function AgreementSuite() {
         .then(inspectPromise(false));
     });
 
-    it('Should execute an approved agreement', function test() {
-      return approve.call(this, billingAgreement.url).then(params => (
-        dispatch(executeAgreement, { token: params.token })
-          .reflect()
-          .then(inspectPromise())
-          .then((result) => {
-            billingAgreement.id = result.id;
-            return null;
-          })
-      ));
+    it('Should execute an approved agreement', async () => {
+      const params = await approveSubscription(billingAgreement.url);
+      const result = await dispatch(executeAgreement, { token: params.token })
+        .reflect()
+        .then(inspectPromise());
+
+      billingAgreement.id = result.id;
     });
 
-    it('Should create a trial agreement', () => {
+    it('Should create a trial agreement', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
         trialDiscount: 10,
       };
 
-      return dispatch(createAgreement, data)
+      billingAgreement = await dispatch(createAgreement, data)
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          billingAgreement = result;
-          return null;
-        });
+        .then(inspectPromise());
     });
 
-    it('Should execute an approved trial agreement', function test() {
-      return approve.call(this, billingAgreement.url).then(params => (
-        dispatch(executeAgreement, { token: params.token })
-          .reflect()
-          .then(inspectPromise())
-          .then((result) => {
-            billingAgreement.id = result.id;
-            return null;
-          })
-      ));
+    it('Should execute an approved trial agreement', async () => {
+      const params = await approveSubscription(billingAgreement.url);
+      const result = await dispatch(executeAgreement, { token: params.token })
+        .reflect()
+        .then(inspectPromise());
+
+      billingAgreement.id = result.id;
     });
 
     it('Should list all agreements', () => {
@@ -184,31 +124,29 @@ describe('Agreements suite', function AgreementSuite() {
         .then(inspectPromise());
     });
 
-    it('Should get agreement for user', () => {
-      return dispatch(forUserAgreement, { user: 'test@test.ru' })
+    it('Should get agreement for user', async () => {
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          assert.equal(result.agreement.id, billingAgreement.id);
-          return null;
-        });
+        .then(inspectPromise());
+
+      assert.equal(result.agreement.id, billingAgreement.id);
     });
 
-    it('Should pull updates for an agreement', () => {
+    it('Should pull updates for an agreement', async () => {
       this.timeout(duration);
 
-      function waitForAgreementToBecomeActive() {
-        return dispatch(syncAgreements, {})
+      async function waitForAgreementToBecomeActive() {
+        await dispatch(syncAgreements, {})
           .reflect()
-          .then(inspectPromise())
-          .then(() => dispatch(getAgreement, { id: billingAgreement.id }))
-          .then((agreement) => {
-            if (agreement.state.toLowerCase() === 'pending') {
-              return Promise.delay(500).then(waitForAgreementToBecomeActive);
-            }
+          .then(inspectPromise());
 
-            return null;
-          });
+        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
+
+        if (agreement.state.toLowerCase() === 'pending') {
+          return Promise.delay(500).then(waitForAgreementToBecomeActive);
+        }
+
+        return null;
       }
 
       return waitForAgreementToBecomeActive();
@@ -221,14 +159,12 @@ describe('Agreements suite', function AgreementSuite() {
         .then(inspectPromise());
     });
 
-    it('Should get free agreement for user after cancelling', () => {
-      return dispatch(forUserAgreement, { user: 'test@test.ru' })
+    it('Should get free agreement for user after cancelling', async () => {
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
         .reflect()
-        .then(inspectPromise())
-        .then((result) => {
-          assert.equal(result.id, 'free');
-          return null;
-        });
+        .then(inspectPromise());
+
+      assert.equal(result.id, 'free');
     });
   });
 });
