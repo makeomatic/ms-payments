@@ -76,7 +76,7 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
     await Promise.some([
       page.waitFor('#confirmButtonTop', { visible: true, timeout: 40000 }),
       page.waitFor('#retryLink', { visible: true, timeout: 40000 }),
-    ], 1).catch(() => Promise.delay(100).then(() => retry));
+    ], 1).catch(() => Promise.delay(100).then(() => retry()));
 
     const retryButton = await page.$('#retryLink');
     const confirmButton = await page.$('#confirmButtonTop');
