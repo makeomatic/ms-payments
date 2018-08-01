@@ -52,23 +52,65 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   console.info('try to subscribe to %s', saleUrl);
   await page.goto(saleUrl, { waitUntil: 'networkidle2' });
 
-  // ensure login is selected
-  await page.waitForSelector('#loadLogin, #login_email', { visible: true });
-  await page.click('#loadLogin, #login_email');
+  await page.waitFor('#email', { visible: true });
+  const emailHandle = await page.$('#email');
+  await emailHandle.type(process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
+  await emailHandle.press('Enter', { delay: 100 });
+  await emailHandle.dispose();
 
-  // now type login
-  await page.waitForSelector('#login_email', { visible: true });
-  await page.type('#login_email', process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
-
-  const pwdHandle = await page.$('#login_password');
+  await page.waitFor('#password', { visible: true });
+  const pwdHandle = await page.$('#password');
   await pwdHandle.type(process.env.PAYPAL_SANDBOX_PASSWORD, { delay: 100 });
   await pwdHandle.press('Enter', { delay: 100 });
   await pwdHandle.dispose();
 
-  await page.waitForSelector('#continue', { visible: true });
-  await page.click('#continue');
+  let retryCount = 3;
 
-  await page.waitForNavigation({ waitUntil: 'networkidle0' });
+  const retry = async () => {
+    retryCount -= 1;
+
+    if (retryCount < 0) {
+      return Promise.reject(new Error('Operation failed: max number of retries'));
+    }
+
+    await Promise.some([
+      page.waitFor('#confirmButtonTop', { visible: true, timeout: 40000 }),
+      page.waitFor('#retryLink', { visible: true, timeout: 40000 }),
+    ], 1).catch(() => Promise.delay(100).then(() => retry));
+
+    const retryButton = await page.$('#retryLink');
+    const confirmButton = await page.$('#confirmButtonTop');
+
+    if (confirmButton) {
+      return Promise.resolve();
+    }
+
+    if (retryButton) {
+      await Promise.delay(2000);
+      await page.click('#retryLink', { delay: 100 });
+    }
+
+    return Promise.delay(100).then(() => retry());
+  };
+
+  try {
+    await retry();
+  } catch (e) {
+    console.warn('failed to confirm', e);
+  }
+
+  // wait some time for button handlers
+  await Promise.delay(7000);
+
+  try {
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 }),
+      page.click('#confirmButtonTop', { delay: 100 }),
+    ]);
+  } catch (e) {
+    console.warn('failed to get nav event', e);
+  }
+
   const href = page.url();
 
   console.assert(/paypal-subscription-return\?/.test(href), 'url is %s - %s', href);
@@ -98,11 +140,19 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   await pwdHandle.dispose();
 
   await page.waitFor('#confirmButtonTop', { visible: true });
-  // for some reason even though its visible - it really is not
-  await Promise.delay(3000);
-  await page.click('#confirmButtonTop');
 
-  await page.waitForNavigation({ waitUntil: 'networkidle0' });
+  // wait some time for button handlers
+  await Promise.delay(7000);
+
+  try {
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 5000 }),
+      page.click('#confirmButtonTop', { delay: 100 }),
+    ]);
+  } catch (e) {
+    console.warn('failed to get nav event', e);
+  }
+
   const href = page.url();
 
   console.assert(/paypal-sale-return\?/.test(href), 'url is %s - %s', href);
