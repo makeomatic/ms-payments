@@ -2,10 +2,18 @@ const Promise = require('bluebird');
 const puppeteer = require('puppeteer');
 const url = require('url');
 
+// selector constants
+const EMAIL_INPUT = '#email';
+const PWD_INPUT = '#password';
+const CONFIRM_BUTTON = '#confirmButtonTop';
+const RETRY_LINK = '#retryLink';
+const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
+
 // instance variables
 let page;
 let chrome;
 
+// save screenshot in case of crash
 const saveCrashReport = fn => async (...args) => {
   let response;
   try {
@@ -17,6 +25,40 @@ const saveCrashReport = fn => async (...args) => {
   }
 
   return response;
+};
+
+// create retry function
+const createRetry = (retrySelectror, confirmSelector) => {
+  let retryCount = 3;
+  return async function retry() {
+    retryCount -= 1;
+
+    if (retryCount < 0) {
+      return Promise.reject(new Error('Operation failed: max number of retries'));
+    }
+
+    await Promise
+      .some([
+        page.waitFor(confirmSelector, { visible: true, timeout: 40000 }),
+        page.waitFor(retrySelectror, { visible: true, timeout: 40000 }),
+      ], 1)
+      .catch(() => Promise.delay(100).then(() => retry()));
+
+
+    const retryButton = await page.$(retrySelectror);
+    const confirmButton = await page.$(confirmSelector);
+
+    if (confirmButton) {
+      return Promise.resolve();
+    }
+
+    if (retryButton) {
+      await Promise.delay(2000);
+      await page.click(retrySelectror, { delay: 100 });
+    }
+
+    return Promise.delay(100).then(() => retry());
+  };
 };
 
 // headless testing
@@ -49,49 +91,21 @@ exports.closeChrome = async () => {
 };
 
 exports.approveSubscription = saveCrashReport(async (saleUrl) => {
-  console.info('try to subscribe to %s', saleUrl);
   await page.goto(saleUrl, { waitUntil: 'networkidle2' });
 
-  await page.waitFor('#email', { visible: true });
-  const emailHandle = await page.$('#email');
+  await page.waitFor(EMAIL_INPUT, { visible: true });
+  const emailHandle = await page.$(EMAIL_INPUT);
   await emailHandle.type(process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
   await emailHandle.press('Enter', { delay: 100 });
   await emailHandle.dispose();
 
-  await page.waitFor('#password', { visible: true });
-  const pwdHandle = await page.$('#password');
+  await page.waitFor(PWD_INPUT, { visible: true });
+  const pwdHandle = await page.$(PWD_INPUT);
   await pwdHandle.type(process.env.PAYPAL_SANDBOX_PASSWORD, { delay: 100 });
   await pwdHandle.press('Enter', { delay: 100 });
   await pwdHandle.dispose();
 
-  let retryCount = 3;
-
-  const retry = async () => {
-    retryCount -= 1;
-
-    if (retryCount < 0) {
-      return Promise.reject(new Error('Operation failed: max number of retries'));
-    }
-
-    await Promise.some([
-      page.waitFor('#confirmButtonTop', { visible: true, timeout: 40000 }),
-      page.waitFor('#retryLink', { visible: true, timeout: 40000 }),
-    ], 1).catch(() => Promise.delay(100).then(() => retry()));
-
-    const retryButton = await page.$('#retryLink');
-    const confirmButton = await page.$('#confirmButtonTop');
-
-    if (confirmButton) {
-      return Promise.resolve();
-    }
-
-    if (retryButton) {
-      await Promise.delay(2000);
-      await page.click('#retryLink', { delay: 100 });
-    }
-
-    return Promise.delay(100).then(() => retry());
-  };
+  const retry = createRetry(RETRY_LINK, CONFIRM_BUTTON);
 
   try {
     await retry();
@@ -105,7 +119,7 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   try {
     await Promise.all([
       page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 }),
-      page.click('#confirmButtonTop', { delay: 100 }),
+      page.click(CONFIRM_BUTTON, { delay: 100 }),
     ]);
   } catch (e) {
     console.warn('failed to get nav event', e);
@@ -125,21 +139,41 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
 
 exports.approveSale = saveCrashReport(async (saleUrl) => {
   console.info('trying to load %s', saleUrl);
-  await page.goto(saleUrl, { waitUntil: 'networkidle2' });
+  await page.goto(saleUrl, { waitUntil: 'networkidle2', timeout: 40000 });
+  await Promise.some([
+    page.waitFor(HAS_ACCOUNT_LINK, { visible: true }),
+    page.waitFor(CONFIRM_BUTTON, { visible: true }),
+  ], 1);
 
-  await page.waitFor('#email', { visible: true });
-  const emailHandle = await page.$('#email');
+  const hasAccount = await page.$(HAS_ACCOUNT_LINK);
+
+  if (hasAccount) {
+    await Promise.delay(3000);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      page.click(HAS_ACCOUNT_LINK, { delay: 100 }),
+    ]);
+  }
+
+  await page.waitFor(EMAIL_INPUT, { visible: true });
+  const emailHandle = await page.$(EMAIL_INPUT);
   await emailHandle.type(process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
   await emailHandle.press('Enter', { delay: 100 });
   await emailHandle.dispose();
 
-  await page.waitFor('#password', { visible: true });
-  const pwdHandle = await page.$('#password');
+  await page.waitFor(PWD_INPUT, { visible: true });
+  const pwdHandle = await page.$(PWD_INPUT);
   await pwdHandle.type(process.env.PAYPAL_SANDBOX_PASSWORD, { delay: 100 });
   await pwdHandle.press('Enter', { delay: 100 });
   await pwdHandle.dispose();
 
-  await page.waitFor('#confirmButtonTop', { visible: true });
+  const retry = createRetry(RETRY_LINK, CONFIRM_BUTTON);
+
+  try {
+    await retry();
+  } catch (e) {
+    console.warn('failed to confirm', e);
+  }
 
   // wait some time for button handlers
   await Promise.delay(7000);
@@ -147,14 +181,13 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   try {
     await Promise.all([
       page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 5000 }),
-      page.click('#confirmButtonTop', { delay: 100 }),
+      page.click(CONFIRM_BUTTON, { delay: 100 }),
     ]);
   } catch (e) {
     console.warn('failed to get nav event', e);
   }
 
   const href = page.url();
-
   console.assert(/paypal-sale-return\?/.test(href), 'url is %s - %s', href);
   const { query } = url.parse(href, true);
 
