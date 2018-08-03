@@ -15,7 +15,8 @@ describe('Sales suite', function SalesSuite() {
   const executeSale = 'payments.sale.execute';
   const listSale = 'payments.sale.list';
 
-  this.timeout(duration * 4);
+  this.timeout(duration * 5);
+  this.retries(4);
 
   let payments;
   let sale;
