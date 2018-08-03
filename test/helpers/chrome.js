@@ -37,19 +37,20 @@ const createRetry = (retrySelectror, confirmSelector) => {
       return Promise.reject(new Error('Operation failed: max number of retries'));
     }
 
-    await Promise
-      .some([
+    try {
+      await Promise.some([
         page.waitFor(confirmSelector, { visible: true, timeout: 40000 }),
         page.waitFor(retrySelectror, { visible: true, timeout: 40000 }),
-      ], 1)
-      .catch(() => Promise.delay(100).then(() => retry()));
-
+      ], 1);
+    } catch (e) {
+      return Promise.delay(100).then(retry);
+    }
 
     const retryButton = await page.$(retrySelectror);
     const confirmButton = await page.$(confirmSelector);
 
     if (confirmButton) {
-      return Promise.resolve();
+      return null;
     }
 
     if (retryButton) {
@@ -57,7 +58,7 @@ const createRetry = (retrySelectror, confirmSelector) => {
       await page.click(retrySelectror, { delay: 100 });
     }
 
-    return Promise.delay(100).then(() => retry());
+    return Promise.delay(100).then(retry);
   };
 };
 
