@@ -1,8 +1,8 @@
-const key = require('../../redisKey.js');
 const Errors = require('common-errors');
 const is = require('is');
 
 // helpers
+const key = require('../../redisKey.js');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 

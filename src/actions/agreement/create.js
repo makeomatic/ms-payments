@@ -9,7 +9,7 @@ const debug = require('debug')('ms-payments:paypal-plan');
 // helpers
 const key = require('../../redisKey');
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants');
-const { deserialize } = require('../../utils/redis');
+const { serialize, deserialize } = require('../../utils/redis');
 const {
   agreement: { create: billingAgreementCreate },
   plan: { create: billingPlanCreate, update: billingPlanUpdate },
@@ -141,11 +141,15 @@ function sendRequest(rawPlanData) {
 function setToken(response) {
   const tokenKey = key('subscription-token', response.token);
   const { owner, planId, redis } = this;
+  const { plan } = response.agreement;
+  const data = {
+    planId, owner, plan,
+  };
 
   // during trial original plan id is returned, however, payment model is different
   return redis
     .pipeline()
-    .hmset(tokenKey, { planId, owner })
+    .hmset(tokenKey, serialize(data))
     .expire(tokenKey, 3600 * 24)
     .exec()
     .return(response);

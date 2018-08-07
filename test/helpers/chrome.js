@@ -1,6 +1,7 @@
 const Promise = require('bluebird');
 const puppeteer = require('puppeteer');
 const url = require('url');
+const fs = require('fs').promises;
 
 // selector constants
 const EMAIL_INPUT = '#email';
@@ -20,46 +21,85 @@ const saveCrashReport = fn => async (...args) => {
     response = await fn(...args);
   } catch (e) {
     console.error('fail', e);
-    await page.screenshot({ fullPage: true, path: `./ss/crash-${Date.now()}.png` });
+    await page.screenshot({ fullPage: false, path: `./ss/crash-${Date.now()}.png` });
+    await fs.writeFile(`./ss/crash-${Date.now()}.html`, await page.content(), 'utf-8');
     throw e;
   }
 
   return response;
 };
 
+const typeAndSubmit = async (selector, text) => {
+  let handle;
+  try {
+    await page.waitFor(selector, { visible: true });
+    handle = await page.$(selector);
+    await handle.type(text, { delay: 100 });
+    await handle.press('Enter', { delay: 100 });
+  } finally {
+    if (handle) await handle.dispose();
+  }
+};
+
+const dispose = async (...handlers) => {
+  await Promise.all((
+    handlers
+      .filter(x => x !== null)
+      .map(x => x.dispose())
+  ));
+};
+
+const idle = async (type = '2') => {
+  await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 10000 });
+};
+
 // create retry function
-const createRetry = (retrySelectror, confirmSelector) => {
+const confirmRetry = (retrySelectror, confirmSelector) => {
   let retryCount = 3;
-  return async function retry() {
+  async function retry() {
     retryCount -= 1;
 
     if (retryCount < 0) {
       return Promise.reject(new Error('Operation failed: max number of retries'));
     }
 
+    let retryButton;
+    let confirmButton;
     try {
       await Promise.some([
         page.waitFor(confirmSelector, { visible: true, timeout: 40000 }),
         page.waitFor(retrySelectror, { visible: true, timeout: 40000 }),
       ], 1);
+
+      retryButton = await page.$(retrySelectror);
+      confirmButton = await page.$(confirmSelector);
+
+      if (confirmButton) {
+        console.info('pressed confirm btn');
+        await Promise.all([
+          idle('0'),
+          page.click(confirmSelector, { delay: 100 }),
+        ]);
+        return null;
+      }
+
+      if (retryButton) {
+        console.info('pressed retry btn');
+        await Promise.all([
+          idle('0'),
+          page.click(retrySelectror, { delay: 100 }),
+        ]);
+      }
     } catch (e) {
-      return Promise.delay(100).then(retry);
-    }
-
-    const retryButton = await page.$(retrySelectror);
-    const confirmButton = await page.$(confirmSelector);
-
-    if (confirmButton) {
-      return null;
-    }
-
-    if (retryButton) {
-      await Promise.delay(2000);
-      await page.click(retrySelectror, { delay: 100 });
+      console.info('failed to confirm/retry', e);
+    } finally {
+      await dispose(retryButton, confirmButton);
     }
 
     return Promise.delay(100).then(retry);
-  };
+  }
+
+  return retry();
 };
 
 // headless testing
@@ -71,6 +111,7 @@ exports.initChrome = async () => {
   });
   page = await chrome.newPage();
   await page.setRequestInterception(true);
+  await page.setViewport({ width: 1960, height: 1280 });
   page.on('request', (interceptedRequest) => {
     if (/api-sandbox.cappasity.matic.ninja/.test(interceptedRequest.url())) {
       return interceptedRequest.respond({
@@ -94,36 +135,14 @@ exports.closeChrome = async () => {
 exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   await page.goto(saleUrl, { waitUntil: 'networkidle2' });
 
-  await page.waitFor(EMAIL_INPUT, { visible: true });
-  const emailHandle = await page.$(EMAIL_INPUT);
-  await emailHandle.type(process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
-  await emailHandle.press('Enter', { delay: 100 });
-  await emailHandle.dispose();
-
-  await page.waitFor(PWD_INPUT, { visible: true });
-  const pwdHandle = await page.$(PWD_INPUT);
-  await pwdHandle.type(process.env.PAYPAL_SANDBOX_PASSWORD, { delay: 100 });
-  await pwdHandle.press('Enter', { delay: 100 });
-  await pwdHandle.dispose();
-
-  const retry = createRetry(RETRY_LINK, CONFIRM_BUTTON);
+  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
+  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   try {
-    await retry();
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON);
   } catch (e) {
-    console.warn('failed to confirm', e);
-  }
-
-  // wait some time for button handlers
-  await Promise.delay(7000);
-
-  try {
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 10000 }),
-      page.click(CONFIRM_BUTTON, { delay: 100 }),
-    ]);
-  } catch (e) {
-    console.warn('failed to get nav event', e);
+    console.warn('confirmation failed');
+    throw e;
   }
 
   const href = page.url();
@@ -151,41 +170,20 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   if (hasAccount) {
     await Promise.delay(3000);
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      idle('2'),
       page.click(HAS_ACCOUNT_LINK, { delay: 100 }),
     ]);
+    await dispose(hasAccount);
   }
 
-  await page.waitFor(EMAIL_INPUT, { visible: true });
-  const emailHandle = await page.$(EMAIL_INPUT);
-  await emailHandle.type(process.env.PAYPAL_SANDBOX_USERNAME, { delay: 100 });
-  await emailHandle.press('Enter', { delay: 100 });
-  await emailHandle.dispose();
-
-  await page.waitFor(PWD_INPUT, { visible: true });
-  const pwdHandle = await page.$(PWD_INPUT);
-  await pwdHandle.type(process.env.PAYPAL_SANDBOX_PASSWORD, { delay: 100 });
-  await pwdHandle.press('Enter', { delay: 100 });
-  await pwdHandle.dispose();
-
-  const retry = createRetry(RETRY_LINK, CONFIRM_BUTTON);
+  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
+  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   try {
-    await retry();
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON);
   } catch (e) {
-    console.warn('failed to confirm', e);
-  }
-
-  // wait some time for button handlers
-  await Promise.delay(7000);
-
-  try {
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle0', timeout: 5000 }),
-      page.click(CONFIRM_BUTTON, { delay: 100 }),
-    ]);
-  } catch (e) {
-    console.warn('failed to get nav event', e);
+    console.warn('failed to confirm');
+    throw e;
   }
 
   const href = page.url();
