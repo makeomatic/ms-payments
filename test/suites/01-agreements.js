@@ -94,6 +94,11 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then(inspectPromise());
 
+      result.plan.payment_definitions.forEach((definition) => {
+        assert.ok(definition.id);
+        assert.ok(definition.name);
+      });
+
       billingAgreement.id = result.id;
     });
 
@@ -130,6 +135,10 @@ describe('Agreements suite', function AgreementSuite() {
         .then(inspectPromise());
 
       assert.equal(result.agreement.id, billingAgreement.id);
+      result.agreement.plan.payment_definitions.forEach((definition) => {
+        assert.ok(definition.id);
+        assert.ok(definition.name);
+      });
     });
 
     it('Should pull updates for an agreement', async () => {
@@ -145,6 +154,11 @@ describe('Agreements suite', function AgreementSuite() {
         if (agreement.state.toLowerCase() === 'pending') {
           return Promise.delay(500).then(waitForAgreementToBecomeActive);
         }
+
+        agreement.agreement.plan.payment_definitions.forEach((definition) => {
+          assert.ok(definition.id);
+          assert.ok(definition.name);
+        });
 
         return null;
       }
