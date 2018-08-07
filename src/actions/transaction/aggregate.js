@@ -1,9 +1,9 @@
 const Promise = require('bluebird');
 const fsort = require('redis-filtered-sort');
-const key = require('../../redisKey');
 const is = require('is');
 
 // helpers
+const key = require('../../redisKey');
 const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
 
 /**

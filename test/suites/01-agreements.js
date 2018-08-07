@@ -89,6 +89,8 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('Should execute an approved agreement', async () => {
+      console.info('trying to approve %s', billingAgreement.url);
+
       const params = await approveSubscription(billingAgreement.url);
       const result = await dispatch(executeAgreement, { token: params.token })
         .reflect()
