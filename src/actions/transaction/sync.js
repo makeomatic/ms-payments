@@ -71,18 +71,13 @@ function findOwner() {
  * Fetch old agreement from redis
  * @return {Promise<{ agreement: Agreement }>}
  */
-function getOldAgreement() {
+async function getOldAgreement() {
   const agreementKey = key(AGREEMENT_DATA, this.agreementId);
+  const data = await this.redis.hgetall(agreementKey);
 
-  return this.redis
-    .hgetall(agreementKey)
-    .then((data) => {
-      if (!data) {
-        return null;
-      }
-
-      return deserialize(data);
-    });
+  return data
+    ? deserialize(data)
+    : null;
 }
 
 /**

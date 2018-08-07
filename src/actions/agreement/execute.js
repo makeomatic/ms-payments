@@ -26,61 +26,62 @@ function sendRequest() {
  * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
  * @param  {string} id - Agreement Id.
  */
-function fetchUpdatedAgreement(id, attempt = 0) {
-  return getAgreement(id, this.paypal).then((agreement) => {
-    const state = String(agreement.state).toLowerCase();
+async function fetchUpdatedAgreement(id, attempt = 0) {
+  const agreement = await getAgreement(id, this.paypal);
+  this.log.debug('fetched agreement %j', agreement);
+  const state = String(agreement.state).toLowerCase();
 
-    if (state === 'active') {
-      return agreement;
+  if (state === 'active') {
+    return agreement;
+  }
+
+  if (state === 'pending') {
+    if (attempt > 20) {
+      throw new HttpStatusError(504, 'paypal agreement stuck in pending state');
     }
 
-    if (state === 'pending') {
-      if (attempt > 20) {
-        throw new HttpStatusError(504, 'paypal agreement stuck in pending state');
-      }
+    return Promise
+      .bind(this, [id, attempt + 1])
+      .delay(250)
+      .spread(fetchUpdatedAgreement);
+  }
 
-      return Promise
-        .bind(this, [id, attempt + 1])
-        .delay(250)
-        .spread(fetchUpdatedAgreement);
-    }
-
-    this.log.error('Client tried to execute failed agreement: %j', agreement);
-
-    throw new HttpStatusError(412, `paypal agreement in state: ${state}, not "active"`);
-  });
+  this.log.error('Client tried to execute failed agreement: %j', agreement);
+  throw new HttpStatusError(412, `paypal agreement in state: ${state}, not "active"`);
 }
 
-function fetchPlan(agreement) {
-  return this.service.redis.hgetall(this.tokenKey)
-    .then(deserialize)
-    .then((data) => {
-      const { owner, planId, plan } = data;
+async function fetchPlan(agreement) {
+  const data = await this.service
+    .redis
+    .hgetall(this.tokenKey)
+    .then(deserialize);
 
-      return {
-        owner,
-        planId,
-        agreement: {
-          ...agreement,
-          plan: mergeWithNotNull(plan, agreement.plan),
-        },
-      };
-    });
+  return {
+    owner: data.owner,
+    planId: data.planId,
+    agreement: {
+      ...agreement,
+      plan: mergeWithNotNull(data.plan, agreement.plan),
+    },
+  };
 }
 
-function fetchSubscription(data) {
+async function fetchSubscription(data) {
   const { planId, agreement, owner } = data;
   const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
-  return getPlan.call(this.service, { params: planId }).then((plan) => {
-    const subscription = find(plan.subs, { name: subscriptionName });
-    return {
-      agreement, subscription, planId, owner,
-    };
-  });
+  const plan = await getPlan.call(this.service, { params: planId });
+  const subscription = find(plan.subs, { name: subscriptionName });
+
+  return {
+    agreement,
+    subscription,
+    planId,
+    owner,
+  };
 }
 
-function getCurrentAgreement(data) {
+async function getCurrentAgreement(data) {
   const { prefix, postfix, audience } = this.users;
   const path = `${prefix}.${postfix.getMetadata}`;
   const getRequest = {
@@ -88,16 +89,17 @@ function getCurrentAgreement(data) {
     audience,
   };
 
-  return this.service
+  const metadata = await this.service
     .amqp
     .publishAndWait(path, getRequest, { timeout: 5000 })
-    .get(audience)
-    .then(metadata => ({
-      data,
-      oldAgreement: metadata.agreement,
-      subscriptionType: metadata.subscriptionType,
-      subscriptionInterval: metadata.subscriptionInterval,
-    }));
+    .get(audience);
+
+  return {
+    data,
+    oldAgreement: metadata.agreement,
+    subscriptionType: metadata.subscriptionType,
+    subscriptionInterval: metadata.subscriptionInterval,
+  };
 }
 
 function syncTransactions({ agreement, owner, subscriptionInterval }) {
@@ -199,16 +201,14 @@ function updateRedis({
   return pipeline.exec().return({ agreement, owner, subscriptionInterval });
 }
 
-function verifyToken() {
-  return this.redis
-    .exists(this.tokenKey)
-    .then((exists) => {
-      if (!exists) {
-        throw new HttpStatusError(404, `subscription token ${this.token} was not found`);
-      }
+async function verifyToken() {
+  const exists = await this.redis.exists(this.tokenKey);
 
-      return true;
-    });
+  if (!exists) {
+    throw new HttpStatusError(404, `subscription token ${this.token} was not found`);
+  }
+
+  return true;
 }
 
 function agreementExecute({ params }) {

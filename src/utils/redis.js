@@ -22,11 +22,11 @@ function expander(accumulator, value, key) {
 }
 
 exports.serialize = function serialize(object) {
-  return reduce(object, reducer, {});
+  return reduce(object, reducer, Object.create(null));
 };
 
 exports.deserialize = function deserialize(object) {
-  return reduce(object, expander, {});
+  return reduce(object, expander, Object.create(null));
 };
 
 exports.calcSlot = calcSlot;
