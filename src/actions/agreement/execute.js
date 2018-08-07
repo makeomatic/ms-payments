@@ -5,8 +5,9 @@ const find = require('lodash/find');
 
 // helpers
 const key = require('../../redisKey');
-const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
-const { serialize } = require('../../utils/redis.js');
+const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { serialize, deserialize } = require('../../utils/redis');
+const { mergeWithNotNull } = require('../../utils/plans');
 
 // internal actions
 const { agreement: { execute, get: getAgreement }, handleError } = require('../../utils/paypal');
@@ -52,7 +53,19 @@ function fetchUpdatedAgreement(id, attempt = 0) {
 
 function fetchPlan(agreement) {
   return this.service.redis.hgetall(this.tokenKey)
-    .then(data => ({ ...data, agreement }));
+    .then(deserialize)
+    .then((data) => {
+      const { owner, planId, plan } = data;
+
+      return {
+        owner,
+        planId,
+        agreement: {
+          ...agreement,
+          plan: mergeWithNotNull(plan, agreement.plan),
+        },
+      };
+    });
 }
 
 function fetchSubscription(data) {

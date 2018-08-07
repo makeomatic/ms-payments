@@ -1,13 +1,15 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const forEach = require('lodash/forEach');
+const get = require('lodash/get');
 
 // helpers
 const key = require('../../redisKey');
-const { serialize, handlePipeline } = require('../../utils/redis');
+const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
 const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants');
 const { agreement: { get: getAgreement, searchTransactions }, handleError } = require('../../utils/paypal');
+const { mergeWithNotNull } = require('../../utils/plans');
 
 /**
  * Helper functions
@@ -66,6 +68,24 @@ function findOwner() {
 }
 
 /**
+ * Fetch old agreement from redis
+ * @return {Promise<{ agreement: Agreement }>}
+ */
+function getOldAgreement() {
+  const agreementKey = key(AGREEMENT_DATA, this.agreementId);
+
+  return this.redis
+    .hgetall(agreementKey)
+    .then((data) => {
+      if (!data) {
+        return null;
+      }
+
+      return deserialize(data);
+    });
+}
+
+/**
  * Insert data about transaction into common list of sales and
  * @param  {Transaction} transaction
  * @param  {String} owner
@@ -89,7 +109,7 @@ function updateCommon(transaction, owner) {
  * @param  {Object<{ agreement, transactions }>}  paypalData
  * @return {Promise<{ agreement, transactions }>}
  */
-function saveToRedis(owner, paypalData) {
+function saveToRedis(owner, paypalData, oldAgreement) {
   const { redis, agreementId } = this;
   const { agreement, transactions } = paypalData;
 
@@ -98,7 +118,13 @@ function saveToRedis(owner, paypalData) {
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
 
   // update current agreement details
-  pipeline.hmset(agreementKey, serialize({ agreement, state: agreement.state }));
+  pipeline.hmset(agreementKey, serialize({
+    agreement: {
+      ...agreement,
+      plan: mergeWithNotNull(get(oldAgreement, 'agreement.plan'), agreement.plan),
+    },
+    state: agreement.state,
+  }));
 
   // gather updates
   forEach(transactions, (transaction) => {
@@ -164,7 +190,7 @@ function transactionSync({ params }) {
   };
 
   return Promise
-    .bind(ctx, [findOwner, sendRequest])
+    .bind(ctx, [findOwner, sendRequest, getOldAgreement])
     .map(invoke)
     .spread(saveToRedis);
 }
