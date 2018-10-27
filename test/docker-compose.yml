@@ -1,33 +1,19 @@
 version: '2'
 
-networks:
-  static:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-        - subnet: 172.16.0.0/16
-
 services:
   redis:
     hostname: redis
     image: makeomatic/redis-cluster:3.2.9
-    networks:
-      static:
-        ipv4_address: 172.16.238.10
 
   rabbitmq:
     image: makeomatic/rabbitmq:3.6.12
     hostname: rabbitmq
-    networks:
-      static:
-        ipv4_address: 172.16.238.11
 
   ms-users:
     depends_on:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:10.12.0-10.0.1
+    image: makeomatic/ms-users:10.12.0-10.0.2
     hostname: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
@@ -35,10 +21,6 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
-    command: /bin/sh -c "sleep 10 && exec yarn start"
-    networks:
-      static:
-        ipv4_address: 172.16.238.12
 
   tester:
     image: makeomatic/node:10.12.0-chrome-tester
@@ -55,6 +37,3 @@ services:
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678
     command: tail -f /dev/null
-    networks:
-      static:
-        ipv4_address: 172.16.238.13

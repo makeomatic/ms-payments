@@ -58,8 +58,9 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     it('By default user should have free agreement', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
+      const result = await dispatch(forUserAgreement, { user: 'pristine@test.ru' });
       assert.equal(result.id, 'free');
+      assert.equal(result.agreement.id, 'free');
     });
 
     it('Should create an agreement', async () => {

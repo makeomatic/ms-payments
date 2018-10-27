@@ -24,7 +24,7 @@ function forUser({ params: message }) {
 
   function getAgreement(id) {
     if (id === FREE_PLAN_ID) {
-      return { id };
+      return { id, agreement: { id } };
     }
 
     const agreementKey = key(AGREEMENT_DATA, id);

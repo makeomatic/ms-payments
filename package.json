@@ -29,7 +29,7 @@
   },
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
-    "@microfleet/core": "^13.3.0",
+    "@microfleet/core": "^13.3.1",
     "@microfleet/transport-amqp": "^13.1.2",
     "@microfleet/validation": "^8.1.0",
     "@sentry/node": "^4.2.3",
