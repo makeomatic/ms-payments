@@ -6,7 +6,8 @@ const fs = require('fs').promises;
 // selector constants
 const EMAIL_INPUT = '#email';
 const PWD_INPUT = '#password';
-const CONFIRM_BUTTON = '#confirmButtonTop';
+const CONFIRM_PAYMENT_METHOD = '.confirmButton';
+const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton';
 const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
 
@@ -44,7 +45,7 @@ const typeAndSubmit = async (selector, text) => {
 const dispose = async (...handlers) => {
   await Promise.all((
     handlers
-      .filter(x => x !== null)
+      .filter(x => x != null)
       .map(x => x.dispose())
   ));
 };
@@ -54,46 +55,40 @@ const idle = async (type = '2') => {
 };
 
 // create retry function
-const confirmRetry = (retrySelectror, confirmSelector) => {
+const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
   let retryCount = 3;
   async function retry() {
     retryCount -= 1;
+
+    if (breaker && breaker.test(page.url())) {
+      return null;
+    }
 
     if (retryCount < 0) {
       return Promise.reject(new Error('Operation failed: max number of retries'));
     }
 
-    let retryButton;
-    let confirmButton;
     try {
-      await Promise.some([
+      const [jsHandle] = await Promise.some([
         page.waitFor(confirmSelector, { visible: true, timeout: 40000 }),
         page.waitFor(retrySelectror, { visible: true, timeout: 40000 }),
       ], 1);
 
-      retryButton = await page.$(retrySelectror);
-      confirmButton = await page.$(confirmSelector);
-
-      if (confirmButton) {
-        console.info('pressed confirm btn');
-        await Promise.all([
-          idle('0'),
-          page.click(confirmSelector, { delay: 100 }),
-        ]);
+      await Promise.all([
+        jsHandle.asElement().click({ delay: 100 }),
+        Promise.some([idle('0', { timeout: 20000 }), Promise.delay(15000)], 1),
+      ]);
+    } catch (e) {
+      // means we moved on to another page
+      if (e.message.startsWith('Protocol error (Runtime.callFunctionOn)')
+          || e.message.startsWith('Protocol error (Target.activateTarget)')
+          || e.message.startsWith('Node is detached from document')) {
         return null;
       }
 
-      if (retryButton) {
-        console.info('pressed retry btn');
-        await Promise.all([
-          idle('0'),
-          page.click(retrySelectror, { delay: 100 }),
-        ]);
-      }
-    } catch (e) {
       console.info('failed to confirm/retry', e);
-    } finally {
-      await dispose(retryButton, confirmButton);
+      await page.screenshot({ fullPage: false, path: `./ss/crash-${Date.now()}.png` });
+      await fs.writeFile(`./ss/crash-${Date.now()}.html`, await page.content(), 'utf-8');
     }
 
     return Promise.delay(100).then(retry);
@@ -107,11 +102,12 @@ const confirmRetry = (retrySelectror, confirmSelector) => {
 exports.initChrome = async () => {
   chrome = await puppeteer.launch({
     executablePath: '/usr/bin/chromium-browser',
-    args: ['--no-sandbox', '--headless', '--disable-gpu'],
+    args: ['--no-sandbox', '--headless', '--disable-gpu', '--disable-dev-shm-usage'],
   });
   page = await chrome.newPage();
   await page.setRequestInterception(true);
   await page.setViewport({ width: 1960, height: 1280 });
+
   page.on('request', (interceptedRequest) => {
     if (/api-sandbox.cappasity.matic.ninja/.test(interceptedRequest.url())) {
       return interceptedRequest.respond({
@@ -133,21 +129,29 @@ exports.closeChrome = async () => {
 };
 
 exports.approveSubscription = saveCrashReport(async (saleUrl) => {
-  await page.goto(saleUrl, { waitUntil: 'networkidle2' });
+  await Promise.all([
+    page.goto(saleUrl, { waitUntil: 'domcontentloaded' }),
+    page.waitForSelector(EMAIL_INPUT),
+  ]);
 
   await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   try {
-    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON);
+    console.info('[after login] --> ', page.url());
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, /paypal-subscription-return\?/);
+    console.info('[after payment method] --> ', page.url());
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, /paypal-subscription-return\?/);
+    console.info('[after confirm] --> ', page.url());
   } catch (e) {
     console.warn('confirmation failed');
     throw e;
   }
 
+  await page.screenshot({ fullPage: false, path: './ss/2.png' });
   const href = page.url();
-
   console.assert(/paypal-subscription-return\?/.test(href), 'url is %s - %s', href);
+
   const { query } = url.parse(href, true);
 
   return {
@@ -159,11 +163,14 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
 
 exports.approveSale = saveCrashReport(async (saleUrl) => {
   console.info('trying to load %s', saleUrl);
-  await page.goto(saleUrl, { waitUntil: 'networkidle2', timeout: 40000 });
-  await Promise.some([
-    page.waitFor(HAS_ACCOUNT_LINK, { visible: true }),
-    page.waitFor(CONFIRM_BUTTON, { visible: true }),
-  ], 1);
+
+  await Promise.all([
+    page.goto(saleUrl, { waitUntil: 'domcontentloaded' }),
+    Promise.some([
+      page.waitFor(HAS_ACCOUNT_LINK, { visible: true }),
+      page.waitFor(CONFIRM_BUTTON, { visible: true }),
+    ], 1),
+  ]);
 
   const hasAccount = await page.$(HAS_ACCOUNT_LINK);
 
@@ -180,7 +187,11 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   try {
-    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON);
+    console.info('[after login] --> ', page.url());
+    await confirmRetry(RETRY_LINK, CONFIRM_PAYMENT_METHOD, /paypal-sale-return\?/);
+    console.info('[after payment method] --> ', page.url());
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, /paypal-sale-return\?/);
+    console.info('[after confirm] --> ', page.url());
   } catch (e) {
     console.warn('failed to confirm');
     throw e;

@@ -1,9 +1,9 @@
-const TEST_CONFIG = require('../config');
 const Promise = require('bluebird');
 const assert = require('assert');
 const sinon = require('sinon');
-const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
+const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
+const TEST_CONFIG = require('../config');
 const { duration, simpleDispatcher } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
@@ -37,13 +37,11 @@ describe('Sales suite', function SalesSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should create sale', async () => {
-      sale = await dispatch(createSale, testSaleData)
-        .reflect()
-        .then(inspectPromise());
+      sale = await dispatch(createSale, testSaleData);
     });
 
     it('Should fail to execute unapproved sale', () => {
@@ -54,15 +52,11 @@ describe('Sales suite', function SalesSuite() {
 
     it('Should execute approved sale', async () => {
       const query = await approveSale(sale.url);
-      return dispatch(executeSale, query)
-        .reflect()
-        .then(inspectPromise());
+      await dispatch(executeSale, query);
     });
 
     it('Should create 3d printing sale', async () => {
-      sale = await dispatch(createDynamicSale, testDynamicSaleData)
-        .reflect()
-        .then(inspectPromise());
+      sale = await dispatch(createDynamicSale, testDynamicSaleData);
     });
 
     it('Should approve & execute 3d printing sale', async () => {
@@ -71,9 +65,7 @@ describe('Sales suite', function SalesSuite() {
       sinon.stub(payments.mailer, 'send').returns(Promise.resolve());
 
       try {
-        await dispatch(executeSale, query)
-          .reflect()
-          .then(inspectPromise());
+        await dispatch(executeSale, query);
         assert.ok(payments.mailer.send.calledOnce);
       } finally {
         payments.mailer.send.restore();
@@ -81,7 +73,7 @@ describe('Sales suite', function SalesSuite() {
     });
 
     it('Should list all sales', () => (
-      dispatch(listSale, {}).reflect().then(inspectPromise())
+      dispatch(listSale, {})
     ));
   });
 });

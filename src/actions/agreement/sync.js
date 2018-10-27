@@ -7,12 +7,12 @@ const listAgreements = require('./list.js');
 
 // constants
 const FETCH_USERS_LIMIT = 20;
-const AGREEMENT_PENDING_STATUS = JSON.stringify('Pending');
+const AGREEMENT_PENDING_STATUS = JSON.stringify('pending');
 const SUBSCRIPTION_TYPE = JSON.stringify('capp');
 
 function agreementSync({ params: message = {} }) {
-  const { _config, amqp, log } = this;
-  const { users: { prefix, postfix, audience } } = _config;
+  const { config, amqp, log } = this;
+  const { users: { prefix, postfix, audience } } = config;
   const usersList = `${prefix}.${postfix.list}`;
   const getMetadata = `${prefix}.${postfix.getMetadata}`;
   const pulledUsers = new Set();
@@ -72,7 +72,7 @@ function agreementSync({ params: message = {} }) {
           limit: FETCH_USERS_LIMIT,
           filter: {
             state: {
-              eq: AGREEMENT_PENDING_STATUS,
+              match: AGREEMENT_PENDING_STATUS,
             },
           },
         },

@@ -2,14 +2,18 @@
  * Core Configuration of @microfleet/payments
  */
 
-const mservice = require('@microfleet/core');
+const { routerExtension } = require('@microfleet/core');
 const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
 
 // plugins
-const { routerExtension } = mservice;
 const autoSchema = routerExtension('validate/schemaLessAction');
 const auditLog = routerExtension('audit/log');
+
+/**
+ * Required Unique Service Name
+ */
+exports.name = 'ms-payments';
 
 /**
  * Set to true if you want debug options

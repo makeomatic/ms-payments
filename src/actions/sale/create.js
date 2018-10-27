@@ -11,8 +11,8 @@ const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const { payment: { create: createPayment } } = require('../../utils/paypal');
 
 function saleCreate({ params: message }) {
-  const { _config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = _config;
+  const { config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = config;
   const promise = Promise.bind(this);
   const path = `${prefix}.${postfix.getMetadata}`;
 
@@ -27,11 +27,11 @@ function saleCreate({ params: message }) {
         total: message.amount,
         currency: 'USD',
       },
-      notify_url: _config.urls.sale_notify,
+      notify_url: config.urls.sale_notify,
     }],
     redirect_urls: {
-      return_url: _config.urls.sale_return,
-      cancel_url: _config.urls.sale_cancel,
+      return_url: config.urls.sale_return,
+      cancel_url: config.urls.sale_cancel,
     },
   };
 
@@ -67,7 +67,7 @@ function saleCreate({ params: message }) {
   }
 
   function sendRequest(request) {
-    return createPayment(request, _config.paypal).then((newSale) => {
+    return createPayment(request, config.paypal).then((newSale) => {
       const approval = find(newSale.links, { rel: 'approval_url' });
       if (approval === null) {
         throw new NotSupportedError('Unexpected PayPal response!');

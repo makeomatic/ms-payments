@@ -1,5 +1,5 @@
 const Promise = require('bluebird');
-const MService = require('@microfleet/core');
+const { Microfleet, ConnectorsTypes } = require('@microfleet/core');
 const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
 const Mailer = require('ms-mailer-client');
@@ -14,7 +14,7 @@ const syncAgreements = require('./actions/agreement/sync');
  * Class representing payments handling
  * @extends MService
  */
-class Payments extends MService {
+class Payments extends Microfleet {
   /**
    * Configuration options for the service
    * @type {Object}
@@ -39,7 +39,7 @@ class Payments extends MService {
 
     // add migration connector
     if (this.config.migrations.enabled === true) {
-      this.addConnector(MService.ConnectorsTypes.migration, () => (
+      this.addConnector(ConnectorsTypes.migration, () => (
         this.migrate('redis', `${__dirname}/migrations`)
       ));
     }
@@ -47,7 +47,7 @@ class Payments extends MService {
     // init plans and sync transactions during startup of production
     // service
     if (process.env.NODE_ENV === 'production') {
-      this.addConnector(MService.ConnectorsTypes.application, () => (
+      this.addConnector(ConnectorsTypes.application, () => (
         Promise
           .bind(this)
           .then(this.initPlans)
