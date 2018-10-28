@@ -24,9 +24,9 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 function agreementBill({ params: input }) {
   const { agreement: id, subscriptionInterval, username } = input;
   const {
-    _config, redis, amqp, log,
+    config, redis, amqp, log,
   } = this;
-  const { users: { prefix, postfix } } = _config;
+  const { users: { prefix, postfix } } = config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
@@ -152,7 +152,7 @@ function agreementBill({ params: input }) {
 
     const updateRequest = {
       username: data.agreement.owner,
-      audience: _config.users.audience,
+      audience: config.users.audience,
       metadata: {
         $set: {
           nextCycle: data.nextCycle.valueOf(),

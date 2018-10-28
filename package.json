@@ -13,9 +13,7 @@
     "prepublishOnly": "yarn compile",
     "semantic-release": "semantic-release",
     "docker-release": "mdep docker release",
-    "release": "yarn --frozen-lockfile && yarn semantic-release",
-    "commitmsg": "commitlint -e $GIT_PARAMS",
-    "preparecommitmsg": "./node_modules/@makeomatic/deploy/git-hooks/prepare-commit-msg $GIT_PARAMS"
+    "release": "yarn --frozen-lockfile && yarn semantic-release"
   },
   "repository": {
     "type": "git",
@@ -31,56 +29,56 @@
   },
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
-    "@microfleet/core": "^10.8.1",
+    "@microfleet/core": "^13.3.1",
     "@microfleet/transport-amqp": "^13.1.2",
-    "bluebird": "^3.5.1",
+    "@microfleet/validation": "^8.1.0",
+    "@sentry/node": "^4.2.3",
+    "bluebird": "^3.5.2",
     "bunyan": "^1.8.12",
     "bunyan-sentry-stream": "^1.1.0",
     "bytes": "^3.0.0",
     "cluster-key-slot": "^1.0.12",
     "common-errors": "^1.0.5",
-    "debug": "^3.0.0",
-    "ioredis": "^3.2.2",
-    "lodash": "^4.17.10",
+    "debug": "^4.1.0",
+    "ioredis": "^4.2.0",
+    "lodash": "^4.17.11",
     "moment": "^2.22.2",
-    "ms-conf": "^3.1.2",
-    "ms-mailer-client": "^7.0.0",
+    "ms-conf": "^3.3.1",
+    "ms-mailer-client": "^8.0.1",
     "ms-mailer-templates": "^1.10.0",
-    "ms-validation": "^7.1.0",
     "paypal-rest-sdk": "^1.8.1",
-    "raven": "^2.6.3",
     "redis-filtered-sort": "^2.3.0",
-    "request": "^2.87.0",
+    "request": "^2.88.0",
     "request-promise": "^4.2.1",
-    "stdout-stream": "^1.4.0",
+    "stdout-stream": "^1.4.1",
     "urlsafe-base64": "^1.0.0",
-    "yargs": "^12.0.1"
+    "yargs": "^12.0.2"
   },
   "devDependencies": {
-    "@babel/cli": "^7.0.0-beta.56",
-    "@babel/core": "^7.0.0-beta.56",
-    "@babel/plugin-proposal-class-properties": "^7.0.0-beta.56",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0-beta.56",
-    "@babel/plugin-transform-strict-mode": "^7.0.0-beta.56",
-    "@babel/register": "^7.0.0-beta.56",
-    "@makeomatic/deploy": "^7.0.1",
-    "@semantic-release/exec": "^3.0.1",
-    "babel-eslint": "^8.2.6",
-    "babel-plugin-istanbul": "^5.0.0",
+    "@babel/cli": "^7.1.2",
+    "@babel/core": "^7.1.2",
+    "@babel/plugin-proposal-class-properties": "^7.1.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
+    "@babel/plugin-transform-strict-mode": "^7.0.0",
+    "@babel/register": "^7.0.0",
+    "@makeomatic/deploy": "^8.2.3",
+    "@semantic-release/exec": "^3.3.0",
+    "babel-eslint": "^10.0.1",
+    "babel-plugin-istanbul": "^5.1.0",
     "bluebird-retry": "^0.11.0",
-    "codecov": "^3.0.4",
+    "codecov": "^3.1.0",
     "cross-env": "^5.2.0",
-    "eslint": "^5.3.0",
+    "eslint": "^5.8.0",
     "eslint-config-makeomatic": "^3.0.0",
-    "eslint-plugin-import": "^2.13.0",
-    "eslint-plugin-mocha": "^5.1.0",
-    "eslint-plugin-promise": "^3.8.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-mocha": "^5.2.0",
+    "eslint-plugin-promise": "^4.0.1",
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
-    "nyc": "^12.0.2",
-    "puppeteer": "1.5.0",
+    "nyc": "^13.1.0",
+    "puppeteer": "=1.4.0",
     "rimraf": "^2.6.1",
-    "sinon": "^6.1.4"
+    "sinon": "^7.1.0"
   },
   "engine": {
     "node": ">= 8.9.0"
@@ -91,5 +89,11 @@
     "src/",
     "schemas/",
     "yarn.lock"
-  ]
+  ],
+  "husky": {
+    "hooks": {
+      "commit-msg": "commitlint -e $HUSKY_GIT_PARAMS",
+      "prepare-commit-msg": "./node_modules/@makeomatic/deploy/git-hooks/prepare-commit-msg $HUSKY_GIT_PARAMS"
+    }
+  }
 }

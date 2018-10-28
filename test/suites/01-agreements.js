@@ -54,15 +54,13 @@ describe('Agreements suite', function AgreementSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('By default user should have free agreement', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
-        .reflect()
-        .then(inspectPromise());
-
+      const result = await dispatch(forUserAgreement, { user: 'pristine@test.ru' });
       assert.equal(result.id, 'free');
+      assert.equal(result.agreement.id, 'free');
     });
 
     it('Should create an agreement', async () => {
@@ -71,9 +69,7 @@ describe('Agreements suite', function AgreementSuite() {
         owner: 'test@test.ru',
       };
 
-      billingAgreement = await dispatch(createAgreement, data)
-        .reflect()
-        .then(inspectPromise());
+      billingAgreement = await dispatch(createAgreement, data);
     });
 
     it('Should fail to execute on an unknown token', () => {
@@ -92,9 +88,7 @@ describe('Agreements suite', function AgreementSuite() {
       console.info('trying to approve %s', billingAgreement.url);
 
       const params = await approveSubscription(billingAgreement.url);
-      const result = await dispatch(executeAgreement, { token: params.token })
-        .reflect()
-        .then(inspectPromise());
+      const result = await dispatch(executeAgreement, { token: params.token });
 
       result.plan.payment_definitions.forEach((definition) => {
         assert.ok(definition.id);
@@ -111,30 +105,22 @@ describe('Agreements suite', function AgreementSuite() {
         trialDiscount: 10,
       };
 
-      billingAgreement = await dispatch(createAgreement, data)
-        .reflect()
-        .then(inspectPromise());
+      billingAgreement = await dispatch(createAgreement, data);
     });
 
     it('Should execute an approved trial agreement', async () => {
       const params = await approveSubscription(billingAgreement.url);
-      const result = await dispatch(executeAgreement, { token: params.token })
-        .reflect()
-        .then(inspectPromise());
+      const result = await dispatch(executeAgreement, { token: params.token });
 
       billingAgreement.id = result.id;
     });
 
     it('Should list all agreements', () => {
-      return dispatch(listAgreement, {})
-        .reflect()
-        .then(inspectPromise());
+      return dispatch(listAgreement, {});
     });
 
     it('Should get agreement for user', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
-        .reflect()
-        .then(inspectPromise());
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
       assert.equal(result.agreement.id, billingAgreement.id);
       result.agreement.plan.payment_definitions.forEach((definition) => {
@@ -147,9 +133,7 @@ describe('Agreements suite', function AgreementSuite() {
       this.timeout(duration);
 
       async function waitForAgreementToBecomeActive() {
-        await dispatch(syncAgreements, {})
-          .reflect()
-          .then(inspectPromise());
+        await dispatch(syncAgreements, {});
 
         const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
 
@@ -170,16 +154,11 @@ describe('Agreements suite', function AgreementSuite() {
 
     // this test is perf
     it('Should cancel agreement', () => {
-      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' })
-        .reflect()
-        .then(inspectPromise());
+      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
     });
 
     it('Should get free agreement for user after cancelling', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' })
-        .reflect()
-        .then(inspectPromise());
-
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
       assert.equal(result.id, 'free');
     });
   });

@@ -6,8 +6,8 @@ const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
 function forUser({ params: message }) {
-  const { _config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = _config;
+  const { config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = config;
   const { user } = message;
 
   function getId() {
@@ -24,7 +24,7 @@ function forUser({ params: message }) {
 
   function getAgreement(id) {
     if (id === FREE_PLAN_ID) {
-      return { id };
+      return { id, agreement: { id } };
     }
 
     const agreementKey = key(AGREEMENT_DATA, id);

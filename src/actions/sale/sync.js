@@ -15,8 +15,8 @@ const { payment: { list: listTransactions } } = require('../../utils/paypal');
 const TRANSACTIONS_LIMIT = 20;
 
 function transactionSync({ params: message = {} }) {
-  const { _config, redis } = this;
-  const { paypal: paypalConfig } = _config;
+  const { config, redis } = this;
+  const { paypal: paypalConfig } = config;
 
   function updateCommon(sale, owner) {
     return Promise.bind(this, parseSale(sale, owner)).then(saveCommon);

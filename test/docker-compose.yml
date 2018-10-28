@@ -3,39 +3,37 @@ version: '2'
 services:
   redis:
     hostname: redis
-    container_name: redis
     image: makeomatic/redis-cluster:3.2.9
 
   rabbitmq:
     image: makeomatic/rabbitmq:3.6.12
-    container_name: rabbitmq
     hostname: rabbitmq
 
   ms-users:
-    links:
+    depends_on:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:10.6.0-9.4.2
+    image: makeomatic/ms-users:10.12.0-10.0.2
     hostname: ms-users
-    container_name: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
     environment:
+      DEBUG: ${DEBUG}
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
 
   tester:
-    container_name: tester
-    image: makeomatic/node:10.8.0-chrome-tester
+    image: makeomatic/node:10.12.0-chrome-tester
     links:
       - redis
       - rabbitmq
       - ms-users
     working_dir: /src
     volumes:
-      - ${PWD}:/src
+      - ${PWD}:/src:cached
     environment:
+      DEBUG: ${DEBUG}
       NODE_ENV: "test"
       PAYPAL_RETRY_TIMEOUT: 30000
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com

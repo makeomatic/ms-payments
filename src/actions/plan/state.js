@@ -11,9 +11,9 @@ const { serialize } = require('../../utils/redis');
 const { plan: { update } } = require('../../utils/paypal');
 
 function planState({ params: message }) {
-  const { _config, redis, log } = this;
+  const { config, redis, log } = this;
   const { id, state } = message;
-  const { paypal: paypalConfig } = _config;
+  const { paypal: paypalConfig } = config;
 
   function getPlan() {
     return redis

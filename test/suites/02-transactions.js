@@ -1,7 +1,7 @@
-const TEST_CONFIG = require('../config');
 const assert = require('assert');
-const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
 const { inspectPromise } = require('@makeomatic/deploy');
+const TEST_CONFIG = require('../config');
+const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
 const { duration, simpleDispatcher } = require('../utils');
 const { testAgreementData, testPlanData } = require('../data/paypal');
 
@@ -57,16 +57,12 @@ describe('Transactions suite', function TransactionsSuite() {
       owner: userId,
     };
 
-    agreement = await dispatch(createAgreement, data)
-      .reflect()
-      .then(inspectPromise());
+    agreement = await dispatch(createAgreement, data);
   });
 
   before('executeAgreement', async () => {
     const parsed = await approveSubscription(agreement.url);
-    agreement = await dispatch(executeAgreement, { token: parsed.token })
-      .reflect()
-      .then(inspectPromise());
+    agreement = await dispatch(executeAgreement, { token: parsed.token });
   });
 
   before('getAgreement', async () => {
@@ -84,21 +80,17 @@ describe('Transactions suite', function TransactionsSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should sync transactions', () => {
       const start = '2015-01-01';
       const end = '2016-12-31';
-      return dispatch(syncTransaction, { id: agreement.id, start, end })
-        .reflect()
-        .then(inspectPromise());
+      return dispatch(syncTransaction, { id: agreement.id, start, end });
     });
 
     it('Should list all transactions', () => (
       dispatch(listTransaction, {})
-        .reflect()
-        .then(inspectPromise())
     ));
 
     it('Should list common transactions', () => (
@@ -108,8 +100,6 @@ describe('Transactions suite', function TransactionsSuite() {
           status: 'Completed',
         },
       })
-        .reflect()
-        .then(inspectPromise())
     ));
 
     it('should return aggregate list of transactions', async () => {
@@ -123,10 +113,7 @@ describe('Transactions suite', function TransactionsSuite() {
         },
       };
 
-      const [response] = await dispatch(transactionsAggregate, opts)
-        .reflect()
-        .then(inspectPromise());
-
+      const [response] = await dispatch(transactionsAggregate, opts);
       assert.ok(response.amount);
     });
   });

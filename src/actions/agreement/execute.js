@@ -6,7 +6,7 @@ const find = require('lodash/find');
 // helpers
 const key = require('../../redisKey');
 const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
-const { serialize, deserialize } = require('../../utils/redis');
+const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
 
 // internal actions
@@ -37,7 +37,8 @@ async function fetchUpdatedAgreement(id, attempt = 0) {
 
   if (state === 'pending') {
     if (attempt > 20) {
-      throw new HttpStatusError(504, 'paypal agreement stuck in pending state');
+      this.log.warn({ agreement }, 'failed to move agreement to active/failed state');
+      return agreement;
     }
 
     return Promise
@@ -202,11 +203,19 @@ function updateRedis({
 }
 
 async function verifyToken() {
-  const exists = await this.redis.exists(this.tokenKey);
+  const [exists, data] = await this.redis
+    .pipeline()
+    .exists(this.tokenKey)
+    .hgetall(this.tokenKey)
+    .exec()
+    .then(handlePipeline);
 
   if (!exists) {
     throw new HttpStatusError(404, `subscription token ${this.token} was not found`);
   }
+
+  this.log = this.log.child({ agreementData: deserialize(data) });
+  this.log.info('verify token succeeded');
 
   return true;
 }

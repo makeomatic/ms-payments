@@ -21,8 +21,8 @@ const ACTION_TO_STATE = {
 };
 
 function agreementState({ params: message }) {
-  const { _config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = _config;
+  const { config, redis, amqp } = this;
+  const { users: { prefix, postfix, audience } } = config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
 
@@ -50,7 +50,7 @@ function agreementState({ params: message }) {
     }
 
     return operations[state]
-      .call(this, id, { note }, _config.paypal)
+      .call(this, id, { note }, config.paypal)
       .catch((err) => {
         throw new Errors.HttpStatusError(err.httpStatusCode, `${id}: ${err.response.message}`, err.response.name);
       })

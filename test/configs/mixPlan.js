@@ -40,7 +40,7 @@ module.exports = exports = function mixPlan(userId, params) {
   };
 
   const subscription = ld.find(plan.subs, { name: 'month' });
-  const nextCycle = moment().add(1, 'month').format();
+  const nextCycle = moment().add(1, 'month').valueOf();
   const update = {
     userId,
     audience: params.audience,

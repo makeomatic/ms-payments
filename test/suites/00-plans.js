@@ -1,8 +1,8 @@
-const TEST_CONFIG = require('../config');
 const assert = require('assert');
 const Promise = require('bluebird');
-const { duration, simpleDispatcher } = require('../utils');
 const { inspectPromise } = require('@makeomatic/deploy');
+const { duration, simpleDispatcher } = require('../utils');
+const TEST_CONFIG = require('../config');
 
 describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
@@ -56,7 +56,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should create a plan', async () => {
@@ -89,7 +89,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should update plan info', () => {
@@ -149,7 +149,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should fail to activate on an unknown plan id', async () => {
@@ -171,7 +171,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.name, 'ValidationError');
+      assert.equal(error.name, 'HttpStatusError');
     });
 
     it('Should list all plans', () => {
