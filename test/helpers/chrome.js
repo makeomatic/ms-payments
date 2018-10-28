@@ -56,7 +56,7 @@ const idle = async (type = '2') => {
 
 // create retry function
 const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
-  let retryCount = 3;
+  let retryCount = 5;
   async function retry() {
     retryCount -= 1;
 
@@ -91,7 +91,7 @@ const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
       await fs.writeFile(`./ss/crash-${Date.now()}.html`, await page.content(), 'utf-8');
     }
 
-    return Promise.delay(100).then(retry);
+    return Promise.delay(500).then(retry);
   }
 
   return retry();
