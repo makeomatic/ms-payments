@@ -1,11 +1,13 @@
+const Promise = require('bluebird');
+const moment = require('moment');
 const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
-const TEST_CONFIG = require('../config');
-const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
-const { duration, simpleDispatcher } = require('../utils');
-const { testAgreementData, testPlanData } = require('../data/paypal');
 
 describe('Transactions suite', function TransactionsSuite() {
+  const TEST_CONFIG = require('../config');
+  const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
+  const { duration, simpleDispatcher } = require('../utils');
+  const { testAgreementData, testPlanData } = require('../data/paypal');
   const Payments = require('../../src');
 
   const syncTransaction = 'payments.transaction.sync';
@@ -18,7 +20,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const transactionsAggregate = 'payments.transaction.aggregate';
   const listCommonTransactions = 'payments.transaction.common';
 
-  this.timeout(duration * 4);
+  this.timeout(duration * 30);
 
   let payments;
   let agreement;
@@ -83,10 +85,17 @@ describe('Transactions suite', function TransactionsSuite() {
       assert.equal(error.name, 'HttpStatusError');
     });
 
-    it('Should sync transactions', () => {
-      const start = '2015-01-01';
-      const end = '2016-12-31';
-      return dispatch(syncTransaction, { id: agreement.id, start, end });
+    it('Should sync transactions', async () => {
+      const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
+      const end = moment().endOf('year').format('YYYY-MM-DD');
+
+      let state;
+      do {
+        // eslint-disable-next-line
+        state = (await dispatch(syncTransaction, { id: agreement.id, start, end })).agreement.state;
+        // eslint-disable-next-line
+        if (state === 'Pending') await Promise.delay(5000);
+      } while (state === 'Pending');
     });
 
     it('Should list all transactions', () => (

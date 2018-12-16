@@ -105,12 +105,14 @@ function updateCommon(transaction, owner) {
  * @return {Promise<{ agreement, transactions }>}
  */
 function saveToRedis(owner, paypalData, oldAgreement) {
-  const { redis, agreementId } = this;
+  const { redis, agreementId, log } = this;
   const { agreement, transactions } = paypalData;
 
   const pipeline = redis.pipeline();
   const updates = [];
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
+
+  log.info({ agreement, transactions }, 'received data from paypal');
 
   // update current agreement details
   pipeline.hmset(agreementKey, serialize({
@@ -161,9 +163,7 @@ function invoke(fn) {
  * @return {Promise}
  */
 function transactionSync({ params }) {
-  const {
-    config, redis, amqp, log,
-  } = this;
+  const { config, redis, amqp, log } = this;
   const { paypal: paypalConfig } = config;
   const { users: { prefix, postfix, audience } } = config;
   const path = `${prefix}.${postfix.list}`;
