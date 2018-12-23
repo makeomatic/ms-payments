@@ -73,7 +73,7 @@ class Payments extends Microfleet {
 
         const err = plan.reason();
         if (err.status !== 409) {
-          this.log.error('Error creating plan', err.stack);
+          this.log.error({ err }, 'Error creating plan');
         } else {
           this.log.warn(err.message);
         }
@@ -91,7 +91,7 @@ class Payments extends Microfleet {
         return this.log.info('completed sync of missing transactions');
       })
       .catch((err) => {
-        this.log.error('failed to sync sale transactions', err.stack);
+        this.log.error({ err }, 'failed to sync sale transactions');
       });
 
     syncAgreements.call(this, {})
@@ -99,7 +99,7 @@ class Payments extends Microfleet {
         return this.log.info('completed sync of agreements');
       })
       .catch((err) => {
-        this.log.error('failed to sync recurring transactions', err.stack);
+        this.log.error({ err }, 'failed to sync recurring transactions');
       });
 
     return null;

@@ -47,7 +47,7 @@ async function fetchUpdatedAgreement(id, attempt = 0) {
       .spread(fetchUpdatedAgreement);
   }
 
-  this.log.error('Client tried to execute failed agreement: %j', agreement);
+  this.log.error({ agreement }, 'Client tried to execute failed agreement: %j');
   throw new HttpStatusError(412, `paypal agreement in state: ${state}, not "active"`);
 }
 
@@ -119,7 +119,7 @@ function syncTransactions({ agreement, owner, subscriptionInterval }) {
 function checkAndDeleteAgreement(input) {
   const { data, oldAgreement, subscriptionType } = input;
 
-  this.log.info('checking agreement data %j', input);
+  this.log.info(input, 'checking agreement data');
   const oldAgreementIsNotFree = oldAgreement !== FREE_PLAN_ID;
   const oldAgreementIsNotNew = oldAgreement !== data.agreement.id;
   const oldAgreementIsPresent = oldAgreement && oldAgreementIsNotFree && oldAgreementIsNotNew;
@@ -127,7 +127,7 @@ function checkAndDeleteAgreement(input) {
 
   if (oldAgreementIsPresent && subscriptionTypeIsPaypal) {
     // should we really cancel the agreement?
-    this.log.warn('cancelling agreement %s, because of new agreement %j', oldAgreement, data.agreement);
+    this.log.warn({ oldAgreement, agreement: data.agreement }, 'cancelling old agreement because of new agreement');
 
     // remove old agreement if setting new one
     return setState
@@ -138,7 +138,7 @@ function checkAndDeleteAgreement(input) {
         },
       })
       .catch({ statusCode: 400 }, (err) => {
-        this.log.warn('oldAgreement was already cancelled', err);
+        this.log.warn({ err }, 'oldAgreement was already cancelled');
       })
       .return(input);
   }
