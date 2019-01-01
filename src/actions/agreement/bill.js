@@ -33,7 +33,7 @@ function agreementBill({ params: input }) {
   log.debug('billing %s on %s', username, id);
 
   // pull agreement data
-  function getAgreement() {
+  async function getAgreement() {
     if (id === FREE_PLAN_ID) {
       return {
         owner: username,
@@ -44,23 +44,35 @@ function agreementBill({ params: input }) {
     }
 
     const agreementKey = key(AGREEMENT_DATA, id);
-    return redis
-      .hmgetBuffer(agreementKey, AGREEMENT_KEYS)
-      .then((data) => {
-        const {
-          agreement, plan, owner, state,
-        } = agreementParser(data);
-        if (state.toLowerCase() === 'cancelled') {
-          throw new NotPermitted('Operation not permitted on cancelled agreements.');
-        }
+    const data = await redis.hmgetBuffer(agreementKey, AGREEMENT_KEYS);
 
-        agreement.owner = owner;
-        // FIXME: PAYPAL agreement doesn't have embedded plan id...
-        // bug in paypal
-        agreement.plan.id = plan;
+    let agreement;
+    let plan;
+    let owner;
+    let state;
+    try {
+      /* eslint-disable prefer-destructuring */
+      const parsed = agreementParser(data);
+      agreement = parsed.agreement;
+      plan = parsed.plan;
+      owner = parsed.owner;
+      state = parsed.state;
+      /* eslint-enable prefer-destructuring */
+    } catch (e) {
+      this.log.error({ err: e, keys: AGREEMENT_KEYS }, 'failed to fetch agreement data');
+      throw e;
+    }
 
-        return agreement;
-      });
+    if (state.toLowerCase() === 'cancelled') {
+      throw new NotPermitted('Operation not permitted on cancelled agreements.');
+    }
+
+    agreement.owner = owner;
+    // FIXME: PAYPAL agreement doesn't have embedded plan id...
+    // bug in paypal
+    agreement.plan.id = plan;
+
+    return agreement;
   }
 
   // pull plan data
