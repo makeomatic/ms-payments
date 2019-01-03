@@ -76,8 +76,8 @@
     "mkdirp": "^0.5.1",
     "mocha": "^5.2.0",
     "nyc": "^13.1.0",
-    "puppeteer": "=1.9.0",
-    "rimraf": "^2.6.1",
+    "puppeteer": "=1.4.0",
+    "rimraf": "^2.6.3",
     "sinon": "^7.1.0"
   },
   "engine": {

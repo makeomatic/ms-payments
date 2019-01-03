@@ -54,6 +54,16 @@ const idle = async (type = '2') => {
   await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 10000 });
 };
 
+const isIgnorableError = (e) => {
+  if (e.message.includes('Protocol error (Runtime.callFunctionOn)')
+      || e.message.includes('Protocol error (Target.activateTarget)')
+      || e.message.includes('Node is detached from document')) {
+    return true;
+  }
+
+  return false;
+};
+
 // create retry function
 const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
   let retryCount = 5;
@@ -79,14 +89,12 @@ const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
         Promise.some([idle('0', { timeout: 20000 }), Promise.delay(15000)], 1),
       ]);
     } catch (e) {
-      // means we moved on to another page
-      if (e.message.startsWith('Protocol error (Runtime.callFunctionOn)')
-          || e.message.startsWith('Protocol error (Target.activateTarget)')
-          || e.message.startsWith('Node is detached from document')) {
+      if (isIgnorableError(e)) {
         return null;
       }
 
       console.info('failed to confirm/retry', e);
+      console.info('message:', e.message);
       await page.screenshot({ fullPage: false, path: `./ss/crash-${Date.now()}.png` });
       await fs.writeFile(`./ss/crash-${Date.now()}.html`, await page.content(), 'utf-8');
     }
