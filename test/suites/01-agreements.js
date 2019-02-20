@@ -25,7 +25,7 @@ describe('Agreements suite', function AgreementSuite() {
   let payments;
   let dispatch;
 
-  this.timeout(duration * 8);
+  this.timeout(duration * 16);
 
   before('startService', async () => {
     payments = new Payments(TEST_CONFIG);

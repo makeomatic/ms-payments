@@ -13,7 +13,7 @@ services:
     depends_on:
       - redis
       - rabbitmq
-    image: makeomatic/ms-users:10.14.1
+    image: makeomatic/ms-users
     hostname: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
@@ -24,7 +24,8 @@ services:
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
 
   tester:
-    image: makeomatic/node:10.15.0-chrome-tester
+    # because chrome 71 bugs out with paypal
+    image: makeomatic/node:10.13.0-chrome-tester
     links:
       - redis
       - rabbitmq

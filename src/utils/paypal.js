@@ -14,17 +14,20 @@ const promisify = (ops, context) => ops.reduce((acc, op) => {
   // init retry op
   acc[op] = function retryPaypalRequest(...args) {
     const tryOp = (counter = 0) => (
-      opAsync(...args).catch(invalidServerResponsePredicate, (err) => {
-        if (counter > retryCounter) throw err;
+      opAsync(...args)
+        .catch(invalidServerResponsePredicate, (err) => {
+          if (counter > retryCounter) throw err;
 
-        // increment counter
-        return Promise.resolve(counter + 1).delay(retryDelay).then(tryOp);
-      })
+          // increment counter
+          return Promise.resolve(counter + 1).delay(retryDelay).then(tryOp);
+        })
     );
 
     // ensure that we also have a timeout
     // for now hardcode at 6000
-    return tryOp().timeout(retryTimeout);
+    return tryOp().timeout(retryTimeout).tapCatch((e) => {
+      e.originalRequest = [...args];
+    });
   };
 
   return acc;
@@ -62,11 +65,18 @@ exports.payment = promisify([
 ], payment);
 
 exports.handleError = (err) => {
-  throw new HttpStatusError(
+  const wrappedError = new HttpStatusError(
     err.httpStatusCode,
     get(err, 'response.message', err.message),
     get(err, 'response.name', err.name)
   );
+
+  Object.defineProperty(err, 'originalRequest', {
+    value: err.originalRequest,
+    enumerable: process.env.NODE_ENV === 'test',
+  });
+
+  throw wrappedError;
 };
 
 exports.blacklistedProps = ['id', 'state', 'hidden', 'create_time', 'update_time', 'links', 'httpStatusCode'];

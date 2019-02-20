@@ -7,13 +7,14 @@ const fs = require('fs').promises;
 const EMAIL_INPUT = '#email';
 const PWD_INPUT = '#password';
 const CONFIRM_PAYMENT_METHOD = '.confirmButton';
-const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton';
+const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton, #btnNext';
 const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
 
 // instance variables
 let page;
 let chrome;
+let context;
 
 // save screenshot in case of crash
 const saveCrashReport = fn => async (...args) => {
@@ -32,12 +33,16 @@ const saveCrashReport = fn => async (...args) => {
 
 const typeAndSubmit = async (selector, text) => {
   let handle;
+  console.info('>>> typeAndSubmit', selector);
   try {
     await page.waitFor(selector, { visible: true });
     handle = await page.$(selector);
+    console.info('>>> typeAndSubmit %s found', selector);
     await handle.type(text, { delay: 100 });
+    await page.screenshot({ fullPage: false, path: './ss/pre-press.png' });
     await handle.press('Enter', { delay: 100 });
   } finally {
+    await page.screenshot({ fullPage: false, path: './ss/after-enter.png' });
     if (handle) await handle.dispose();
   }
 };
@@ -61,6 +66,12 @@ const isIgnorableError = (e) => {
     return true;
   }
 
+  if (e.length && e.length > 0) {
+    for (let i = 0; i < e.length; i += 1) {
+      if (isIgnorableError(e[i])) return true;
+    }
+  }
+
   return false;
 };
 
@@ -68,6 +79,7 @@ const isIgnorableError = (e) => {
 const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
   let retryCount = 5;
   async function retry() {
+    console.info('trying', retrySelectror, confirmSelector);
     retryCount -= 1;
 
     if (breaker && breaker.test(page.url())) {
@@ -90,6 +102,7 @@ const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
       ]);
     } catch (e) {
       if (isIgnorableError(e)) {
+        console.info('ignored error', e);
         return null;
       }
 
@@ -112,11 +125,16 @@ exports.initChrome = async () => {
     executablePath: '/usr/bin/chromium-browser',
     args: ['--no-sandbox', '--headless', '--disable-gpu', '--disable-dev-shm-usage'],
   });
-  page = await chrome.newPage();
+
+  context = await chrome.createIncognitoBrowserContext();
+  page = await context.newPage();
+
   await page.setRequestInterception(true);
   await page.setViewport({ width: 1960, height: 1280 });
 
   page.on('request', (interceptedRequest) => {
+    console.info(interceptedRequest.url());
+
     if (/api-sandbox.cappasity.matic.ninja/.test(interceptedRequest.url())) {
       return interceptedRequest.respond({
         status: 200,
@@ -128,12 +146,21 @@ exports.initChrome = async () => {
     return interceptedRequest.continue();
   });
 
+  page.on('error', (err) => {
+    console.info('pptr', err);
+  });
+
+  page.on('pageerror', (err) => {
+    console.info('page err', err);
+  });
+
   return { page, chrome };
 };
 
 exports.closeChrome = async () => {
-  if (page) await page.close();
-  if (chrome) await chrome.close();
+  if (page) await page.close().catch(console.warn);
+  if (context) await context.close().catch(console.warn);
+  if (chrome) await chrome.close().catch(console.warn);
 };
 
 exports.approveSubscription = saveCrashReport(async (saleUrl) => {
@@ -172,6 +199,7 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
 exports.approveSale = saveCrashReport(async (saleUrl) => {
   console.info('trying to load %s', saleUrl);
 
+  console.info('preload');
   await Promise.all([
     page.goto(saleUrl, { waitUntil: 'domcontentloaded' }),
     Promise.some([
@@ -181,13 +209,10 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   ]);
 
   const hasAccount = await page.$(HAS_ACCOUNT_LINK);
-
-  if (hasAccount) {
+  if (hasAccount && await hasAccount.boundingBox()) {
+    console.info('has account');
     await Promise.delay(3000);
-    await Promise.all([
-      idle('2'),
-      page.click(HAS_ACCOUNT_LINK, { delay: 100 }),
-    ]);
+    await Promise.all([idle('2'), hasAccount.click({ delay: 100 })]);
     await dispose(hasAccount);
   }
 

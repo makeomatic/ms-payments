@@ -6,7 +6,7 @@ const key = require('../../redisKey.js');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
 const { deserialize } = require('../../utils/redis.js');
 
-module.exports = function getAgreement({ params: message }) {
+module.exports = async function getAgreement({ params: message }) {
   const { redis } = this;
   const { id, owner } = message;
   const agreementKey = key(AGREEMENT_DATA, id);
@@ -20,18 +20,15 @@ module.exports = function getAgreement({ params: message }) {
     };
   }
 
-  return redis
-    .hgetall(agreementKey)
-    .then((data) => {
-      if (is.empty(data)) {
-        throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
-      }
+  const data = await redis.hgetall(agreementKey);
+  if (is.empty(data)) {
+    throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
+  }
 
-      const output = deserialize(data);
-      if (owner && output.owner !== owner) {
-        throw new Errors.HttpStatusError(403, `no access to ${id}`);
-      }
+  const output = deserialize(data);
+  if (owner && output.owner !== owner) {
+    throw new Errors.HttpStatusError(403, `no access to ${id}`);
+  }
 
-      return output;
-    });
+  return output;
 };

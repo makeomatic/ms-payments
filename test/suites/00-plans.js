@@ -157,7 +157,7 @@ describe('Plans suite', function PlansSuite() {
         .reflect()
         .then(inspectPromise(false));
 
-      assert.equal(error.inner_error.httpStatusCode, 400);
+      assert([400, 500].includes(error.inner_error.httpStatusCode));
     });
 
     it('Should activate the plan', () => {
