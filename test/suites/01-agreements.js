@@ -138,7 +138,7 @@ describe('Agreements suite', function AgreementSuite() {
         const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
 
         if (agreement.state.toLowerCase() === 'pending') {
-          return Promise.delay(500).then(waitForAgreementToBecomeActive);
+          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
         }
 
         agreement.agreement.plan.payment_definitions.forEach((definition) => {
