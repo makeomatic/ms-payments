@@ -7,7 +7,17 @@ const { billingAgreement, billingPlan, payment } = require('paypal-rest-sdk');
 const retryTimeout = parseInt(process.env.PAYPAL_RETRY_TIMEOUT || 6000, 10);
 const retryCounter = parseInt(process.env.PAYPAL_RETRY_COUNT || 5, 10);
 const retryDelay = parseInt(process.env.PAYPAL_RETRY_DELAY || 250, 10);
-const invalidServerResponsePredicate = { httpStatusCode: 200, response: '' };
+const invalidServerResponsePredicate = (e) => {
+  if (e.httpStatusCode === 200 && e.response === '') {
+    return true;
+  }
+
+  if (e.httpStatusCode === 500) {
+    return true;
+  }
+
+  return false;
+};
 const promisify = (ops, context) => ops.reduce((acc, op) => {
   const opAsync = Promise.promisify(context[op], { context });
 
