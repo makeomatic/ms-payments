@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const merge = require('lodash/merge');
@@ -139,7 +140,7 @@ function createSaveToRedis(redis, message) {
  * @param  {Object} message
  * @return {Promise}
  */
-module.exports = function planCreate({ params: message }) {
+function planCreate({ params: message }) {
   const { config, redis } = this;
   const { alias } = message;
   const saveToRedis = createSaveToRedis(redis, message);
@@ -168,4 +169,8 @@ module.exports = function planCreate({ params: message }) {
   return promise
     .then(saveToRedis)
     .tap(() => cleanupCache.call(this, PLANS_INDEX));
-};
+}
+
+planCreate.transports = [ActionTransport.amqp];
+
+module.exports = planCreate;

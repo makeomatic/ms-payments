@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const fsort = require('redis-filtered-sort');
 const is = require('is');
@@ -10,7 +11,7 @@ const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constant
  * List files
  * @return {Promise}
  */
-module.exports = function listAggregateTransactions({ params }) {
+function listAggregateTransactions({ params }) {
   const { redis, config } = this;
   const { owners, filter, aggregate } = params;
 
@@ -33,4 +34,8 @@ module.exports = function listAggregateTransactions({ params }) {
       .then(idlist => redis.fsortAggregate(idlist.slice(prefixLength), pattern, agg))
       .then(JSON.parse);
   });
-};
+}
+
+listAggregateTransactions.transports = [ActionTransport.amqp];
+
+module.exports = listAggregateTransactions;

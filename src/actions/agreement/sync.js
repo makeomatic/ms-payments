@@ -1,5 +1,6 @@
 const Promise = require('bluebird');
 const moment = require('moment');
+const { ActionTransport } = require('@microfleet/core');
 
 // internal actions
 const bill = require('./bill');
@@ -126,5 +127,7 @@ async function agreementSync({ params = {} }) {
   return Promise.bind(ctx, users)
     .map(billUser, { concurrency: 10 });
 }
+
+agreementSync.transports = [ActionTransport.amqp];
 
 module.exports = agreementSync;

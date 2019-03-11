@@ -1,4 +1,5 @@
 const fsort = require('redis-filtered-sort');
+const { ActionTransport } = require('@microfleet/core');
 
 // helpers
 const { processResult, mapResult } = require('../../listUtils');
@@ -23,5 +24,5 @@ function planList({ params: opts }) {
     .then(processResult(AGREEMENT_DATA, redis))
     .spread(mapResult(offset, limit));
 }
-
+planList.transports = [ActionTransport.amqp];
 module.exports = planList;

@@ -1,4 +1,5 @@
 const Errors = require('common-errors');
+const { ActionTransport } = require('@microfleet/core');
 const key = require('../../redisKey.js');
 
 // helpers
@@ -42,5 +43,7 @@ function forUser({ params: message }) {
 
   return getId().then(getAgreement);
 }
+
+forUser.transports = [ActionTransport.amqp];
 
 module.exports = forUser;
