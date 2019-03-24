@@ -1,9 +1,8 @@
 const Errors = require('common-errors');
-const key = require('../../redisKey.js');
 
-// helpers
-const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
-const { deserialize } = require('../../utils/redis.js');
+const key = require('../../redis-key');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { deserialize } = require('../../utils/redis');
 
 function forUser({ params: message }) {
   const { config, redis, amqp } = this;

@@ -1,4 +1,4 @@
-const mixPlan = require('./mixPlan.js');
+const mixPlan = require('./mix-plan');
 
 module.exports = {
   logger: {

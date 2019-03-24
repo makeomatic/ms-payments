@@ -1,9 +1,9 @@
 const fsort = require('redis-filtered-sort');
 
 // helpers
-const { processResult, mapResult } = require('../../listUtils');
-const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
-const key = require('../../redisKey.js');
+const { processResult, mapResult } = require('../../list-utils');
+const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants');
+const key = require('../../redis-key');
 
 /**
  * List files

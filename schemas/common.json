@@ -1,6 +1,10 @@
 {
   "$id": "common",
   "definitions": {
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    },
     "currency": {
       "type": "object",
       "required": [

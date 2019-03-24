@@ -3,7 +3,7 @@ const moment = require('moment');
 
 // internal actions
 const bill = require('./bill');
-const listAgreements = require('./list.js');
+const listAgreements = require('./list');
 
 // constants
 const FETCH_USERS_LIMIT = 20;

@@ -5,8 +5,8 @@ const { HttpStatusError } = require('bluebird');
 const setState = require('./state');
 
 // helpers
-const key = require('../../redisKey');
-const { cleanupCache } = require('../../listUtils');
+const key = require('../../redis-key');
+const { cleanupCache } = require('../../list-utils');
 const {
   PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID, PLAN_ALIAS_FIELD,
 } = require('../../constants');

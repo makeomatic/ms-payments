@@ -4,7 +4,7 @@ const forEach = require('lodash/forEach');
 const get = require('lodash/get');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
 const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants');

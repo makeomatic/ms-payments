@@ -9,8 +9,8 @@ const find = require('lodash/find');
 const statePlan = require('./state');
 
 // helpers
-const key = require('../../redisKey');
-const { cleanupCache } = require('../../listUtils');
+const key = require('../../redis-key');
+const { cleanupCache } = require('../../list-utils');
 const { PLANS_DATA, PLANS_INDEX, FREE_PLAN_ID } = require('../../constants');
 const {
   plan: { create: billingPlanCreate }, handleError, is, states: { active },

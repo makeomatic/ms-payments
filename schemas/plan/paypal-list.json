@@ -1,0 +1,34 @@
+{
+  "$id": "plan.paypal.list",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "hidden": {
+      "type": "boolean"
+    },
+    "query": {
+      "type": "object",
+      "page": {
+        "type": "string",
+        "minLength": 1
+      },
+      "status": {
+        "type": "string",
+        "minLength": 1,
+        "enum": [
+          "created",
+          "active",
+          "inactive"
+        ]
+      },
+      "page_size": {
+        "type": "string",
+        "minLength": 1
+      },
+      "total_required": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

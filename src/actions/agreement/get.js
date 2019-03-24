@@ -2,9 +2,9 @@ const Errors = require('common-errors');
 const is = require('is');
 
 // helpers
-const key = require('../../redisKey.js');
-const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
-const { deserialize } = require('../../utils/redis.js');
+const key = require('../../redis-key');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { deserialize } = require('../../utils/redis');
 
 module.exports = async function getAgreement({ params: message }) {
   const { redis } = this;

@@ -4,14 +4,14 @@ const moment = require('moment');
 
 
 // internal actions
-const syncTransactions = require('../transaction/sync.js');
+const syncTransactions = require('../transaction/sync');
 
 // helpers
-const key = require('../../redisKey.js');
+const key = require('../../redis-key');
 const { agreement: operations } = require('../../utils/paypal');
-const resetToFreePlan = require('../../utils/resetToFreePlan.js');
-const { serialize } = require('../../utils/redis.js');
-const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
+const resetToFreePlan = require('../../utils/reset-to-free-plan');
+const { serialize } = require('../../utils/redis');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 
 // correctly save state
 const ACTION_TO_STATE = {

@@ -6,7 +6,7 @@ const forEach = require('lodash/forEach');
 const salelist = require('./list');
 
 // helpers
-const key = require('../../redisKey.js');
+const key = require('../../redis-key');
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
 const { serialize } = require('../../utils/redis');

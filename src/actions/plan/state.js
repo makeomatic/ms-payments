@@ -5,7 +5,7 @@ const uniq = require('lodash/uniq');
 const compact = require('lodash/compact');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { PLANS_DATA, PLAN_ALIAS_FIELD } = require('../../constants');
 const { serialize } = require('../../utils/redis');
 const { plan: { update } } = require('../../utils/paypal');

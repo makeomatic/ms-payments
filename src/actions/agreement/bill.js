@@ -6,13 +6,13 @@ const assign = require('lodash/assign');
 const get = require('lodash/get');
 
 // helpers
-const key = require('../../redisKey.js');
-const resetToFreePlan = require('../../utils/resetToFreePlan.js');
-const { hmget } = require('../../listUtils.js');
-const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
+const key = require('../../redis-key');
+const resetToFreePlan = require('../../utils/reset-to-free-plan');
+const { hmget } = require('../../list-utils');
+const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 
 // internal actions
-const sync = require('../transaction/sync.js');
+const sync = require('../transaction/sync');
 
 // constants
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];

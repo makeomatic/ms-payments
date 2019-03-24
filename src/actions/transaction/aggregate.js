@@ -3,8 +3,8 @@ const fsort = require('redis-filtered-sort');
 const is = require('is');
 
 // helpers
-const key = require('../../redisKey');
-const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
+const key = require('../../redis-key');
+const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants');
 
 /**
  * List files
