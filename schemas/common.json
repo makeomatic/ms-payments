@@ -3,7 +3,8 @@
   "definitions": {
     "owner": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "Identification of owner"
     },
     "currency": {
       "type": "object",

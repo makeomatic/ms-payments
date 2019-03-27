@@ -40,10 +40,11 @@
     "cluster-key-slot": "^1.0.12",
     "common-errors": "^1.0.5",
     "debug": "^4.1.0",
-    "ioredis": "^4.2.0",
+    "dlock": "^9.0.1",
+    "ioredis": "^4.9.0",
     "lodash": "^4.17.11",
     "moment": "^2.24.0",
-    "ms-conf": "^4.0.0",
+    "ms-conf": "^5.0.0",
     "ms-mailer-client": "^8.0.1",
     "ms-mailer-templates": "^1.11.1",
     "paypal-rest-sdk": "^1.8.1",
@@ -51,7 +52,9 @@
     "request": "^2.88.0",
     "request-promise": "^4.2.1",
     "stdout-stream": "^1.4.1",
+    "stripe": "^6.28.0",
     "urlsafe-base64": "^1.0.0",
+    "uuid": "^3.3.2",
     "yargs": "^13.2.2"
   },
   "devDependencies": {
@@ -78,7 +81,7 @@
     "nyc": "^13.1.0",
     "puppeteer": "1.13.0",
     "rimraf": "^2.6.3",
-    "sinon": "^7.3.0"
+    "sinon": "^7.3.1"
   },
   "engine": {
     "node": ">= 8.9.0"

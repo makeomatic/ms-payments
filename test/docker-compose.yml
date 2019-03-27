@@ -39,4 +39,5 @@ services:
       PAYPAL_RETRY_TIMEOUT: 30000
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678
+      DOTENV_FILE_PATH: "/src/test/.env"
     command: tail -f /dev/null

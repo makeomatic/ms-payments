@@ -1,0 +1,62 @@
+{
+  "$id": "charges.stripe.create",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "owner",
+    "amount",
+    "description"
+  ],
+  "if": {
+    "required": ["saveCard"],
+    "properties": {
+       "saveCard": { "const": true }
+     }
+  },
+  "then": {
+    "required": ["email", "token"]
+  },
+  "properties": {
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "amount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000,
+      "description": "A positive integer representing how much to charge"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536,
+      "description": "An arbitrary string which you can attach to a charge object"
+    },
+    "statementDescriptor": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 22,
+      "description": "An arbitrary string to be displayed on your customer’s credit card statement"
+    },
+    "saveCard": {
+      "type": "boolean",
+      "description": "Save card for a future charges",
+      "default": false
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536,
+      "description": "Token from stripe Checkout API. Stored card will be used if token is empty"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Set of key-value pairs that you can attach to a charge object",
+      "default": {}
+    }
+  }
+}
