@@ -1,6 +1,7 @@
 const { ActionTransport } = require('@microfleet/core');
 
 async function stripeWebhookAction(request) {
+  // @todo check IP from white list (it's already in config)
   const event = await this.stripe.getEventFromRequest('charge', request);
 
   if (event.type === 'charge.succeeded') {

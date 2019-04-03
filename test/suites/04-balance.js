@@ -12,8 +12,6 @@ describe('balance', function suite() {
     await this.service.connect();
   });
 
-  afterEach(() => this.service.redis.flushall());
-
   describe('utils', () => {
     it('should throw error if params for balanceRedisKey are invalid', () => {
       assert.throws(() => Balance.redisKey(12345), { message: 'owner is invalid' });

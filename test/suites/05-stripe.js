@@ -14,7 +14,7 @@ describe('stripe', function suite() {
   const Payments = require('../../src');
 
   before('start service', async () => {
-    this.service = new Payments(config);
+    this.service = new Payments(Object.assign({}, config, { stripe: { enabled: true, webhook: { enabled: true } } }));
     await this.service.connect();
   });
 

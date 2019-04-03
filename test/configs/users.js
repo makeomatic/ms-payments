@@ -29,4 +29,9 @@ module.exports = {
       },
     },
   },
+  redis: {
+    options: {
+      keyPrefix: '{ms-users}',
+    },
+  },
 };
