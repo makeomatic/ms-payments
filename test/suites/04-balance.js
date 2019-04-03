@@ -1,47 +1,82 @@
 const assert = require('assert');
 
 const config = require('../config');
+const randomOwner = require('../helpers/random-owner');
 
 describe('balance', function suite() {
   const Payments = require('../../src');
-  const { balanceRedisKey, getBalance } = require('../../src/utils/balance');
+  const Balance = require('../../src/utils/balance');
 
   before('start service', async () => {
     this.service = new Payments(config);
     await this.service.connect();
   });
 
-  afterEach(() => this.service.redis.del(balanceRedisKey('12345')));
+  afterEach(() => this.service.redis.flushall());
 
   describe('utils', () => {
     it('should throw error if params for balanceRedisKey are invalid', () => {
-      assert.throws(() => balanceRedisKey(12345), { message: 'owner is invalid' });
-      assert.throws(() => balanceRedisKey(''), { message: 'owner is invalid' });
+      assert.throws(() => Balance.redisKey(12345), { message: 'owner is invalid' });
+      assert.throws(() => Balance.redisKey(''), { message: 'owner is invalid' });
     });
 
     it('should return a key for redis', () => {
-      assert.strictEqual(balanceRedisKey('12345'), '12345:balance');
+      assert.strictEqual(Balance.redisKey('12345'), '12345:balance');
     });
 
     it('should throw error if params for getBalance are invalid', async () => {
-      await assert.rejects(getBalance(this.service.redis, 12345), { message: 'owner is invalid' });
-      await assert.rejects(getBalance(this.service.redis, ''), { message: 'owner is invalid' });
+      const balance = new Balance(this.service.redis);
+
+      await assert.rejects(balance.get(12345), { message: 'owner is invalid' });
+      await assert.rejects(balance.get(''), { message: 'owner is invalid' });
     });
 
     it('should return 0 if account balance is not set', async () => {
-      assert.strictEqual(await getBalance(this.service.redis, '12345'), 0);
+      const balance = new Balance(this.service.redis);
+      const owner = randomOwner();
+
+      assert.strictEqual(await balance.get(owner), 0);
     });
 
     it('should return account balance', async () => {
-      this.service.redis.set(balanceRedisKey('12345'), 49.51);
+      const balance = new Balance(this.service.redis);
+      const owner = randomOwner();
 
-      assert.strictEqual(await getBalance(this.service.redis, '12345'), 49.51);
+      await this.service.redis.set(Balance.redisKey(owner), 123);
+
+      assert.strictEqual(await balance.get(owner), 123);
     });
 
     it('should throw error if account balance was corrupted', async () => {
-      this.service.redis.set(balanceRedisKey('12345'), 'perchik is a fat cat');
+      const balance = new Balance(this.service.redis);
+      const owner = randomOwner();
 
-      await assert.rejects(getBalance(this.service.redis, '12345'), { message: 'balance is invalid' });
+      await this.service.redis.set(Balance.redisKey(owner), 'perchik is a fat cat');
+
+      await assert.rejects(balance.get(owner), { message: 'balance is invalid' });
+    });
+
+    it('should throw error if params for increment are invalid', async () => {
+      const balance = new Balance(this.service.redis);
+      const pipeline = this.service.redis.pipeline();
+      const owner = randomOwner();
+
+      await assert.rejects(balance.increment(12345, 100, pipeline), { message: 'owner is invalid' });
+      await assert.rejects(balance.increment('', 100, pipeline), { message: 'owner is invalid' });
+      await assert.rejects(balance.increment(owner, 100.01, pipeline), { message: 'amount is invalid' });
+      await assert.rejects(balance.increment(owner, '100', pipeline), { message: 'amount is invalid' });
+      await assert.rejects(balance.increment(owner, 100, 'pipeline'), { message: 'redis pipeline is invalid' });
+    });
+
+    it('should increment account balance', async () => {
+      const balance = new Balance(this.service.redis);
+      const pipeline = this.service.redis.pipeline();
+      const owner = randomOwner();
+
+      await balance.increment(owner, 10001, pipeline);
+      await pipeline.exec();
+
+      assert.strictEqual(await balance.get(owner), 10001);
     });
   });
 
@@ -67,15 +102,18 @@ describe('balance', function suite() {
     });
 
     it('should return 0 if account balance was not set', async () => {
-      const response = await this.service.amqp.publishAndWait('payments.balance.get', { owner: '12345' });
+      const owner = randomOwner();
+      const response = await this.service.amqp.publishAndWait('payments.balance.get', { owner });
 
       assert.strictEqual(response.balance, 0);
     });
 
     it('should return account balance', async () => {
-      await this.service.redis.set(balanceRedisKey('12345'), 1449);
+      const owner = randomOwner();
 
-      const response = await this.service.amqp.publishAndWait('payments.balance.get', { owner: '12345' });
+      await this.service.redis.set(Balance.redisKey(owner), 1449);
+
+      const response = await this.service.amqp.publishAndWait('payments.balance.get', { owner });
 
       assert.strictEqual(response.balance, 1449);
     });

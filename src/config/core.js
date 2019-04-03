@@ -40,6 +40,7 @@ exports.plugins = [
   'router',
   'amqp',
   'redisCluster',
+  'http',
 ];
 
 /**
@@ -51,7 +52,7 @@ exports.router = {
     directory: path.resolve(__dirname, '..', 'actions'),
     prefix: 'payments',
     setTransportsAsDefault: true,
-    transports: ['amqp'],
+    transports: ['amqp', 'http'],
   },
   extensions: {
     enabled: ['postRequest', 'preRequest', 'preResponse'],

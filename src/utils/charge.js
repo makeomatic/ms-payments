@@ -2,10 +2,14 @@ const { strictEqual } = require('assert');
 const uuid = require('uuid/v4');
 const moment = require('moment');
 const isObject = require('lodash/isObject');
+const pick = require('lodash/pick');
+const fsort = require('redis-filtered-sort');
 
 const assertStringNotEmpty = require('./asserts/string-not-empty');
-const assertFinite = require('./asserts/finite');
+const assertInteger = require('./asserts/integer');
 const assertPlainObject = require('./asserts/plain-object');
+const { processResult, mapResult } = require('../list-utils');
+const RedisMapper = require('./redis-mapper');
 
 class Charge {
   static listRedisKey(owner) {
@@ -24,12 +28,13 @@ class Charge {
     strictEqual(isObject(redis), true, 'redis is invalid');
 
     this.redis = redis;
+    this.mapper = new RedisMapper(redis);
   }
 
   async create(source, owner, amount, description = '', meta = {}) {
     assertStringNotEmpty(source, 'source is invalid');
     assertStringNotEmpty(owner, 'owner is invalid');
-    assertFinite(amount, 'amount is invalid');
+    assertInteger(amount, 'amount is invalid');
     assertStringNotEmpty(description, 'description is invalid');
     assertPlainObject(meta, 'meta is invalid');
 
@@ -42,12 +47,12 @@ class Charge {
       amount,
       description,
       createAt: moment().format(),
+      createAtTimestamp: Date.now(),
       metadata: JSON.stringify(meta),
       status: Charge.STATUS_INITIALIZED,
-      sourceId: null,
-      sourceMetadata: null,
-      failReason: null,
-      failMetadata: null,
+      sourceId: '',
+      sourceMetadata: '',
+      failReason: '',
     };
 
     pipeline.sadd(Charge.listRedisKey(owner), id);
@@ -58,40 +63,56 @@ class Charge {
     return charge;
   }
 
-  async markAsComplete(charge, sourceId, sourceMetadata, pipeline) {
-    const { id, owner, amount } = charge;
-
+  async markAsComplete(id, sourceId, sourceMetadata, pipeline) {
     assertStringNotEmpty(id, 'charge id is invalid');
-    assertStringNotEmpty(owner, 'owner is invalid');
-    assertFinite(amount, 'amount is invalid');
+    assertStringNotEmpty(sourceId, 'sourceId is invalid');
+    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
 
-    const updatedCharge = Object.assign({}, charge, {
+    const chargeUpdateData = {
       sourceId,
       sourceMetadata: JSON.stringify(sourceMetadata),
-      status: Charge.STATUS_COMPLETED });
+      status: Charge.STATUS_COMPLETED };
 
     if (pipeline !== undefined) {
-      pipeline.hmset(Charge.dataRedisKey(charge.id), updatedCharge);
+      pipeline.hmset(Charge.dataRedisKey(id), chargeUpdateData);
     } else {
-      await this.redis.hmset(Charge.dataRedisKey(charge.id), updatedCharge);
+      await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
     }
-
-    return updatedCharge;
   }
 
-  async markAsFailed(charge, failReason, failMetadata) {
-    const updatedCharge = Object.assign({}, charge, {
+  async markAsFailed(id, sourceId, sourceMetadata, failReason) {
+    assertStringNotEmpty(id, 'charge id is invalid');
+    assertStringNotEmpty(failReason, 'failReason is invalid');
+    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
+    assertStringNotEmpty(failReason, 'failReason is invalid');
+
+    const chargeUpdateData = {
+      sourceId,
       failReason,
-      failMetadata: JSON.stringify(failMetadata),
-      status: Charge.STATUS_FAILED,
-    });
+      sourceMetadata: JSON.stringify(sourceMetadata),
+      status: Charge.STATUS_FAILED };
 
-    await this.redis.hmset(Charge.dataRedisKey(charge.id), updatedCharge);
+    await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
+  }
 
-    return updatedCharge;
+  async list(owner, offset, limit, restricted = true) {
+    const result = await this.redis
+      .fsort(Charge.listRedisKey(owner), Charge.dataRedisKey('*'), 'createAtTimestamp', 'DESC', fsort.filter({}), Date.now(), offset, limit)
+      .then(processResult(Charge.dataRedisKey('*').split(':')[0], this.redis))
+      .spread(mapResult(offset, limit, false));
+    const items = result.items.map(charge => (restricted ? pick(charge, Charge.unrestrictedProps) : charge));
+
+    return Object.assign({ ...result }, { items });
+  }
+
+  async get(id, restricted = true) {
+    const props = restricted ? Charge.unrestrictedProps : [];
+
+    return this.mapper.get(Charge.dataRedisKey(id), props);
   }
 }
 
+Charge.unrestrictedProps = ['id', 'amount', 'description', 'createAt', 'status', 'failReason'/* <-- is it safe? */];
 Charge.STATUS_INITIALIZED = 0;
 Charge.STATUS_FAILED = 1;
 Charge.STATUS_COMPLETED = 2;

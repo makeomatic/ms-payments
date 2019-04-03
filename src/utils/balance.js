@@ -2,7 +2,7 @@ const isObject = require('lodash/isObject');
 const { strictEqual } = require('assert');
 
 const assertStringNotEmpty = require('./asserts/string-not-empty');
-const assertFinite = require('./asserts/finite');
+const assertInteger = require('./asserts/integer');
 
 class Balance {
   static redisKey(owner) {
@@ -23,7 +23,7 @@ class Balance {
     if (value !== null) {
       const balance = Number(value);
 
-      assertFinite(balance, 'balance is invalid');
+      assertInteger(balance, 'balance is invalid');
 
       return balance;
     }
@@ -33,7 +33,10 @@ class Balance {
 
   // eslint-disable-next-line class-methods-use-this
   async increment(owner, amount, pipeline) {
-    pipeline.incrbyfloat(Balance.redisKey(owner), amount);
+    assertInteger(amount, 'amount is invalid');
+    strictEqual(isObject(pipeline), true, 'redis pipeline is invalid');
+
+    pipeline.incrby(Balance.redisKey(owner), amount);
   }
 }
 

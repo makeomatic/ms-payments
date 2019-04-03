@@ -1,5 +1,5 @@
 {
-  "$id": "charges.stripe.create",
+  "$id": "charge.stripe.create",
   "type": "object",
   "additionalProperties": false,
   "required": [

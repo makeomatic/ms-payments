@@ -35,34 +35,16 @@ async function selectChargeSource(service, params) {
 
 async function createStripeCharge(service, charge, source, params) {
   const { amount, description, statementDescriptor, metadata, email } = params;
-  const stripeMetadata = Object.assign({ internalId: charge.id }, metadata);
-  const stripeChargeParams = { amount, description, statementDescriptor, metadata: stripeMetadata };
+  const stripeChargeParams = { amount, description, statementDescriptor, metadata };
 
   if (email !== undefined) {
     stripeChargeParams.receipt_email = email;
   }
 
   try {
-    return service.stripe.charge(Object.assign({}, source, stripeChargeParams));
+    await service.stripe.charge(charge.id, Object.assign({}, source, stripeChargeParams));
   } catch (error) {
-    service.log.error(error, charge);
-    await service.charge.markAsFailed(charge, error.message, error);
-
-    throw error;
-  }
-}
-
-async function incrementBalance(service, charge, stripeCharge) {
-  try {
-    const { owner, amount } = charge;
-    const pipeline = service.redis.pipeline();
-
-    await service.charge.markAsComplete(charge, stripeCharge.id, stripeCharge, pipeline);
-    await service.balance.increment(owner, amount, pipeline);
-    await pipeline.exec();
-  } catch (error) {
-    service.log.error(error, charge, stripeCharge);
-    // @todo retry
+    service.log.error(`Stripe charge for ${charge.owner} is failed`, error, charge);
   }
 }
 
@@ -70,19 +52,20 @@ async function createStripeChargeAction(service, { params }) {
   strictEqual(service.config.stripe.enabled, true, notEnabled);
 
   const { owner, amount, description } = params;
+  // next method should call first because it's validate source
   const stripeChargeSource = await selectChargeSource(service, params);
-  // store info about charge
+  // next method create internal record about charge
   const charge = await service.charge.create(CHARGE_SOURCE_STRIPE, owner, amount, description, omit(params, ['token']));
-  const stripeCharge = await createStripeCharge(service, charge, stripeChargeSource, params);
 
-  await incrementBalance(service, charge, stripeCharge);
+  // note it's not throw any errors
+  await createStripeCharge(service, charge, stripeChargeSource, params);
 
-  return { balance: await service.balance.get(owner) };
+  return { id: charge.id };
 }
 
 async function wrappedAction(request) {
   return Promise
-    .using(this, request, acquireLock(this, `tx!${request.params.owner}`), createStripeChargeAction)
+    .using(this, request, acquireLock(this, `tx!stripe:charge:create:${request.params.owner}`), createStripeChargeAction)
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }
 

@@ -51,9 +51,13 @@ class Payments extends Microfleet {
       ));
     }
 
-    this.addConnector(ConnectorsTypes.application, () => {
+    this.addConnector(ConnectorsTypes.application, async () => {
       if (this.config.stripe.enabled === true) {
         this.stripe = new Stripe(this.config.stripe, this.redis);
+
+        if (this.config.stripe.webhook.enabled === true) {
+          await this.stripe.setupWebhook();
+        }
       }
 
       this.balance = new Balance(this.redis);

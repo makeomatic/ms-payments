@@ -1,9 +1,7 @@
 const { ActionTransport } = require('@microfleet/core');
 
-const { getBalance } = require('../../utils/balance');
-
 async function getBalanceAction({ params }) {
-  const balance = await getBalance(this.redis, params.owner);
+  const balance = await this.balance.get(params.owner);
 
   return { balance };
 }

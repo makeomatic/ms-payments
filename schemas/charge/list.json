@@ -1,5 +1,5 @@
 {
-  "$id": "charges.list",
+  "$id": "charge.list",
   "type": "object",
   "additionalProperties": false,
   "required": [

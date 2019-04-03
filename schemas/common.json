@@ -6,6 +6,11 @@
       "minLength": 1,
       "description": "Identification of owner"
     },
+    "chargeId": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Identification of charge"
+    },
     "currency": {
       "type": "object",
       "required": [
