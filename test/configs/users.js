@@ -7,16 +7,26 @@ module.exports = {
   },
   admins: [
     {
+      alias: 'admin0',
       username: 'test@test.ru',
       password: 'megalongsuperpasswordfortest',
       firstName: 'Unit',
       lastName: 'Test',
     },
     {
+      alias: 'admin1',
       username: 'pristine@test.ru',
       password: 'megalongsuperpasswordfortest',
       firstName: 'Pristine',
       lastName: 'Test',
+    },
+    {
+      alias: 'user0',
+      username: 'user0@test.com',
+      password: 'megalongsuperpasswordfortest',
+      firstName: 'Im',
+      lastName: 'User0',
+      roles: [],
     },
   ],
   hooks: {

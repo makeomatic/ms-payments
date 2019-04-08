@@ -2,13 +2,13 @@ const { strictEqual } = require('assert');
 const uuid = require('uuid/v4');
 const moment = require('moment');
 const isObject = require('lodash/isObject');
-const pick = require('lodash/pick');
+const isNull = require('lodash/isNull');
+const zipObject = require('lodash/zipObject');
 const fsort = require('redis-filtered-sort');
 
 const assertStringNotEmpty = require('./asserts/string-not-empty');
 const assertInteger = require('./asserts/integer');
 const assertPlainObject = require('./asserts/plain-object');
-const { processResult, mapResult } = require('../list-utils');
 const RedisMapper = require('./redis-mapper');
 
 class Charge {
@@ -95,24 +95,60 @@ class Charge {
     await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
   }
 
-  async list(owner, offset, limit, restricted = true) {
-    const result = await this.redis
-      .fsort(Charge.listRedisKey(owner), Charge.dataRedisKey('*'), 'createAtTimestamp', 'DESC', fsort.filter({}), Date.now(), offset, limit)
-      .then(processResult(Charge.dataRedisKey('*').split(':')[0], this.redis))
-      .spread(mapResult(offset, limit, false));
-    const items = result.items.map(charge => (restricted ? pick(charge, Charge.unrestrictedProps) : charge));
+  // NOTE: how to `fields` works
+  // NOTE: does not safe for pagination, could return less results than expected
+  async list(owner, offset, limit, fields = []) {
+    assertStringNotEmpty(owner, 'owner is invalid');
 
-    return Object.assign({ ...result }, { items });
+    const result = await this.redis.fsort(
+      Charge.listRedisKey(owner),
+      Charge.dataRedisKey('*'),
+      'createAtTimestamp',
+      'DESC',
+      fsort.filter({}),
+      Date.now(),
+      offset,
+      limit
+    );
+
+    if (result.length < 2) {
+      return [[], 0];
+    }
+
+    const pipeline = this.redis.pipeline();
+    const total = Number(result.pop());
+
+    for (const chargeId of result) {
+      if (fields.length > 1) {
+        pipeline.hmget(Charge.dataRedisKey(chargeId), fields);
+      } else {
+        pipeline.hgetall(Charge.dataRedisKey(chargeId));
+      }
+    }
+
+    const data = await pipeline.exec();
+    const charges = [];
+
+    for (const [, chargeData] of data) {
+      // eslint-disable-next-line no-nested-ternary
+      const charge = fields.length > 1
+        // I hope there is a more simple way to detect not found (and it is not lua script)
+        ? (chargeData.every(isNull) ? null : zipObject(fields, chargeData))
+        : (Object.keys(chargeData).length !== 0 ? chargeData : null);
+
+      if (charge !== null) {
+        charges.push(charge);
+      }
+    }
+
+    return [charges, total];
   }
 
-  async get(id, restricted = true) {
-    const props = restricted ? Charge.unrestrictedProps : [];
-
-    return this.mapper.get(Charge.dataRedisKey(id), props);
+  async get(id, fields = []) {
+    return this.mapper.get(Charge.dataRedisKey(id), fields);
   }
 }
 
-Charge.unrestrictedProps = ['id', 'amount', 'description', 'createAt', 'status', 'failReason'/* <-- is it safe? */];
 Charge.STATUS_INITIALIZED = 0;
 Charge.STATUS_FAILED = 1;
 Charge.STATUS_COMPLETED = 2;

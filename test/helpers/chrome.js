@@ -10,6 +10,7 @@ const CONFIRM_PAYMENT_METHOD = '.confirmButton';
 const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton, #btnNext';
 const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
+const LOGIN_BUTTON = '#btnLogin';
 
 // instance variables
 let page;
@@ -205,6 +206,7 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
     Promise.some([
       page.waitFor(HAS_ACCOUNT_LINK, { visible: true }),
       page.waitFor(CONFIRM_BUTTON, { visible: true }),
+      page.waitFor(LOGIN_BUTTON, { visible: true }),
     ], 1),
   ]);
 

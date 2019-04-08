@@ -3,7 +3,6 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "owner",
     "amount",
     "description"
   ],
@@ -17,9 +16,6 @@
     "required": ["email", "token"]
   },
   "properties": {
-    "owner": {
-      "$ref": "common#/definitions/owner"
-    },
     "amount": {
       "type": "integer",
       "minimum": 0,

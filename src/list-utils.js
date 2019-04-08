@@ -26,9 +26,9 @@ function processResult(dataIndex, redis) {
   };
 }
 
-function mapResult(offset, limit, decode = true) {
+function mapResult(offset, limit) {
   return (ids, props, length) => {
-    const items = ids.map((_, idx) => (decode ? deserialize(props[idx][1]) : props[idx][1]));
+    const items = ids.map((_, idx) => deserialize(props[idx][1]));
 
     return {
       items,

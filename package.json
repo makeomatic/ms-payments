@@ -48,6 +48,7 @@
     "ms-conf": "^5.0.0",
     "ms-mailer-client": "^8.0.1",
     "ms-mailer-templates": "^1.11.1",
+    "ms-users": "^10.4.2",
     "paypal-rest-sdk": "^1.8.1",
     "redis-filtered-sort": "^2.3.0",
     "request": "^2.88.0",

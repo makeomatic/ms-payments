@@ -6,7 +6,7 @@ async function stripeWebhookAction(request) {
 
   if (event.type === 'charge.succeeded') {
     const { id: sourceId, metadata: { internalId } } = event.data.object;
-    const { amount, owner } = await this.charge.get(internalId, false);
+    const { amount, owner } = await this.charge.get(internalId);
     const pipeline = this.redis.pipeline();
 
     await this.charge.markAsComplete(internalId, sourceId, event, pipeline);

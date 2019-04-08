@@ -1,14 +1,4 @@
-/**
- * Core Configuration of @microfleet/payments
- */
-
-const { routerExtension } = require('@microfleet/core');
-const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
-
-// plugins
-const autoSchema = routerExtension('validate/schemaLessAction');
-const auditLog = routerExtension('audit/log');
 
 /**
  * Required Unique Service Name
@@ -44,23 +34,6 @@ exports.plugins = [
 ];
 
 /**
- * Router Plugin Configuration
- * @type {Object}
- */
-exports.router = {
-  routes: {
-    directory: path.resolve(__dirname, '..', 'actions'),
-    prefix: 'payments',
-    setTransportsAsDefault: true,
-    transports: ['amqp', 'http'],
-  },
-  extensions: {
-    enabled: ['postRequest', 'preRequest', 'preResponse'],
-    register: [autoSchema, auditLog()],
-  },
-};
-
-/**
  * @microfleet/mailer configuration
  * @type {Object}
  */
@@ -87,21 +60,6 @@ exports.paypal = {
  * @type {Array}
  */
 exports.validator = ['../schemas'];
-
-/**
- * @microfleet/users Configuration
- * @type {Object}
- */
-exports.users = {
-  audience: '*.localhost',
-  prefix: 'users',
-  postfix: {
-    getInternalData: 'getInternalData',
-    getMetadata: 'getMetadata',
-    list: 'list',
-    updateMetadata: 'updateMetadata',
-  },
-};
 
 /**
  * Plans that are initialized during startup of the service.

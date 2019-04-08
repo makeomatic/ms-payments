@@ -48,9 +48,12 @@ async function createStripeCharge(service, charge, source, params) {
   }
 }
 
-async function createStripeChargeAction(service, { params }) {
+async function createStripeChargeAction(service, request) {
   strictEqual(service.config.stripe.enabled, true, notEnabled);
 
+  const { id: ownerId } = request.auth.credentials;
+  // use owner id instead of alias
+  const params = Object.assign({ owner: ownerId }, request.params);
   const { owner, amount, description } = params;
   // next method should call first because it's validate source
   const stripeChargeSource = await selectChargeSource(service, params);
@@ -69,6 +72,12 @@ async function wrappedAction(request) {
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }
 
-wrappedAction.transports = [ActionTransport.amqp];
+wrappedAction.auth = 'token';
+wrappedAction.transports = [ActionTransport.http];
+wrappedAction.transportOptions = {
+  [ActionTransport.http]: {
+    methods: ['post'],
+  },
+};
 
 module.exports = wrappedAction;

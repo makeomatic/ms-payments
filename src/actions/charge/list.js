@@ -1,11 +1,23 @@
 const { ActionTransport } = require('@microfleet/core');
 
-async function chargesListAction({ params }) {
-  const { owner, offset, limit } = params;
+const checkAllowedForAdmin = require('../../middlewares/admin-request-owner');
+const { CHARGE_RESPONSE_FIELDS, chargeCollection } = require('../../utils/json-api');
 
-  return this.charge.list(owner, offset, limit);
+async function chargesListAction(request) {
+  const { owner } = request.context;
+  const { offset, limit } = request.query;
+  const [charges, total] = await this.charge.list(owner.id, offset, limit, CHARGE_RESPONSE_FIELDS);
+
+  return chargeCollection(charges, { owner: owner.alias }, total, limit, offset);
 }
 
-chargesListAction.transports = [ActionTransport.amqp];
+chargesListAction.auth = 'token';
+chargesListAction.allowed = checkAllowedForAdmin;
+chargesListAction.transports = [ActionTransport.http];
+chargesListAction.transportOptions = {
+  [ActionTransport.http]: {
+    methods: ['get'],
+  },
+};
 
 module.exports = chargesListAction;

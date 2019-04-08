@@ -1,4 +1,5 @@
 const zipObject = require('lodash/zipObject');
+const isNull = require('lodash/isNull');
 
 const assertStringNotEmpty = require('./asserts/string-not-empty');
 const assertArray = require('./asserts/array');
@@ -8,19 +9,19 @@ class RedisMapper {
     this.redis = redis;
   }
 
-  async get(key, props = []) {
+  async get(key, fields = []) {
     assertStringNotEmpty(key, 'key is invalid');
-    assertArray(props, 'props is invalid');
+    assertArray(fields, 'fields is invalid');
 
-    if (props.length === 0) {
+    if (fields.length === 0) {
       const data = await this.redis.hgetall(key);
 
       return Object.keys(data).length !== 0 ? data : null;
     }
 
-    const data = await this.redis.hmget(key, props);
+    const data = await this.redis.hmget(key, fields);
 
-    return zipObject(props, data);
+    return data.every(isNull) ? null : zipObject(fields, data);
   }
 }
 
