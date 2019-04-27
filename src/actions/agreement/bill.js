@@ -90,14 +90,13 @@ function agreementBill({ params: input }) {
   }
 
   // fetch transactions from paypal
-  function getTransactions(data) {
+  async function getTransactions(data) {
     if (data.agreement.plan.id === FREE_PLAN_ID) {
-      return Promise.resolve(data);
+      return data;
     }
 
-    return sync
-      .call(this, { params: { id, start, end } })
-      .then(agreementData => assign(data, { details: agreementData }));
+    const agreementData = await sync.call(this, { params: { id, start, end } });
+    return assign(data, { details: agreementData });
   }
 
   // bill next free cycle
