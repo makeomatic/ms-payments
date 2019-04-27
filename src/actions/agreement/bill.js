@@ -76,13 +76,17 @@ function agreementBill({ params: input }) {
   }
 
   // pull plan data
-  function getPlan(agreement) {
+  async function getPlan(agreement) {
     const planKey = key(PLANS_DATA, agreement.plan.id);
 
-    return redis
-      .hmgetBuffer(planKey, PLAN_KEYS)
-      .then(planParser)
-      .then(({ plan, subs }) => ({ agreement, plan, subs }));
+    const response = await redis.hmgetBuffer(planKey, PLAN_KEYS);
+    try {
+      const { plan, subs } = planParser(response);
+      return { agreement, plan, subs };
+    } catch (e) {
+      log.error('failed to fetch plan in redis "%s" for owner "%s"', planKey, username);
+      throw e;
+    }
   }
 
   // fetch transactions from paypal
