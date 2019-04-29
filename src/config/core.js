@@ -2,7 +2,7 @@
  * Core Configuration of @microfleet/payments
  */
 
-const { routerExtension } = require('@microfleet/core');
+const { routerExtension, ActionTransport } = require('@microfleet/core');
 const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
 
@@ -40,7 +40,24 @@ exports.plugins = [
   'router',
   'amqp',
   'redisCluster',
+  'http',
+  'prometheus',
 ];
+
+/**
+ * Http Plugin Configuration
+ * @type {Object}
+ */
+exports.http = {
+  server: {
+    handler: 'hapi',
+    port: 3000,
+  },
+  router: {
+    enabled: true,
+  },
+};
+
 
 /**
  * Router Plugin Configuration
@@ -50,8 +67,9 @@ exports.router = {
   routes: {
     directory: path.resolve(__dirname, '..', 'actions'),
     prefix: 'payments',
-    setTransportsAsDefault: true,
-    transports: ['amqp'],
+    setTransportsAsDefault: false,
+    transports: [ActionTransport.amqp, ActionTransport.http],
+    enabledGenericActions: ['health'],
   },
   extensions: {
     enabled: ['postRequest', 'preRequest', 'preResponse'],

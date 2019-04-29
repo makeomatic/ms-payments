@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const moment = require('moment');
@@ -170,7 +171,7 @@ function setToken(response) {
  * @apiParam (Payload) {Number{0..100}=0} [trialDiscount] defines discount for a trial period
  * @apiParam (Payload) {Number{0..}=12} [trialCycle] cycle for trial payments
  */
-module.exports = function agreementCreate({ log, params }) {
+function agreementCreate({ log, params }) {
   const { config, redis } = this;
   const {
     owner, agreement, trialDiscount, trialCycle,
@@ -196,4 +197,8 @@ module.exports = function agreementCreate({ log, params }) {
     .then(fetchPlan)
     .then(sendRequest)
     .then(setToken);
-};
+}
+
+agreementCreate.transports = [ActionTransport.amqp];
+
+module.exports = agreementCreate;

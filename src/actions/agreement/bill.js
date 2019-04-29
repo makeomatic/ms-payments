@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const { NotPermitted } = require('common-errors');
 const Promise = require('bluebird');
 const moment = require('moment');
@@ -197,5 +198,7 @@ function agreementBill({ params: input }) {
       throw e;
     });
 }
+
+agreementBill.transports = [ActionTransport.amqp];
 
 module.exports = agreementBill;

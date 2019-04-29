@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const map = require('lodash/map');
 const forEach = require('lodash/forEach');
@@ -53,5 +54,7 @@ function planState({ params: message }) {
     .tap(sendRequest)
     .then(updateRedis);
 }
+
+planState.transports = [ActionTransport.amqp];
 
 module.exports = planState;

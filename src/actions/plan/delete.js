@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const { HttpStatusError } = require('bluebird');
 
@@ -58,5 +59,7 @@ function planDelete({ params: id }) {
     .return(PLANS_INDEX)
     .then(cleanupCache);
 }
+
+planDelete.transports = [ActionTransport.amqp];
 
 module.exports = planDelete;

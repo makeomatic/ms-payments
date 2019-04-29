@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const fsort = require('redis-filtered-sort');
 
 // helpers
@@ -9,7 +10,7 @@ const key = require('../../redisKey.js');
  * List files
  * @return {Promise}
  */
-module.exports = function listCommonTransactions({ params: opts }) {
+function listCommonTransactions({ params: opts }) {
   const { redis } = this;
   const { owner, type, filter } = opts;
   const { criteria } = opts;
@@ -35,4 +36,8 @@ module.exports = function listCommonTransactions({ params: opts }) {
     .fsort(index, key(TRANSACTIONS_COMMON_DATA, '*'), criteria, order, strFilter, Date.now(), offset, limit)
     .then(processResult(TRANSACTIONS_COMMON_DATA, redis))
     .spread(mapResult(offset, limit));
-};
+}
+
+listCommonTransactions.transports = [ActionTransport.amqp];
+
+module.exports = listCommonTransactions;
