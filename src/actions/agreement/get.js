@@ -1,12 +1,13 @@
 const Errors = require('common-errors');
 const is = require('is');
+const { ActionTransport } = require('@microfleet/core');
 
 // helpers
 const key = require('../../redis-key');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 const { deserialize } = require('../../utils/redis');
 
-module.exports = async function getAgreement({ params: message }) {
+async function getAgreement({ params: message }) {
   const { redis } = this;
   const { id, owner } = message;
   const agreementKey = key(AGREEMENT_DATA, id);
@@ -31,4 +32,8 @@ module.exports = async function getAgreement({ params: message }) {
   }
 
   return output;
-};
+}
+
+getAgreement.transports = [ActionTransport.amqp];
+
+module.exports = getAgreement;

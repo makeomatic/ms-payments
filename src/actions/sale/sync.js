@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const moment = require('moment');
 const forEach = require('lodash/forEach');
@@ -89,5 +90,7 @@ function transactionSync({ params: message = {} }) {
 
   return Promise.bind(this).then(getLatest).then(sendRequest).then(saveToRedis);
 }
+
+transactionSync.transports = [ActionTransport.amqp];
 
 module.exports = transactionSync;

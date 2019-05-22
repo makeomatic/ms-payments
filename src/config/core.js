@@ -33,10 +33,6 @@ exports.plugins = [
   'http',
 ];
 
-/**
- * @microfleet/mailer configuration
- * @type {Object}
- */
 exports.mailer = {
   prefix: 'mailer',
   routes: {

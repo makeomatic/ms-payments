@@ -15,15 +15,19 @@ function getAMQPTransport(amqpConfig) {
 }
 
 /**
- *
+ * Finds master node availble for the write.
+ * In other cases returns existing redis instance.
  */
 function getRedisMasterNode(redis, config) {
-  const { keyPrefix } = config.redis.options;
-  const slot = calcSlot(keyPrefix);
-  const nodeKeys = redis.slots[slot];
-  const { master } = redis.connectionPool.nodes;
+  if (config.plugins.includes('redisCluster')) {
+    const { keyPrefix } = config.redis.options;
+    const slot = calcSlot(keyPrefix);
+    const nodeKeys = redis.slots[slot];
+    const { master } = redis.connectionPool.nodes;
 
-  return nodeKeys.reduce((node, key) => node || master[key], null);
+    return nodeKeys.reduce((node, key) => node || master[key], null);
+  }
+  return redis;
 }
 
 /**

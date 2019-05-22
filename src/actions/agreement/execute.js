@@ -1,4 +1,5 @@
 const { HttpStatusError } = require('common-errors');
+const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const moment = require('moment');
 const find = require('lodash/find');
@@ -246,5 +247,7 @@ function agreementExecute({ params }) {
     .then(updateRedis)
     .then(syncTransactions);
 }
+
+agreementExecute.transports = [ActionTransport.amqp];
 
 module.exports = agreementExecute;

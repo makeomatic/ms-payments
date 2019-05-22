@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const { NotSupportedError } = require('common-errors');
 const Promise = require('bluebird');
 const url = require('url');
@@ -84,5 +85,7 @@ function saleCreate({ params: message }) {
 
   return promise.then(sendRequest).then(saveToRedis).then(updateCommon);
 }
+
+saleCreate.transports = [ActionTransport.amqp];
 
 module.exports = saleCreate;

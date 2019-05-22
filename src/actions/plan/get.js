@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Errors = require('common-errors');
 const is = require('is');
 
@@ -56,7 +57,7 @@ function retrievePlan(redis, id, fetchParent = false) {
  * @apiParam (Payload_v2) {String} params.id - id of the plan
  * @apiParam (Payload_v2) {Boolean} params.fetchParent - whether to try retrieving parent plan
  */
-module.exports = function planGet({ params }) {
+function planGet({ params }) {
   let id;
   let fetchParent = false;
 
@@ -70,4 +71,8 @@ module.exports = function planGet({ params }) {
   }
 
   return retrievePlan(this.redis, id, fetchParent);
-};
+}
+
+planGet.transports = [ActionTransport.amqp];
+
+module.exports = planGet;

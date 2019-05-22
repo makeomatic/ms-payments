@@ -1,7 +1,7 @@
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const moment = require('moment');
-
+const { ActionTransport } = require('@microfleet/core');
 
 // internal actions
 const syncTransactions = require('../transaction/sync');
@@ -82,5 +82,7 @@ function agreementState({ params: message }) {
     .then(sendRequest)
     .then(updateRedis);
 }
+
+agreementState.transports = [ActionTransport.amqp];
 
 module.exports = agreementState;

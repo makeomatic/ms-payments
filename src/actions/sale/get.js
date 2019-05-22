@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const Errors = require('common-errors');
 
 // helpers
@@ -6,7 +7,7 @@ const key = require('../../redis-key');
 const { remapState } = require('../../utils/transactions');
 const { deserialize } = require('../../utils/redis');
 
-module.exports = function saleGet({ params: opts }) {
+function saleGet({ params: opts }) {
   const { redis } = this;
   const { owner, id } = opts;
   const saleKey = key(SALES_DATA_PREFIX, id);
@@ -31,4 +32,8 @@ module.exports = function saleGet({ params: opts }) {
         state: remapState(output.sale.state),
       };
     });
-};
+}
+
+saleGet.transports = [ActionTransport.amqp];
+
+module.exports = saleGet;

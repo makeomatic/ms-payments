@@ -40,6 +40,10 @@ class Payments extends Microfleet {
       fsort.attach(redis, 'fsort');
     });
 
+    this.on('plugin:connect:redisSentinel', (redis) => {
+      fsort.attach(redis, 'fsort');
+    });
+
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
     });

@@ -1,4 +1,4 @@
-const { routerExtension } = require('@microfleet/core');
+const { routerExtension, ActionTransport } = require('@microfleet/core');
 const path = require('path');
 const tokenAuth = require('ms-users/lib/auth/strategy.bearer');
 
@@ -10,8 +10,9 @@ module.exports = {
     routes: {
       directory: path.resolve(__dirname, '..', 'actions'),
       prefix: 'payments',
-      setTransportsAsDefault: true,
-      transports: ['amqp', 'http'],
+      setTransportsAsDefault: false,
+      transports: [ActionTransport.amqp, ActionTransport.http],
+      enabledGenericActions: ['health'],
     },
     extensions: {
       enabled: ['postRequest', 'preRequest', 'preResponse'],

@@ -1,3 +1,4 @@
+const { ActionTransport } = require('@microfleet/core');
 const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const render = require('ms-mailer-templates');
@@ -135,5 +136,7 @@ function saleExecute({ params: message }) {
     .then(updateMetadata)
     .then(sendCartEmail);
 }
+
+saleExecute.transports = [ActionTransport.amqp];
 
 module.exports = saleExecute;

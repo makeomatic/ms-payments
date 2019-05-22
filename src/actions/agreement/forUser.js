@@ -1,4 +1,5 @@
 const Errors = require('common-errors');
+const { ActionTransport } = require('@microfleet/core');
 
 const key = require('../../redis-key');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
@@ -41,5 +42,7 @@ function forUser({ params: message }) {
 
   return getId().then(getAgreement);
 }
+
+forUser.transports = [ActionTransport.amqp];
 
 module.exports = forUser;
