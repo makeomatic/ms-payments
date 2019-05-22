@@ -4,7 +4,7 @@ const checkAllowedForAdmin = require('../../middlewares/admin-request-owner');
 const { balance: balanceResponse } = require('../../utils/json-api');
 
 async function getBalanceAction(request) {
-  const { owner } = request.context;
+  const { owner } = request.locals;
   const balance = await this.balance.get(owner.id);
 
   return balanceResponse(owner.alias, balance);

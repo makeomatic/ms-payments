@@ -10,14 +10,10 @@ async function adminRequestOwner(request) {
   const { owner } = request.query;
   const currentUser = request.auth.credentials.metadata[audience];
 
-  if (request.context === undefined) {
-    request.context = Object.create(null);
-  }
-
   if (owner === undefined || owner === currentUser.alias) {
     const { id, alias } = currentUser;
 
-    request.context.owner = { id, alias };
+    request.locals.owner = { id, alias };
 
     return true;
   }
@@ -29,7 +25,7 @@ async function adminRequestOwner(request) {
       .catchThrow(notFoundError, notFoundHttpError);
     const { id, alias } = user;
 
-    request.context.owner = { id, alias };
+    request.locals.owner = { id, alias };
 
     return true;
   }
