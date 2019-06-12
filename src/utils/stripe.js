@@ -185,6 +185,5 @@ class Stripe {
 }
 
 Stripe.CUSTOMER_FIELDS_FOR_SAVE = ['id', 'default_source', 'email'];
-Stripe.CHARGE_SOURCE_STRIPE = 'stripe';
 
 module.exports = Stripe;

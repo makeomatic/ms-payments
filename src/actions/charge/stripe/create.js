@@ -7,7 +7,8 @@ const omit = require('lodash/omit');
 
 const acquireLock = require('../../../utils/acquire-lock');
 const assertStringNotEmpty = require('../../../utils/asserts/string-not-empty');
-const { CHARGE_SOURCE_STRIPE } = require('../../../utils/stripe');
+const { CHARGE_SOURCE_STRIPE } = require('../../../utils/charge');
+const { charge: chargeResponse } = require('../../../utils/json-api');
 
 const notEnabled = new HttpStatusError(501, 'Stripe is not enabled');
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
@@ -52,6 +53,8 @@ async function createStripeChargeAction(service, request) {
   strictEqual(service.config.stripe.enabled, true, notEnabled);
 
   const { id: ownerId } = request.auth.credentials;
+  const { audience } = service.config.users;
+  const { alias } = request.auth.credentials.metadata[audience];
   // use owner id instead of alias
   const params = Object.assign({ owner: ownerId }, request.params);
   const { owner, amount, description } = params;
@@ -63,12 +66,14 @@ async function createStripeChargeAction(service, request) {
   // note it's not throw any errors
   await createStripeCharge(service, charge, stripeChargeSource, params);
 
-  return { id: charge.id };
+  return chargeResponse(charge, { owner: alias });
 }
 
 async function wrappedAction(request) {
+  const { id: ownerId } = request.auth.credentials;
+
   return Promise
-    .using(this, request, acquireLock(this, `tx!stripe:charge:create:${request.params.owner}`), createStripeChargeAction)
+    .using(this, request, acquireLock(this, `tx!charge:create:stripe:${ownerId}`), createStripeChargeAction)
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }
 

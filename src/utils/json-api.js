@@ -37,10 +37,16 @@ function chargeCollectionMapper(data) {
   return chargeMapper(data, this);
 }
 
-function charge(data, replacement) {
-  return {
+function charge(data, replacement, meta = {}) {
+  const response = {
     data: chargeMapper(data, replacement),
   };
+
+  if (Object.keys(meta).length > 0) {
+    response.meta = meta;
+  }
+
+  return response;
 }
 
 function chargeCollection(data, replacement, total, limit, offset) {
