@@ -5,14 +5,14 @@ const moment = require('moment');
 const find = require('lodash/find');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
 
 // internal actions
 const { agreement: { execute, get: getAgreement }, handleError } = require('../../utils/paypal');
-const pullTransactionsData = require('../transaction/sync.js');
+const pullTransactionsData = require('../transaction/sync');
 const setState = require('./state');
 const getPlan = require('../plan/get');
 

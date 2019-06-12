@@ -1,0 +1,18 @@
+{
+  "$id": "sale.execute",
+  "type": "object",
+  "required": [
+    "payment_id",
+    "payer_id"
+  ],
+  "properties": {
+    "payment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payer_id": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

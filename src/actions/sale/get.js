@@ -2,10 +2,10 @@ const { ActionTransport } = require('@microfleet/core');
 const Errors = require('common-errors');
 
 // helpers
-const { SALES_DATA_PREFIX } = require('../../constants.js');
-const key = require('../../redisKey.js');
-const { remapState } = require('../../utils/transactions.js');
-const { deserialize } = require('../../utils/redis.js');
+const { SALES_DATA_PREFIX } = require('../../constants');
+const key = require('../../redis-key');
+const { remapState } = require('../../utils/transactions');
+const { deserialize } = require('../../utils/redis');
 
 function saleGet({ params: opts }) {
   const { redis } = this;

@@ -8,7 +8,7 @@ const omit = require('lodash/omit');
 const debug = require('debug')('ms-payments:paypal-plan');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { PAYPAL_DATE_FORMAT, PLANS_DATA } = require('../../constants');
 const { serialize, deserialize } = require('../../utils/redis');
 const {

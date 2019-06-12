@@ -1,0 +1,14 @@
+{
+  "$id": "agreement.forUser",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "user"
+  ],
+  "properties": {
+    "user": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

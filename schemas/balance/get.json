@@ -1,0 +1,10 @@
+{
+  "$id": "balance.get",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    }
+  }
+}

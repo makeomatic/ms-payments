@@ -4,5 +4,8 @@ module.exports = {
       host: 'redis',
       port: 7000 + idx,
     })),
+    options: {
+      keyPrefix: '{ms-payments}',
+    },
   },
 };

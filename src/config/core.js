@@ -1,14 +1,4 @@
-/**
- * Core Configuration of @microfleet/payments
- */
-
-const { routerExtension, ActionTransport } = require('@microfleet/core');
-const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
-
-// plugins
-const autoSchema = routerExtension('validate/schemaLessAction');
-const auditLog = routerExtension('audit/log');
 
 /**
  * Required Unique Service Name
@@ -41,46 +31,8 @@ exports.plugins = [
   'amqp',
   'redisCluster',
   'http',
-  'prometheus',
 ];
 
-/**
- * Http Plugin Configuration
- * @type {Object}
- */
-exports.http = {
-  server: {
-    handler: 'hapi',
-    port: 3000,
-  },
-  router: {
-    enabled: true,
-  },
-};
-
-
-/**
- * Router Plugin Configuration
- * @type {Object}
- */
-exports.router = {
-  routes: {
-    directory: path.resolve(__dirname, '..', 'actions'),
-    prefix: 'payments',
-    setTransportsAsDefault: false,
-    transports: [ActionTransport.amqp, ActionTransport.http],
-    enabledGenericActions: ['health'],
-  },
-  extensions: {
-    enabled: ['postRequest', 'preRequest', 'preResponse'],
-    register: [autoSchema, auditLog()],
-  },
-};
-
-/**
- * @microfleet/mailer configuration
- * @type {Object}
- */
 exports.mailer = {
   prefix: 'mailer',
   routes: {
@@ -104,21 +56,6 @@ exports.paypal = {
  * @type {Array}
  */
 exports.validator = ['../schemas'];
-
-/**
- * @microfleet/users Configuration
- * @type {Object}
- */
-exports.users = {
-  audience: '*.localhost',
-  prefix: 'users',
-  postfix: {
-    getInternalData: 'getInternalData',
-    getMetadata: 'getMetadata',
-    list: 'list',
-    updateMetadata: 'updateMetadata',
-  },
-};
 
 /**
  * Plans that are initialized during startup of the service.

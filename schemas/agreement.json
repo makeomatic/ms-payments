@@ -1,83 +1,83 @@
 {
-    "$id": "agreement",
-    "type": "object",
-    "required": [
-        "name",
-        "description",
-        "payer",
-        "plan"
-    ],
-    "properties": {
-        "id": {
-            "type": "string",
-            "minLength": 1
+  "$id": "agreement",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "payer",
+    "plan"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start_date": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agreement_details": {
+      "$ref": "common#/definitions/agreement_details"
+    },
+    "payer": {
+      "$ref": "common#/definitions/payer"
+    },
+    "shipping_address": {
+      "$ref": "common#/definitions/address"
+    },
+    "override_merchant_preferences": {
+      "$ref": "common#/definitions/merchant_preferences"
+    },
+    "override_charge_models": {
+      "type": "array",
+      "items": {
+        "$ref": "common#/definitions/override_charge_model"
+      }
+    },
+    "plan": {
+      "oneOf": [
+        {
+          "$ref": "plan.create#"
         },
-        "state": {
-            "type": "string",
-            "minLength": 1
-        },
-        "name": {
-            "type": "string",
-            "minLength": 1
-        },
-        "description": {
-            "type": "string",
-            "minLength": 1
-        },
-        "start_date": {
-            "type": "string",
-            "minLength": 1
-        },
-        "agreement_details": {
-            "$ref": "common#/definitions/agreement_details"
-        },
-        "payer": {
-            "$ref": "common#/definitions/payer"
-        },
-        "shipping_address": {
-            "$ref": "common#/definitions/address"
-        },
-        "override_merchant_preferences": {
-            "$ref": "common#/definitions/merchant_preferences"
-        },
-        "override_charge_models": {
-            "type": "array",
-            "items": {
-                "$ref": "common#/definitions/override_charge_model"
+        {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
             }
-        },
-        "plan": {
-            "oneOf": [
-                {
-                    "$ref": "plan.create#"
-                },
-                {
-                    "type": "object",
-                    "required": [
-                        "id"
-                    ],
-                    "properties": {
-                        "id": {
-                            "type": "string",
-                            "minLength": 1
-                        }
-                    }
-                }
-            ]
-        },
-        "create_time": {
-            "type": "string",
-            "minLength": 1
-        },
-        "update_time": {
-            "type": "string",
-            "minLength": 1
-        },
-        "links": {
-            "type": "array",
-            "items": {
-                "$ref": "common#/definitions/links"
-            }
+          }
         }
+      ]
+    },
+    "create_time": {
+      "type": "string",
+      "minLength": 1
+    },
+    "update_time": {
+      "type": "string",
+      "minLength": 1
+    },
+    "links": {
+      "type": "array",
+      "items": {
+        "$ref": "common#/definitions/links"
+      }
     }
+  }
 }

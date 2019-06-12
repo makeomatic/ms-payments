@@ -5,7 +5,7 @@ const render = require('ms-mailer-templates');
 const pick = require('lodash/pick');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { serialize } = require('../../utils/redis');
 const { SALES_DATA_PREFIX, TRANSACTION_TYPE_SALE, TRANSACTION_TYPE_3D } = require('../../constants');
 const { saveCommon, parseSale, getOwner } = require('../../utils/transactions');

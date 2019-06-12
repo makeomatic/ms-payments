@@ -1,0 +1,4 @@
+{
+  "$id": "charge.stripe.webhook",
+  "type": "object"
+}

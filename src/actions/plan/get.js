@@ -3,8 +3,8 @@ const Errors = require('common-errors');
 const is = require('is');
 
 // helpers
-const key = require('../../redisKey');
-const { hmget } = require('../../listUtils');
+const key = require('../../redis-key');
+const { hmget } = require('../../list-utils');
 const { PLANS_DATA, PLAN_ALIAS_FIELD } = require('../../constants');
 const { handlePipeline } = require('../../utils/redis');
 

@@ -3,12 +3,17 @@ const { Microfleet, ConnectorsTypes } = require('@microfleet/core');
 const fsort = require('redis-filtered-sort');
 const merge = require('lodash/merge');
 const Mailer = require('ms-mailer-client');
-const conf = require('./conf');
+const RedisCluster = require('ioredis').Cluster;
+const LockManager = require('dlock');
 
+const conf = require('./conf');
 // internal actions
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync');
 const syncAgreements = require('./actions/agreement/sync');
+const Balance = require('./utils/balance');
+const Charge = require('./utils/charge');
+const Stripe = require('./utils/stripe');
 
 /**
  * Class representing payments handling
@@ -29,6 +34,8 @@ class Payments extends Microfleet {
   constructor(opts = {}) {
     super(merge({}, Payments.defaultOpts, opts));
 
+    this.initLockManager();
+
     this.on('plugin:connect:redisCluster', (redis) => {
       fsort.attach(redis, 'fsort');
     });
@@ -47,6 +54,19 @@ class Payments extends Microfleet {
         this.migrate('redis', `${__dirname}/migrations`)
       ));
     }
+
+    this.addConnector(ConnectorsTypes.application, async () => {
+      if (this.config.stripe.enabled === true) {
+        this.stripe = new Stripe(this.config.stripe, this.redis);
+
+        if (this.config.stripe.webhook.enabled === true) {
+          await this.stripe.setupWebhook();
+        }
+      }
+
+      this.balance = new Balance(this.redis);
+      this.charge = new Charge(this.redis);
+    });
 
     // init plans and sync transactions during startup of production
     // service
@@ -107,6 +127,19 @@ class Payments extends Microfleet {
       });
 
     return null;
+  }
+
+  initLockManager() {
+    this.addDestructor(ConnectorsTypes.database, () => this.dlock.pubsub.disconnect());
+
+    this.on('plugin:connect:redisCluster', (redis) => {
+      this.dlock = new LockManager({
+        ...this.config.dlock,
+        client: redis,
+        pubsub: new RedisCluster(this.config.redis.hosts, this.config.redis.options),
+        log: this.log,
+      });
+    });
   }
 }
 

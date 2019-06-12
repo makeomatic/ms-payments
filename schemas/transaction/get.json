@@ -1,0 +1,16 @@
+{
+  "$id": "transaction.get",
+  "type": "object",
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    }
+  }
+}

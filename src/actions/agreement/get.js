@@ -3,9 +3,9 @@ const is = require('is');
 const { ActionTransport } = require('@microfleet/core');
 
 // helpers
-const key = require('../../redisKey.js');
-const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants.js');
-const { deserialize } = require('../../utils/redis.js');
+const key = require('../../redis-key');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { deserialize } = require('../../utils/redis');
 
 async function getAgreement({ params: message }) {
   const { redis } = this;
