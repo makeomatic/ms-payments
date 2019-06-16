@@ -1,13 +1,12 @@
 const { strictEqual } = require('assert');
 const request = require('request-promise');
 
-const config = require('../config');
 const { getToken, makeHeader } = require('../helpers/auth');
 const { isUUIDv4 } = require('../helpers/uuid');
 
 describe('charge.paypal', function suite() {
   const Payments = require('../../src');
-  const service = new Payments(Object.assign({}, config, { stripe: { enabled: true, webhook: { enabled: true } } }));
+  const service = new Payments();
 
   let successChargeId;
 

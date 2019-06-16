@@ -1,13 +1,12 @@
 const assert = require('assert');
 const request = require('request-promise');
 
-const config = require('../config');
 const { getToken, makeHeader } = require('../helpers/auth');
 
 describe('balance actions', function suite() {
   const Payments = require('../../src');
   const Balance = require('../../src/utils/balance');
-  const service = new Payments(config);
+  const service = new Payments();
 
   before('start service', () => service.connect());
 

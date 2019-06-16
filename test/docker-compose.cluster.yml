@@ -20,7 +20,7 @@ services:
     environment:
       DEBUG: ${DEBUG}
       NODE_ENV: 'production'
-      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.js","/src/configs/users.js"]'
+      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.cluster.js","/src/configs/users.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
 
   tester:
@@ -33,9 +33,12 @@ services:
     working_dir: /src
     volumes:
       - ${PWD}:/src:cached
+      - ./configs:/configs:cached
     environment:
       DEBUG: ""
       NODE_ENV: "test"
+      NCONF_NAMESPACE: MS_PAYMENTS
+      NCONF_FILE_PATH: '["/configs/amqp.js", "/configs/mix-plan.js", "/configs/redis.cluster.js", "/configs/users.js"]'
       PAYPAL_RETRY_TIMEOUT: 30000
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678

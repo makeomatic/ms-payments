@@ -1,0 +1,83 @@
+version: '2'
+
+volumes:
+  certs:
+  vhost:
+  html:
+
+networks:
+  static:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 172.16.238.0/24
+
+services:
+  redis:
+    image: redis:4.0.11-alpine
+    hostname: redis
+    expose:
+      - "6379"
+    networks:
+      static:
+        ipv4_address: 172.16.238.10
+
+  redis-sentinel:
+    depends_on:
+      - redis
+    volumes:
+      - ./helpers/redis-sentinel:/etc/redis-sentinel
+    image: redis:4.0.11-alpine
+    hostname: redis-sentinel
+    expose:
+      - "26379"
+    command: redis-server /etc/redis-sentinel/redis-sentinel.conf --sentinel
+    networks:
+      static:
+        ipv4_address: 172.16.238.15
+
+  rabbitmq:
+    image: makeomatic/rabbitmq:3.6.12
+    hostname: rabbitmq
+    networks:
+      static:
+        ipv4_address: 172.16.238.11
+
+  ms-users:
+    depends_on:
+      - redis
+      - rabbitmq
+    image: makeomatic/ms-users
+    links:
+      - redis
+      - rabbitmq
+    hostname: ms-users
+    volumes:
+      - ${PWD}/test/configs:/src/configs:ro
+    environment:
+      DEBUG: ${DEBUG}
+      NODE_ENV: 'production'
+      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.sentinel.js","/src/configs/users.js"]'
+      MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
+
+  tester:
+    # because chrome 71 bugs out with paypal
+    image: makeomatic/node:10.15.3-chrome-tester
+    links:
+      - redis-sentinel
+      - rabbitmq
+      - ms-users
+    working_dir: /src
+    volumes:
+      - ${PWD}:/src:cached
+      - ./configs:/configs:cached
+    environment:
+      DEBUG: ${DEBUG}
+      NCONF_FILE_PATH: '["/configs/amqp.js", "/configs/mix-plan.js", "/configs/redis.sentinel.js", "/configs/users.js"]'
+      NODE_ENV: "test"
+      NCONF_NAMESPACE: MS_PAYMENTS
+      PAYPAL_RETRY_TIMEOUT: 30000
+      PAYPAL_SANDBOX_USERNAME: test@cappasity.com
+      PAYPAL_SANDBOX_PASSWORD: 12345678
+    command: tail -f /dev/null

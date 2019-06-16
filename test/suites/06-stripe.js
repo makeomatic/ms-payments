@@ -4,14 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const replace = require('lodash/replace');
 
-const config = require('../config');
 const { createSignature } = require('../helpers/stripe');
 const { getToken, makeHeader } = require('../helpers/auth');
 const { isUUIDv4 } = require('../helpers/uuid');
 
 describe('stripe', function suite() {
   const Payments = require('../../src');
-  const service = new Payments(Object.assign({}, config, { stripe: { enabled: true, webhook: { enabled: true } } }));
+  const service = new Payments({ stripe: { enabled: true, webhook: { enabled: true } } });
   let successChargeId;
   let failChargeId;
 
