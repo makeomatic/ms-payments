@@ -1,3 +1,5 @@
+const { default: metricObservability } = require('@microfleet/core/lib/plugins/router/extensions/audit/metrics');
+
 const mixPlan = require('./mix-plan');
 
 module.exports = {
@@ -37,6 +39,12 @@ module.exports = {
       facebook: {
         password: Array.from({ length: 64 }).join('_'),
       },
+    },
+  },
+  router: {
+    extensions: {
+      enabled: ['preRequest', 'postResponse'],
+      register: [metricObservability()],
     },
   },
 };
