@@ -37,10 +37,9 @@ services:
     environment:
       DEBUG: ""
       NODE_ENV: "test"
-      NCONF_NAMESPACE: MS_PAYMENTS
-      NCONF_FILE_PATH: '["/configs/amqp.js", "/configs/mix-plan.js", "/configs/redis.cluster.js", "/configs/users.js"]'
+      DOTENV_FILE_PATH: "/src/test/.env"
+      NCONF_FILE_PATH: '["/configs/amqp.js", "/configs/redis.cluster.js"]'
       PAYPAL_RETRY_TIMEOUT: 30000
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678
-      DOTENV_FILE_PATH: "/src/test/.env"
     command: tail -f /dev/null
