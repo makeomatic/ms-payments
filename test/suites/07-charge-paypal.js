@@ -11,7 +11,7 @@ describe('charge.paypal', function suite() {
   let successChargeId;
 
   before('start service', () => service.connect());
-  before(async () => {
+  before('get user tokens', async () => {
     this.admin0 = (await getToken.call(service, 'test@test.ru'));
     this.user0 = (await getToken.call(service, 'user0@test.com'));
   });

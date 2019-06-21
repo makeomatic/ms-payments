@@ -38,7 +38,7 @@ services:
       DEBUG: ""
       NODE_ENV: "test"
       DOTENV_FILE_PATH: "/src/test/.env"
-      NCONF_FILE_PATH: '["/configs/amqp.js", "/configs/redis.cluster.js"]'
+      NCONF_FILE_PATH: '["/configs/amqp.js","/configs/cart.js","/configs/redis.cluster.js"]'
       PAYPAL_RETRY_TIMEOUT: 30000
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678
