@@ -55,7 +55,7 @@ services:
     environment:
       DEBUG: ${DEBUG}
       NODE_ENV: 'production'
-      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/users.redis.sentinel.js","/src/configs/users.redis.sentinel.js"]'
+      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.sentinel.js","/src/configs/users.redis.sentinel.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
     networks:
       static:
