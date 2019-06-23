@@ -26,9 +26,13 @@ class Paypal {
 
   constructor(config, redis) {
     assertPlainObject(config, invalidConfig);
-    assertStringNotEmpty(config.mode, invalidConfig);
-    assertStringNotEmpty(config.client_id, invalidConfig);
-    assertStringNotEmpty(config.client_secret, invalidConfig);
+    assertPlainObject(config.client, invalidConfig);
+    assertPlainObject(config.urls, invalidConfig);
+    assertStringNotEmpty(config.client.mode, invalidConfig);
+    assertStringNotEmpty(config.client.client_id, invalidConfig);
+    assertStringNotEmpty(config.client.client_secret, invalidConfig);
+    assertStringNotEmpty(config.urls.payments_cancel, invalidConfig);
+    assertStringNotEmpty(config.urls.payments_return, invalidConfig);
 
     this.config = config;
     this.redis = redis;
@@ -40,7 +44,7 @@ class Paypal {
 
     return Promise.fromCallback(callback => retry(
       invoke,
-      Object.assign({ args: [paypalClient, path, ...params, this.config, callback] }, retryConfig)
+      Object.assign({ args: [paypalClient, path, ...params, this.config.client, callback] }, retryConfig)
     ));
   }
 
@@ -48,12 +52,13 @@ class Paypal {
     assertStringNotEmpty(internalId, 'internalId is invalid');
     assertPlainObject(params, 'params is invalid');
 
+    const { payments_return: returnUrl, payments_cancel: cancelUrl } = this.config.urls;
     const payload = {
       intent: 'sale',
       payer: { payment_method: 'paypal' },
       redirect_urls: {
-        return_url: 'http://return.url',
-        cancel_url: 'http://cancel.url',
+        return_url: returnUrl,
+        cancel_url: cancelUrl,
       },
       transactions: [{
         amount: {

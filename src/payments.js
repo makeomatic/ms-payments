@@ -60,7 +60,7 @@ class Payments extends Microfleet {
 
       this.balance = new Balance(this.redis);
       this.charge = new Charge(this.redis);
-      this.paypal = new Paypal(this.config.paypal, this.redis);
+      this.paypal = new Paypal({ client: this.config.paypal, urls: this.config.urls }, this.redis);
     });
 
     // init plans and sync transactions during startup of production
