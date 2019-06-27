@@ -81,7 +81,8 @@ describe('charge.paypal', function suite() {
         url: 'http://localhost:3000/payments/charge/paypal/return',
         qs: {
           PayerID: 'CR87QHB7JTRSC',
-          paymentId: paypalPaymentId },
+          paymentId: paypalPaymentId,
+          token: 'EC-2AG32291P06779036' },
         headers: makeHeader(this.user0.jwt),
         json: true });
     });
