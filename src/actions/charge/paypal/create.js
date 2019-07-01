@@ -39,7 +39,7 @@ async function wrappedAction(request) {
 }
 
 wrappedAction.auth = 'token';
-wrappedAction.transports = [ActionTransport.http];
+wrappedAction.transports = [ActionTransport.amqp, ActionTransport.http];
 wrappedAction.transportOptions = {
   [ActionTransport.http]: {
     methods: ['post'],

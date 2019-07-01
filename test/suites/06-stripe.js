@@ -3,6 +3,7 @@ const request = require('request-promise');
 const fs = require('fs');
 const path = require('path');
 const replace = require('lodash/replace');
+const { inspectPromise } = require('@makeomatic/deploy');
 
 const { createSignature } = require('../helpers/stripe');
 const { getToken, makeHeader } = require('../helpers/auth');
@@ -177,102 +178,209 @@ describe('stripe', function suite() {
   });
 
   describe('list action', () => {
-    it('should return error if not admin', async () => {
-      const response = await request.get({
-        url: 'http://localhost:3000/payments/balance/get',
-        qs: { owner: 'admin0' },
-        headers: makeHeader(this.user0.jwt),
-        simple: false });
+    describe('http', () => {
+      it('should return error if not admin', async () => {
+        const response = await request.get({
+          url: 'http://localhost:3000/payments/charge/list',
+          qs: { owner: 'admin0' },
+          headers: makeHeader(this.user0.jwt),
+          simple: false });
 
-      strictEqual(response, '{"statusCode":403,"error":"Forbidden","message":"not enough rights","name":"HttpStatusError"}');
+        strictEqual(response, '{"statusCode":403,"error":"Forbidden","message":"not enough rights","name":"HttpStatusError"}');
+      });
+
+      it('should be able to get charges list by user', async () => {
+        const response = await request.get({
+          url: 'http://localhost:3000/payments/charge/list',
+          qs: { owner: 'user0' },
+          headers: makeHeader(this.user0.jwt),
+          json: true });
+
+        strictEqual(response.meta.offset, 0);
+        strictEqual(response.meta.limit, 20);
+        strictEqual(response.meta.cursor, 20);
+        strictEqual(response.meta.page, 1);
+        strictEqual(response.meta.pages, 1);
+
+        strictEqual(response.data.length, 2);
+
+        strictEqual(response.data[0].id, failChargeId);
+        strictEqual(response.data[0].type, 'charge');
+        strictEqual(response.data[0].attributes.amount, '100002');
+        strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
+        strictEqual(response.data[0].attributes.owner, 'user0');
+        strictEqual(response.data[0].attributes.createAt !== undefined, true);
+        strictEqual(response.data[0].attributes.status, '1');
+        strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
+        strictEqual(response.data[0].attributes.metadata === undefined, true);
+        strictEqual(response.data[0].attributes.source === undefined, true);
+        strictEqual(response.data[0].attributes.sourceId === undefined, true);
+        strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[0].attributes.failMetadata === undefined, true);
+
+        strictEqual(response.data[1].id, successChargeId);
+        strictEqual(response.data[1].type, 'charge');
+        strictEqual(response.data[1].attributes.amount, '1001');
+        strictEqual(response.data[1].attributes.description, 'Feed the cat');
+        strictEqual(response.data[1].attributes.owner, 'user0');
+        strictEqual(response.data[1].attributes.createAt !== undefined, true);
+        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.failReason, '');
+        strictEqual(response.data[1].attributes.metadata === undefined, true);
+        strictEqual(response.data[1].attributes.source === undefined, true);
+        strictEqual(response.data[1].attributes.sourceId === undefined, true);
+        strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[1].attributes.failMetadata === undefined, true);
+      });
+
+      it('should be able to get charges list by admin', async () => {
+        const response = await request.get({
+          url: 'http://localhost:3000/payments/charge/list',
+          qs: { owner: 'user0' },
+          headers: makeHeader(this.admin0.jwt),
+          json: true });
+
+        strictEqual(response.meta.offset, 0);
+        strictEqual(response.meta.limit, 20);
+        strictEqual(response.meta.cursor, 20);
+        strictEqual(response.meta.page, 1);
+        strictEqual(response.meta.pages, 1);
+
+        strictEqual(response.data.length, 2);
+
+        strictEqual(response.data[0].id, failChargeId);
+        strictEqual(response.data[0].type, 'charge');
+        strictEqual(response.data[0].attributes.amount, '100002');
+        strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
+        strictEqual(response.data[0].attributes.owner, 'user0');
+        strictEqual(response.data[0].attributes.createAt !== undefined, true);
+        strictEqual(response.data[0].attributes.status, '1');
+        strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
+        strictEqual(response.data[0].attributes.metadata === undefined, true);
+        strictEqual(response.data[0].attributes.source === undefined, true);
+        strictEqual(response.data[0].attributes.sourceId === undefined, true);
+        strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[0].attributes.failMetadata === undefined, true);
+
+        strictEqual(response.data[1].id, successChargeId);
+        strictEqual(response.data[1].type, 'charge');
+        strictEqual(response.data[1].attributes.amount, '1001');
+        strictEqual(response.data[1].attributes.description, 'Feed the cat');
+        strictEqual(response.data[1].attributes.owner, 'user0');
+        strictEqual(response.data[1].attributes.createAt !== undefined, true);
+        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.failReason, '');
+        strictEqual(response.data[1].attributes.metadata === undefined, true);
+        strictEqual(response.data[1].attributes.source === undefined, true);
+        strictEqual(response.data[1].attributes.sourceId === undefined, true);
+        strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[1].attributes.failMetadata === undefined, true);
+      });
     });
 
-    it('should be able to get charges list by user', async () => {
-      const response = await request.get({
-        url: 'http://localhost:3000/payments/charge/list',
-        qs: { owner: 'user0' },
-        headers: makeHeader(this.user0.jwt),
-        json: true });
+    describe('amqp', () => {
+      it('should return error if not admin', async () => {
+        const error = await service.amqp
+          .publishAndWait(
+            'payments.charge.list',
+            { owner: 'admin0' },
+            { headers: makeHeader(this.user0.jwt) }
+          )
+          .reflect()
+          .then(inspectPromise(false));
 
-      strictEqual(response.meta.offset, 0);
-      strictEqual(response.meta.limit, 20);
-      strictEqual(response.meta.cursor, 20);
-      strictEqual(response.meta.page, 1);
-      strictEqual(response.meta.pages, 1);
+        strictEqual(error.statusCode, 403);
+        strictEqual(error.message, 'not enough rights');
+        strictEqual(error.name, 'HttpStatusError');
+      });
 
-      strictEqual(response.data.length, 2);
+      it('should be able to get charges list by user', async () => {
+        const response = await service.amqp.publishAndWait(
+          'payments.charge.list',
+          { owner: 'user0' },
+          { headers: makeHeader(this.user0.jwt) }
+        );
 
-      strictEqual(response.data[0].id, failChargeId);
-      strictEqual(response.data[0].type, 'charge');
-      strictEqual(response.data[0].attributes.amount, '100002');
-      strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
-      strictEqual(response.data[0].attributes.owner, 'user0');
-      strictEqual(response.data[0].attributes.createAt !== undefined, true);
-      strictEqual(response.data[0].attributes.status, '1');
-      strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
-      strictEqual(response.data[0].attributes.metadata === undefined, true);
-      strictEqual(response.data[0].attributes.source === undefined, true);
-      strictEqual(response.data[0].attributes.sourceId === undefined, true);
-      strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
-      strictEqual(response.data[0].attributes.failMetadata === undefined, true);
+        strictEqual(response.meta.offset, 0);
+        strictEqual(response.meta.limit, 20);
+        strictEqual(response.meta.cursor, 20);
+        strictEqual(response.meta.page, 1);
+        strictEqual(response.meta.pages, 1);
 
-      strictEqual(response.data[1].id, successChargeId);
-      strictEqual(response.data[1].type, 'charge');
-      strictEqual(response.data[1].attributes.amount, '1001');
-      strictEqual(response.data[1].attributes.description, 'Feed the cat');
-      strictEqual(response.data[1].attributes.owner, 'user0');
-      strictEqual(response.data[1].attributes.createAt !== undefined, true);
-      strictEqual(response.data[1].attributes.status, '2');
-      strictEqual(response.data[1].attributes.failReason, '');
-      strictEqual(response.data[1].attributes.metadata === undefined, true);
-      strictEqual(response.data[1].attributes.source === undefined, true);
-      strictEqual(response.data[1].attributes.sourceId === undefined, true);
-      strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
-      strictEqual(response.data[1].attributes.failMetadata === undefined, true);
-    });
+        strictEqual(response.data.length, 2);
 
-    it('should be able to get charges list by admin', async () => {
-      const response = await request.get({
-        url: 'http://localhost:3000/payments/charge/list',
-        qs: { owner: 'user0' },
-        headers: makeHeader(this.admin0.jwt),
-        json: true });
+        strictEqual(response.data[0].id, failChargeId);
+        strictEqual(response.data[0].type, 'charge');
+        strictEqual(response.data[0].attributes.amount, '100002');
+        strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
+        strictEqual(response.data[0].attributes.owner, 'user0');
+        strictEqual(response.data[0].attributes.createAt !== undefined, true);
+        strictEqual(response.data[0].attributes.status, '1');
+        strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
+        strictEqual(response.data[0].attributes.metadata === undefined, true);
+        strictEqual(response.data[0].attributes.source === undefined, true);
+        strictEqual(response.data[0].attributes.sourceId === undefined, true);
+        strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[0].attributes.failMetadata === undefined, true);
 
-      strictEqual(response.meta.offset, 0);
-      strictEqual(response.meta.limit, 20);
-      strictEqual(response.meta.cursor, 20);
-      strictEqual(response.meta.page, 1);
-      strictEqual(response.meta.pages, 1);
+        strictEqual(response.data[1].id, successChargeId);
+        strictEqual(response.data[1].type, 'charge');
+        strictEqual(response.data[1].attributes.amount, '1001');
+        strictEqual(response.data[1].attributes.description, 'Feed the cat');
+        strictEqual(response.data[1].attributes.owner, 'user0');
+        strictEqual(response.data[1].attributes.createAt !== undefined, true);
+        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.failReason, '');
+        strictEqual(response.data[1].attributes.metadata === undefined, true);
+        strictEqual(response.data[1].attributes.source === undefined, true);
+        strictEqual(response.data[1].attributes.sourceId === undefined, true);
+        strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[1].attributes.failMetadata === undefined, true);
+      });
 
-      strictEqual(response.data.length, 2);
+      it('should be able to get charges list by admin', async () => {
+        const response = await service.amqp.publishAndWait(
+          'payments.charge.list',
+          { owner: 'user0' },
+          { headers: makeHeader(this.admin0.jwt) }
+        );
 
-      strictEqual(response.data[0].id, failChargeId);
-      strictEqual(response.data[0].type, 'charge');
-      strictEqual(response.data[0].attributes.amount, '100002');
-      strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
-      strictEqual(response.data[0].attributes.owner, 'user0');
-      strictEqual(response.data[0].attributes.createAt !== undefined, true);
-      strictEqual(response.data[0].attributes.status, '1');
-      strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
-      strictEqual(response.data[0].attributes.metadata === undefined, true);
-      strictEqual(response.data[0].attributes.source === undefined, true);
-      strictEqual(response.data[0].attributes.sourceId === undefined, true);
-      strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
-      strictEqual(response.data[0].attributes.failMetadata === undefined, true);
+        strictEqual(response.meta.offset, 0);
+        strictEqual(response.meta.limit, 20);
+        strictEqual(response.meta.cursor, 20);
+        strictEqual(response.meta.page, 1);
+        strictEqual(response.meta.pages, 1);
 
-      strictEqual(response.data[1].id, successChargeId);
-      strictEqual(response.data[1].type, 'charge');
-      strictEqual(response.data[1].attributes.amount, '1001');
-      strictEqual(response.data[1].attributes.description, 'Feed the cat');
-      strictEqual(response.data[1].attributes.owner, 'user0');
-      strictEqual(response.data[1].attributes.createAt !== undefined, true);
-      strictEqual(response.data[1].attributes.status, '2');
-      strictEqual(response.data[1].attributes.failReason, '');
-      strictEqual(response.data[1].attributes.metadata === undefined, true);
-      strictEqual(response.data[1].attributes.source === undefined, true);
-      strictEqual(response.data[1].attributes.sourceId === undefined, true);
-      strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
-      strictEqual(response.data[1].attributes.failMetadata === undefined, true);
+        strictEqual(response.data.length, 2);
+
+        strictEqual(response.data[0].id, failChargeId);
+        strictEqual(response.data[0].type, 'charge');
+        strictEqual(response.data[0].attributes.amount, '100002');
+        strictEqual(response.data[0].attributes.description, 'Feed the cat!!!!');
+        strictEqual(response.data[0].attributes.owner, 'user0');
+        strictEqual(response.data[0].attributes.createAt !== undefined, true);
+        strictEqual(response.data[0].attributes.status, '1');
+        strictEqual(response.data[0].attributes.failReason, 'Your card\'s security code is incorrect.');
+        strictEqual(response.data[0].attributes.metadata === undefined, true);
+        strictEqual(response.data[0].attributes.source === undefined, true);
+        strictEqual(response.data[0].attributes.sourceId === undefined, true);
+        strictEqual(response.data[0].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[0].attributes.failMetadata === undefined, true);
+
+        strictEqual(response.data[1].id, successChargeId);
+        strictEqual(response.data[1].type, 'charge');
+        strictEqual(response.data[1].attributes.amount, '1001');
+        strictEqual(response.data[1].attributes.description, 'Feed the cat');
+        strictEqual(response.data[1].attributes.owner, 'user0');
+        strictEqual(response.data[1].attributes.createAt !== undefined, true);
+        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.failReason, '');
+        strictEqual(response.data[1].attributes.metadata === undefined, true);
+        strictEqual(response.data[1].attributes.source === undefined, true);
+        strictEqual(response.data[1].attributes.sourceId === undefined, true);
+        strictEqual(response.data[1].attributes.sourceMetadata === undefined, true);
+        strictEqual(response.data[1].attributes.failMetadata === undefined, true);
+      });
     });
   });
 

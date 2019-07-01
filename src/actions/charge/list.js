@@ -5,7 +5,7 @@ const { CHARGE_RESPONSE_FIELDS, chargeCollection } = require('../../utils/json-a
 
 async function chargesListAction(request) {
   const { owner } = request.locals;
-  const { offset, limit } = request.query;
+  const { offset, limit } = request.method === 'amqp' ? request.params : request.query;
   const [charges, total] = await this.charge.list(owner.id, offset, limit, CHARGE_RESPONSE_FIELDS);
 
   return chargeCollection(charges, { owner: owner.alias }, total, limit, offset);
@@ -13,7 +13,7 @@ async function chargesListAction(request) {
 
 chargesListAction.auth = 'token';
 chargesListAction.allowed = checkAllowedForAdmin;
-chargesListAction.transports = [ActionTransport.http];
+chargesListAction.transports = [ActionTransport.amqp, ActionTransport.http];
 chargesListAction.transportOptions = {
   [ActionTransport.http]: {
     methods: ['get'],

@@ -10,7 +10,7 @@ function getToken(username) {
 }
 
 function makeHeader(token) {
-  return { Authorization: `JWT ${token}` };
+  return { authorization: `JWT ${token}` };
 }
 
 module.exports = {
