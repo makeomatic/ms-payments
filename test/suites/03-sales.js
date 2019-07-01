@@ -3,7 +3,6 @@ const assert = require('assert');
 const sinon = require('sinon');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
-const TEST_CONFIG = require('../config');
 const { duration, simpleDispatcher } = require('../utils');
 
 describe('Sales suite', function SalesSuite() {
@@ -23,7 +22,7 @@ describe('Sales suite', function SalesSuite() {
   let dispatch;
 
   before('start service', async () => {
-    payments = new Payments(TEST_CONFIG);
+    payments = new Payments();
     await payments.connect();
     dispatch = simpleDispatcher(payments);
   });

@@ -3,7 +3,6 @@ const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
-const TEST_CONFIG = require('../config');
 
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
@@ -28,7 +27,7 @@ describe('Agreements suite', function AgreementSuite() {
   this.timeout(duration * 16);
 
   before('startService', async () => {
-    payments = new Payments(TEST_CONFIG);
+    payments = new Payments();
     await payments.connect();
     dispatch = simpleDispatcher(payments);
   });

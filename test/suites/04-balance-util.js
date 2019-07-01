@@ -1,12 +1,11 @@
 const assert = require('assert');
 
-const config = require('../config');
 const randomOwner = require('../helpers/random-owner');
 
 describe('balance utils', function suite() {
   const Payments = require('../../src');
   const Balance = require('../../src/utils/balance');
-  const service = new Payments(config);
+  const service = new Payments();
 
   before('start service', () => service.connect());
 

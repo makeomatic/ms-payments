@@ -63,6 +63,20 @@ class Charge {
     return charge;
   }
 
+  async updateSource(id, sourceId, sourceMetadata, pipeline) {
+    assertStringNotEmpty(id, 'charge id is invalid');
+    assertStringNotEmpty(sourceId, 'sourceId is invalid');
+    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
+
+    const chargeUpdateData = { sourceId, sourceMetadata: JSON.stringify(sourceMetadata) };
+
+    if (pipeline !== undefined) {
+      pipeline.hmset(Charge.dataRedisKey(id), chargeUpdateData);
+    } else {
+      await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
+    }
+  }
+
   async markAsComplete(id, sourceId, sourceMetadata, pipeline) {
     assertStringNotEmpty(id, 'charge id is invalid');
     assertStringNotEmpty(sourceId, 'sourceId is invalid');
@@ -145,12 +159,21 @@ class Charge {
   }
 
   async get(id, fields = []) {
-    return this.mapper.get(Charge.dataRedisKey(id), fields);
+    const charge = await this.mapper.get(Charge.dataRedisKey(id), fields);
+
+    if (charge.status !== undefined) {
+      charge.status = parseInt(charge.status, 10);
+    }
+
+    return charge;
   }
 }
 
 Charge.STATUS_INITIALIZED = 0;
 Charge.STATUS_FAILED = 1;
 Charge.STATUS_COMPLETED = 2;
+
+Charge.CHARGE_SOURCE_STRIPE = 'stripe';
+Charge.CHARGE_SOURCE_PAYPAL = 'paypal';
 
 module.exports = Charge;

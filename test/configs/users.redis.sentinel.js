@@ -1,3 +1,5 @@
+// const { default: metricObservability } = require('@microfleet/core/lib/plugins/router/extensions/audit/metrics');
+
 const mixPlan = require('./mix-plan');
 
 module.exports = {
@@ -39,9 +41,20 @@ module.exports = {
       },
     },
   },
-  redis: {
-    options: {
-      keyPrefix: '{ms-users}',
-    },
-  },
+  // delete this
+  plugins: [
+    'validator',
+    'logger',
+    'router',
+    'redisSentinel',
+    'amqp',
+    'http',
+  ],
+  // uncomment this
+  // router: {
+  //   extensions: {
+  //     enabled: ['preRequest', 'postResponse'],
+  //     register: [metricObservability()],
+  //   },
+  // },
 };

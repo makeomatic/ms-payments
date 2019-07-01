@@ -58,7 +58,7 @@ function transform(keys, prefixLength) {
 }
 
 function cleanupCache(_index) {
-  const { redis, config } = this;
+  const { redis, redisType, config } = this;
   const { keyPrefix } = config.redis.options;
   const keyPrefixLength = keyPrefix.length;
   const index = `${keyPrefix}${_index}`;
@@ -66,9 +66,16 @@ function cleanupCache(_index) {
   const slot = calcSlot(index);
   // this has possibility of throwing, but not likely to since previous operations
   // would've been rejected already, in a promise this will result in a rejection
-  const nodeKeys = redis.slots[slot];
-  const masters = redis.connectionPool.nodes.master;
-  const masterNode = nodeKeys.reduce((node, key) => node || masters[key], null);
+  let masterNode;
+
+  if (redisType === 'redisCluster') {
+    const nodeKeys = redis.slots[slot];
+    const masters = redis.connectionPool.nodes.master;
+
+    masterNode = nodeKeys.reduce((node, key) => node || masters[key], null);
+  } else {
+    masterNode = redis;
+  }
 
   function scan(node, cursor = '0') {
     return node

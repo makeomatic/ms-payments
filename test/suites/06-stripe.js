@@ -4,15 +4,13 @@ const fs = require('fs');
 const path = require('path');
 const replace = require('lodash/replace');
 
-const config = require('../config');
 const { createSignature } = require('../helpers/stripe');
 const { getToken, makeHeader } = require('../helpers/auth');
-
-const isUUIDv4 = string => /^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i.test(string);
+const { isUUIDv4 } = require('../helpers/uuid');
 
 describe('stripe', function suite() {
   const Payments = require('../../src');
-  const service = new Payments(Object.assign({}, config, { stripe: { enabled: true, webhook: { enabled: true } } }));
+  const service = new Payments({ stripe: { enabled: true, webhook: { enabled: true } } });
   let successChargeId;
   let failChargeId;
 
@@ -42,9 +40,16 @@ describe('stripe', function suite() {
         headers: makeHeader(this.user0.jwt),
         json: true });
 
-      strictEqual(isUUIDv4(response.id), true);
+      strictEqual(isUUIDv4(response.data.id), true);
+      strictEqual(response.data.type, 'charge');
+      strictEqual(response.data.attributes.amount, 1001);
+      strictEqual(response.data.attributes.description, 'Feed the cat');
+      strictEqual(response.data.attributes.status, 0);
+      strictEqual(response.data.attributes.createAt !== undefined, true);
+      strictEqual(response.data.attributes.owner, 'user0');
+      strictEqual(response.data.attributes.failReason, '');
 
-      successChargeId = response.id;
+      successChargeId = response.data.id;
 
       const charge = await service.redis.hgetall(`charge:${successChargeId}`);
 
@@ -107,9 +112,16 @@ describe('stripe', function suite() {
         headers: makeHeader(this.user0.jwt),
         json: true });
 
-      strictEqual(isUUIDv4(response.id), true);
+      strictEqual(isUUIDv4(response.data.id), true);
+      strictEqual(response.data.type, 'charge');
+      strictEqual(response.data.attributes.amount, 100002);
+      strictEqual(response.data.attributes.description, 'Feed the cat!!!!');
+      strictEqual(response.data.attributes.status, 0);
+      strictEqual(response.data.attributes.createAt !== undefined, true);
+      strictEqual(response.data.attributes.owner, 'user0');
+      strictEqual(response.data.attributes.failReason, '');
 
-      failChargeId = response.id;
+      failChargeId = response.data.id;
 
       const charge = await service.redis.hgetall(`charge:${failChargeId}`);
 
@@ -290,7 +302,7 @@ describe('stripe', function suite() {
       strictEqual(response.data.attributes.description, 'Feed the cat');
       strictEqual(response.data.attributes.owner, '[[protected]]');
       strictEqual(response.data.attributes.createAt !== undefined, true);
-      strictEqual(response.data.attributes.status, '2');
+      strictEqual(response.data.attributes.status, 2);
       strictEqual(response.data.attributes.failReason, '');
       strictEqual(response.data.attributes.metadata === undefined, true);
       strictEqual(response.data.attributes.source === undefined, true);
@@ -312,7 +324,7 @@ describe('stripe', function suite() {
       strictEqual(response.data.attributes.description, 'Feed the cat!!!!');
       strictEqual(response.data.attributes.owner, '[[protected]]');
       strictEqual(response.data.attributes.createAt !== undefined, true);
-      strictEqual(response.data.attributes.status, '1');
+      strictEqual(response.data.attributes.status, 1);
       strictEqual(response.data.attributes.failReason, 'Your card\'s security code is incorrect.');
       strictEqual(response.data.attributes.metadata === undefined, true);
       strictEqual(response.data.attributes.source === undefined, true);

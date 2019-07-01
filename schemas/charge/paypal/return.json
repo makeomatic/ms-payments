@@ -1,0 +1,29 @@
+{
+  "$id": "charge.paypal.return",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "PayerID",
+    "paymentId"
+  ],
+  "properties": {
+    "PayerID": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "A positive integer representing how much to charge"
+    },
+    "paymentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "An arbitrary string which you can attach to a charge object"
+    },
+    "token": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024,
+      "description": "Paypal token"
+    }
+  }
+}

@@ -14,6 +14,7 @@ const syncAgreements = require('./actions/agreement/sync');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
 const Stripe = require('./utils/stripe');
+const Paypal = require('./utils/paypal-payment');
 
 /**
  * Class representing payments handling
@@ -34,15 +35,8 @@ class Payments extends Microfleet {
   constructor(opts = {}) {
     super(merge({}, Payments.defaultOpts, opts));
 
+    this.initRedis();
     this.initLockManager();
-
-    this.on('plugin:connect:redisCluster', (redis) => {
-      fsort.attach(redis, 'fsort');
-    });
-
-    this.on('plugin:connect:redisSentinel', (redis) => {
-      fsort.attach(redis, 'fsort');
-    });
 
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
@@ -66,6 +60,7 @@ class Payments extends Microfleet {
 
       this.balance = new Balance(this.redis);
       this.charge = new Charge(this.redis);
+      this.paypal = new Paypal({ client: this.config.paypal, urls: this.config.urls }, this.redis);
     });
 
     // init plans and sync transactions during startup of production
@@ -129,14 +124,40 @@ class Payments extends Microfleet {
     return null;
   }
 
+  initRedis() {
+    const { config } = this;
+
+    if (config.plugins.includes('redisCluster')) {
+      this.redisType = 'redisCluster';
+      this.redisDuplicate = () => new RedisCluster(config.redis.hosts, { ...config.redis.options, lazyConnect: true });
+    } else if (config.plugins.includes('redisSentinel')) {
+      this.redisType = 'redisSentinel';
+      this.redisDuplicate = redis => redis.duplicate();
+    } else {
+      throw new Error('must include redis family plugins');
+    }
+
+    this.on(`plugin:connect:${this.redisType}`, (redis) => {
+      fsort.attach(redis, 'fsort');
+    });
+  }
+
   initLockManager() {
     this.addDestructor(ConnectorsTypes.database, () => this.dlock.pubsub.disconnect());
 
-    this.on('plugin:connect:redisCluster', (redis) => {
+    this.on(`plugin:close:${this.redisType}`, () => {
+      this.dlock = null;
+    });
+
+    this.addConnector(ConnectorsTypes.migration, async () => {
+      this.pubsub = this.redisDuplicate(this.redis);
+
+      await this.pubsub.connect();
+
       this.dlock = new LockManager({
         ...this.config.dlock,
-        client: redis,
-        pubsub: new RedisCluster(this.config.redis.hosts, this.config.redis.options),
+        client: this.redis,
+        pubsub: this.pubsub,
         log: this.log,
       });
     });
