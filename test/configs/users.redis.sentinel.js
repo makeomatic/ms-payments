@@ -47,5 +47,6 @@ module.exports = {
     'amqp',
     'redisSentinel',
     'http',
+    'prometheus',
   ],
 };
