@@ -4,7 +4,9 @@
   "additionalProperties": false,
   "required": [
     "amount",
-    "description"
+    "description",
+    "returnUrl",
+    "cancelUrl"
   ],
   "properties": {
     "amount": {
@@ -18,6 +20,14 @@
       "minLength": 1,
       "maxLength": 65536,
       "description": "An arbitrary string which you can attach to a charge object"
+    },
+    "returnUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "cancelUrl": {
+      "type": "string",
+      "format": "uri"
     }
   }
 }

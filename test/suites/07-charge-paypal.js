@@ -26,7 +26,9 @@ describe('charge.paypal', function suite() {
           url: 'http://localhost:3000/payments/charge/paypal/create',
           body: {
             amount: 1005,
-            description: 'Feed the cat' },
+            description: 'Feed the cat',
+            returnUrl: 'http://api-sandbox.cappasity.matic.ninja/paypal-payments-return',
+            cancelUrl: 'http://api-sandbox.cappasity.matic.ninja/paypal-payments-cancel' },
           headers: makeHeader(this.user0.jwt),
           json: true });
 
@@ -57,7 +59,9 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.createAt !== undefined, true);
         strictEqual(charge.status, '0');
         strictEqual(charge.failReason, '');
-        strictEqual(charge.metadata, `{"owner":"${this.user0.user.id}","amount":1005,"description":"Feed the cat"}`);
+        strictEqual(charge.metadata, `{"owner":"${this.user0.user.id}","amount":1005,`
+          + '"description":"Feed the cat","returnUrl":"http://api-sandbox.cappasity.matic.ninja/paypal-payments-return",'
+          + '"cancelUrl":"http://api-sandbox.cappasity.matic.ninja/paypal-payments-cancel"}');
         strictEqual(charge.source, 'paypal');
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
@@ -75,7 +79,12 @@ describe('charge.paypal', function suite() {
       it('should create success paypal charge', async () => {
         const response = await service.amqp.publishAndWait(
           'payments.charge.paypal.create',
-          { amount: 1005, description: 'Feed the cat' },
+          {
+            amount: 1005,
+            description: 'Feed the cat',
+            returnUrl: 'http://api-sandbox.cappasity.matic.ninja/paypal-payments-return',
+            cancelUrl: 'http://api-sandbox.cappasity.matic.ninja/paypal-payments-cancel',
+          },
           { headers: makeHeader(this.user0.jwt) }
         );
 
@@ -106,7 +115,9 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.createAt !== undefined, true);
         strictEqual(charge.status, '0');
         strictEqual(charge.failReason, '');
-        strictEqual(charge.metadata, `{"owner":"${this.user0.user.id}","amount":1005,"description":"Feed the cat"}`);
+        strictEqual(charge.metadata, `{"owner":"${this.user0.user.id}","amount":1005,`
+          + '"description":"Feed the cat","returnUrl":"http://api-sandbox.cappasity.matic.ninja/paypal-payments-return",'
+          + '"cancelUrl":"http://api-sandbox.cappasity.matic.ninja/paypal-payments-cancel"}');
         strictEqual(charge.source, 'paypal');
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
