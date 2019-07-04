@@ -1,8 +1,13 @@
+const fs = require('fs');
+const path = require('path');
 const isObject = require('lodash/isObject');
 const { strictEqual } = require('assert');
 
 const assertStringNotEmpty = require('./asserts/string-not-empty');
 const assertInteger = require('./asserts/integer');
+
+const incrementScript = fs.readFileSync(path.resolve(__dirname, '../../scripts/incrementBalance.lua'), 'utf8');
+const decrementScript = fs.readFileSync(path.resolve(__dirname, '../../scripts/decrementBalance.lua'), 'utf8');
 
 class Balance {
   static userBalanceKey(owner) {
@@ -68,7 +73,8 @@ class Balance {
     if (pipeline !== undefined) {
       strictEqual(isObject(pipeline), true, 'redis pipeline is invalid');
 
-      pipeline.incrementBalance(...params);
+      // https://github.com/luin/ioredis/issues/536
+      pipeline.eval(incrementScript, ...params);
     } else {
       await this.redis.incrementBalance(...params);
     }
@@ -93,7 +99,8 @@ class Balance {
     if (pipeline !== undefined) {
       strictEqual(isObject(pipeline), true, 'redis pipeline is invalid');
 
-      pipeline.decrementBalance(...params);
+      // https://github.com/luin/ioredis/issues/536
+      pipeline.eval(decrementScript, ...params);
     } else {
       await this.redis.decrementBalance(...params);
     }
