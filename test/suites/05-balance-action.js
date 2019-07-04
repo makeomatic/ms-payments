@@ -1,6 +1,7 @@
 const assert = require('assert');
 const request = require('request-promise');
 
+const randomOwner = require('../helpers/random-owner');
 const { getToken, makeHeader } = require('../helpers/auth');
 
 describe('balance actions', function suite() {
@@ -15,7 +16,7 @@ describe('balance actions', function suite() {
     this.user0 = (await getToken.call(service, 'user0@test.com'));
   });
 
-  afterEach(() => service.redis.del(Balance.redisKey(this.user0.user.id)));
+  afterEach(() => service.redis.del(Balance.userBalanceKey(this.user0.user.id)));
 
   it('should return error if auth header is not present', async () => {
     const { body } = await request.get(
@@ -65,7 +66,7 @@ describe('balance actions', function suite() {
   });
 
   it('should return user balance requested by owner', async () => {
-    await service.redis.set(Balance.redisKey(this.user0.user.id), 1449);
+    await service.redis.set(Balance.userBalanceKey(this.user0.user.id), 1449);
 
     const { body } = await request.get(
       'http://localhost:3000/payments/balance/get',
@@ -76,7 +77,7 @@ describe('balance actions', function suite() {
   });
 
   it('should return user balance requested by admin', async () => {
-    await service.redis.set(Balance.redisKey(this.user0.user.id), 1448);
+    await service.redis.set(Balance.userBalanceKey(this.user0.user.id), 1448);
 
     const { body } = await request.get(
       'http://localhost:3000/payments/balance/get',
@@ -84,5 +85,21 @@ describe('balance actions', function suite() {
     );
 
     assert.strictEqual(body, '{"data":{"type":"balance","id":"user0","attributes":{"value":1448}}}');
+  });
+
+  it('should decrement balance', async () => {
+    const owner = randomOwner();
+
+    await service.balance.increment(owner, 99, 'icr#1', 'goal1');
+
+    const response = await service.amqp.publishAndWait('payments.balance.decrement', {
+      ownerId: owner,
+      amount: 99,
+      idempotency: 'decr#1',
+      goal: 'goal1',
+    });
+
+    assert.strictEqual(response, 0);
+    assert.strictEqual(await service.balance.get(owner), 0);
   });
 });

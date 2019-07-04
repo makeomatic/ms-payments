@@ -10,7 +10,7 @@ async function stripeWebhookAction(request) {
     const pipeline = this.redis.pipeline();
 
     await this.charge.markAsComplete(internalId, sourceId, event, pipeline);
-    await this.balance.increment(owner, Number(amount), pipeline);
+    await this.balance.increment(owner, Number(amount), internalId, internalId, pipeline);
     await pipeline.exec();
   }
 
