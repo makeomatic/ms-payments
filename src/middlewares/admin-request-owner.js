@@ -7,7 +7,7 @@ const notFoundError = { statusCode: 404 };
 
 async function adminRequestOwner(request) {
   const { users: { prefix, postfix, audience } } = this.config;
-  const { owner } = request.query;
+  const { owner } = request.method === 'amqp' ? request.params : request.query;
   const currentUser = request.auth.credentials.metadata[audience];
 
   if (owner === undefined || owner === currentUser.alias) {

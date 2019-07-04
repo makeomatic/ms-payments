@@ -8,8 +8,6 @@ module.exports = {
       sale_return: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-return',
       sale_cancel: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-cancel',
       sale_notify: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-notify',
-      payments_return: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-return',
-      payments_cancel: 'http://api-sandbox.cappasity.matic.ninja/paypal-sale-cancel',
     },
   },
 };

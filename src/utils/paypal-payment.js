@@ -31,8 +31,6 @@ class Paypal {
     assertStringNotEmpty(config.client.mode, invalidConfig);
     assertStringNotEmpty(config.client.client_id, invalidConfig);
     assertStringNotEmpty(config.client.client_secret, invalidConfig);
-    assertStringNotEmpty(config.urls.payments_cancel, invalidConfig);
-    assertStringNotEmpty(config.urls.payments_return, invalidConfig);
 
     this.config = config;
     this.redis = redis;
@@ -51,14 +49,16 @@ class Paypal {
   async createPayment(internalId, params) {
     assertStringNotEmpty(internalId, 'internalId is invalid');
     assertPlainObject(params, 'params is invalid');
+    assertStringNotEmpty(params.description, 'params.description is invalid');
+    assertStringNotEmpty(params.returnUrl, 'params.returnUrl is invalid');
+    assertStringNotEmpty(params.cancelUrl, 'params.cancelUrl is invalid');
 
-    const { payments_return: returnUrl, payments_cancel: cancelUrl } = this.config.urls;
     const payload = {
       intent: 'sale',
       payer: { payment_method: 'paypal' },
       redirect_urls: {
-        return_url: returnUrl,
-        cancel_url: cancelUrl,
+        return_url: params.returnUrl,
+        cancel_url: params.cancelUrl,
       },
       transactions: [{
         amount: {

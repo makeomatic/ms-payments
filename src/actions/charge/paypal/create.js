@@ -15,11 +15,11 @@ async function createPaypalChargeAction(service, request) {
   const { alias } = request.auth.credentials.metadata[audience];
   // use owner id instead of alias
   const params = Object.assign({ owner: ownerId }, request.params);
-  const { amount, description, owner } = params;
+  const { amount, description, owner, returnUrl, cancelUrl } = params;
   // create internal record
   const charge = await service.charge.create(CHARGE_SOURCE_PAYPAL, owner, amount, description, params);
   // create paypal payment
-  const paypalPayment = await service.paypal.createPayment(charge.id, { amount, description });
+  const paypalPayment = await service.paypal.createPayment(charge.id, { amount, description, returnUrl, cancelUrl });
   const approvalUrl = paypalPayment.links.find(link => link.rel === 'approval_url');
   const pipeline = service.redis.pipeline();
 
@@ -39,7 +39,7 @@ async function wrappedAction(request) {
 }
 
 wrappedAction.auth = 'token';
-wrappedAction.transports = [ActionTransport.http];
+wrappedAction.transports = [ActionTransport.amqp, ActionTransport.http];
 wrappedAction.transportOptions = {
   [ActionTransport.http]: {
     methods: ['post'],
