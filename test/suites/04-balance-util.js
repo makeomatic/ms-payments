@@ -78,7 +78,7 @@ describe('balance utils', function suite() {
     const owner = randomOwner();
 
     // 1
-    await balance.increment(owner, 10001, 't:10001', 'g:10001');
+    assert.strictEqual(await balance.increment(owner, 10001, 't:10001', 'g:10001'), 10001);
 
     assert.strictEqual(await balance.get(owner), 10001);
 
@@ -96,7 +96,7 @@ describe('balance utils', function suite() {
     assert.strictEqual(await service.redis.hget(`${owner}:balance:goal`, 'g:10001'), '10001');
 
     // 3
-    await balance.increment(owner, 10002, 't:10002', 'g:10001');
+    assert.strictEqual(await balance.increment(owner, 10002, 't:10002', 'g:10001'), 20003);
 
     assert.strictEqual(await balance.get(owner), 20003);
 
@@ -121,7 +121,7 @@ describe('balance utils', function suite() {
     const balance = new Balance(service.redis);
     const owner = randomOwner();
 
-    await balance.increment(owner, 200, 't:10001', 'g:10001');
+    assert.strictEqual(await balance.increment(owner, 200, 't:10001', 'g:10001'), 200);
 
     // 1 wrong goal
     await assert.rejects(balance.decrement(owner, 200, 't:10001', 'g:10002'), { message: '409' });
@@ -144,7 +144,7 @@ describe('balance utils', function suite() {
     assert.strictEqual(await service.redis.hget(`${owner}:balance:goal`, 'g:10001'), '200');
 
     // 3 decrement
-    await balance.decrement(owner, 200, 't:10001', 'g:10001');
+    assert.strictEqual(await balance.decrement(owner, 200, 't:10001', 'g:10001'), 0);
 
     assert.strictEqual(await balance.get(owner), 0);
 

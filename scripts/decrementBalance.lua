@@ -37,3 +37,5 @@ end
 redis.call("DECRBY", userBalanceKey, amount)
 redis.call("HSET", userBalanceDecrementIdempotencyKey, idempotency, amount)
 redis.call("HDEL", userBalanceGoalKey, goal)
+
+return redis.call("GET", userBalanceKey)

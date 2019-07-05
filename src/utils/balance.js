@@ -34,6 +34,14 @@ class Balance {
     return `${owner}:balance:goal`;
   }
 
+  static castToNumber(value) {
+    const balance = Number(value);
+
+    assertInteger(balance, 'balance is invalid');
+
+    return balance;
+  }
+
   constructor(redis) {
     strictEqual(isObject(redis), true, 'redis is invalid');
 
@@ -44,11 +52,7 @@ class Balance {
     const value = await this.redis.get(Balance.userBalanceKey(owner));
 
     if (value !== null) {
-      const balance = Number(value);
-
-      assertInteger(balance, 'balance is invalid');
-
-      return balance;
+      return Balance.castToNumber(value);
     }
 
     return 0;
@@ -74,10 +78,12 @@ class Balance {
       strictEqual(isObject(pipeline), true, 'redis pipeline is invalid');
 
       // https://github.com/luin/ioredis/issues/536
-      pipeline.eval(incrementScript, ...params);
-    } else {
-      await this.redis.incrementBalance(...params);
+      return pipeline.eval(incrementScript, ...params);
     }
+
+    const value = await this.redis.incrementBalance(...params);
+
+    return Balance.castToNumber(value);
   }
 
   async decrement(owner, amount, idempotency, goal, pipeline) {
@@ -100,10 +106,12 @@ class Balance {
       strictEqual(isObject(pipeline), true, 'redis pipeline is invalid');
 
       // https://github.com/luin/ioredis/issues/536
-      pipeline.eval(decrementScript, ...params);
-    } else {
-      await this.redis.decrementBalance(...params);
+      return pipeline.eval(decrementScript, ...params);
     }
+
+    const value = await this.redis.decrementBalance(...params);
+
+    return Balance.castToNumber(value);
   }
 }
 

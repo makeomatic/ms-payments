@@ -17,3 +17,5 @@ end
 redis.call("INCRBY", userBalanceKey, amount)
 redis.call("HSET", userBalanceIncrementIdempotencyKey, idempotency, amount)
 redis.call("HINCRBY", userBalanceGoalKey, goal, amount)
+
+return redis.call("GET", userBalanceKey)

@@ -10,9 +10,7 @@ const concurrentRequests = new HttpStatusError(429, 'multiple concurrent request
 async function decrementBalanceAction(service, request) {
   const { ownerId, amount, idempotency, goal } = request.params;
 
-  await service.balance.decrement(ownerId, amount, idempotency, goal);
-
-  return service.balance.get(ownerId);
+  return service.balance.decrement(ownerId, amount, idempotency, goal);
 }
 
 async function wrappedAction(request) {
