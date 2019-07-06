@@ -27,7 +27,7 @@ async function createPaypalChargeAction(service, request) {
   await service.charge.updateSource(charge.id, paypalPayment.id, paypalPayment, pipeline);
   await pipeline.exec();
 
-  return chargeResponse(charge, { owner: alias }, { paypal: { approvalUrl } });
+  return chargeResponse(charge, { owner: alias }, { paypal: { approvalUrl, paymentId: paypalPayment.id } });
 }
 
 async function wrappedAction(request) {

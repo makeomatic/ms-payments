@@ -46,6 +46,7 @@ describe('charge.paypal', function suite() {
         );
         strictEqual(response.meta.paypal.approvalUrl.rel, 'approval_url');
         strictEqual(response.meta.paypal.approvalUrl.method, 'REDIRECT');
+        strictEqual(response.meta.paypal.id.includes('PAYID'), true);
 
         const successChargeId = response.data.id;
         const charge = await service.redis.hgetall(`charge:${successChargeId}`);
@@ -102,6 +103,7 @@ describe('charge.paypal', function suite() {
         );
         strictEqual(response.meta.paypal.approvalUrl.rel, 'approval_url');
         strictEqual(response.meta.paypal.approvalUrl.method, 'REDIRECT');
+        strictEqual(response.meta.paypal.id.includes('PAYID'), true);
 
         const successChargeId = response.data.id;
         const charge = await service.redis.hgetall(`charge:${successChargeId}`);
