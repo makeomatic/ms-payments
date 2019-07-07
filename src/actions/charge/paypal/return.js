@@ -38,11 +38,11 @@ async function paypalReturnAction(service, request) {
     );
     await pipeline.exec();
   } else {
-    await this.charge.markAsFailed(chargeId, paypalPayment.id, paypalPayment);
+    await service.charge.markAsFailed(chargeId, paypalPayment.id, paypalPayment);
   }
 
   if (request.method === 'amqp') {
-    const updatedCharge = await this.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
+    const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
 
     return chargeResponse(updatedCharge);
   }
