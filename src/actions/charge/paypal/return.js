@@ -44,7 +44,7 @@ async function paypalReturnAction(service, request) {
   if (request.method === 'amqp') {
     const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
 
-    return chargeResponse(updatedCharge, { owner: updatedCharge.owner });
+    return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
   }
 
   return { received: true };
