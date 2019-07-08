@@ -14,8 +14,8 @@ const {
 } = require('../../constants');
 const { serialize, deserialize } = require('../../utils/redis');
 const { merger } = require('../../utils/plans');
-const { cleanupCache } = require('../../listUtils');
-const key = require('../../redisKey');
+const { cleanupCache } = require('../../list-utils');
+const key = require('../../redis-key');
 
 // constants
 const DATA_HOLDERS = {

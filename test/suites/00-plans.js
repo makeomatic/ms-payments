@@ -2,7 +2,6 @@ const assert = require('assert');
 const Promise = require('bluebird');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
-const TEST_CONFIG = require('../config');
 
 describe('Plans suite', function PlansSuite() {
   const Payments = require('../../src');
@@ -26,7 +25,7 @@ describe('Plans suite', function PlansSuite() {
     before('delay for ms-users', () => Promise.delay(2000));
 
     before('startService', async () => {
-      payments = new Payments(TEST_CONFIG);
+      payments = new Payments();
       await payments.connect();
       dispatch = simpleDispatcher(payments);
     });

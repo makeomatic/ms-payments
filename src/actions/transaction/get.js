@@ -3,9 +3,9 @@ const Errors = require('common-errors');
 const is = require('is');
 
 // helpers
-const key = require('../../redisKey.js');
-const { deserialize } = require('../../utils/redis.js');
-const { TRANSACTIONS_COMMON_DATA } = require('../../constants.js');
+const key = require('../../redis-key');
+const { deserialize } = require('../../utils/redis');
+const { TRANSACTIONS_COMMON_DATA } = require('../../constants');
 
 function saleGet({ params: opts }) {
   const { redis } = this;

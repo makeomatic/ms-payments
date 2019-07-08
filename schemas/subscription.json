@@ -1,21 +1,21 @@
 {
-    "$id": "subscription",
-    "type": "object",
-    "required": [
-        "name",
-        "models"
-    ],
-    "properties": {
-        "models": {
-            "type": "number"
-        },
-        "price": {
-            "type": "number"
-        },
-        "name": {
-            "type": "string",
-            "minLength": 1
-        }
+  "$id": "subscription",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "models"
+  ],
+  "properties": {
+    "models": {
+      "type": "number"
     },
-    "additionalProperties": false
+    "price": {
+      "type": "number"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
 }

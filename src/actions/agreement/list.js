@@ -2,9 +2,9 @@ const fsort = require('redis-filtered-sort');
 const { ActionTransport } = require('@microfleet/core');
 
 // helpers
-const { processResult, mapResult } = require('../../listUtils');
-const { AGREEMENT_DATA, AGREEMENT_INDEX } = require('../../constants.js');
-const key = require('../../redisKey.js');
+const { processResult, mapResult } = require('../../list-utils');
+const { AGREEMENT_DATA, AGREEMENT_INDEX } = require('../../constants');
+const key = require('../../redis-key');
 
 function planList({ params: opts }) {
   const { redis } = this;

@@ -1,0 +1,19 @@
+{
+  "$id": "sale.create",
+  "type": "object",
+  "additionalProperties": false,
+  "require": [
+    "owner",
+    "amount"
+  ],
+  "properties": {
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "amount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "$id": "transaction.sync",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "start": {
+      "type": "string",
+      "format": "date"
+    },
+    "end": {
+      "type": "string",
+      "format": "date"
+    }
+  }
+}

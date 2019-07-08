@@ -1,1 +1,1 @@
-module.exports = require('./payments.js');
+module.exports = require('./payments');

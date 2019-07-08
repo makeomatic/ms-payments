@@ -2,8 +2,8 @@ const Promise = require('bluebird');
 const getPath = require('lodash/get');
 
 // helpers
-const { serialize } = require('./redis.js');
-const key = require('../redisKey.js');
+const { serialize } = require('./redis');
+const key = require('../redis-key');
 
 // constants
 const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
@@ -13,7 +13,7 @@ const {
   TRANSACTION_TYPE_3D,
   TRANSACTIONS_INDEX,
   TRANSACTIONS_COMMON_DATA,
-} = require('../constants.js');
+} = require('../constants');
 
 function getTransactionType(type) {
   switch (type) {

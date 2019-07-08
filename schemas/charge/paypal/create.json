@@ -1,0 +1,33 @@
+{
+  "$id": "charge.paypal.create",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "amount",
+    "description",
+    "returnUrl",
+    "cancelUrl"
+  ],
+  "properties": {
+    "amount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000,
+      "description": "A positive integer representing how much to charge"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 65536,
+      "description": "An arbitrary string which you can attach to a charge object"
+    },
+    "returnUrl": {
+      "type": "string",
+      "format": "uri"
+    },
+    "cancelUrl": {
+      "type": "string",
+      "format": "uri"
+    }
+  }
+}

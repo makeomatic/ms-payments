@@ -4,7 +4,6 @@ const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
 
 describe('Transactions suite', function TransactionsSuite() {
-  const TEST_CONFIG = require('../config');
   const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
   const { duration, simpleDispatcher } = require('../utils');
   const { testAgreementData, testPlanData } = require('../data/paypal');
@@ -34,7 +33,7 @@ describe('Transactions suite', function TransactionsSuite() {
   after('close chrome', closeChrome);
 
   before(async () => {
-    payments = new Payments(TEST_CONFIG);
+    payments = new Payments();
     await payments.connect();
     dispatch = simpleDispatcher(payments);
   });

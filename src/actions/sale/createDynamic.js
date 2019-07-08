@@ -5,7 +5,7 @@ const url = require('url');
 const find = require('lodash/find');
 
 // helpers
-const key = require('../../redisKey');
+const key = require('../../redis-key');
 const { serialize } = require('../../utils/redis');
 const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');

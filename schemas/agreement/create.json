@@ -1,0 +1,45 @@
+{
+  "$id": "agreement.create",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "owner",
+    "agreement"
+  ],
+  "properties": {
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "agreement": {
+      "allOf": [{
+        "$ref": "agreement#"
+      }, {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^P-[A-Z0-9]+$"
+              }
+            }
+          }
+        }
+      }]
+    },
+    "trialDiscount": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100,
+      "default": 0
+    },
+    "trialCycle": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 12
+    }
+  }
+}

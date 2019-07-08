@@ -1,0 +1,33 @@
+{
+  "$id": "plan.list",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "offset": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100
+    },
+    "filter": {
+      "$ref": "common#/definitions/filter"
+    },
+    "criteria": {
+      "type": "string",
+      "minLength": 1
+    },
+    "order": {
+      "type": "string",
+      "enum": [
+        "ASC",
+        "DESC"
+      ]
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    }
+  }
+}

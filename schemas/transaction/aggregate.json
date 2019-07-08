@@ -1,0 +1,25 @@
+{
+  "$id": "transaction.aggregate",
+  "type": "object",
+  "required": ["owners", "aggregate"],
+  "properties": {
+    "owners": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "common#/definitions/owner"
+      }
+    },
+    "filter": {
+      "$ref": "common#/definitions/filter"
+    },
+    "aggregate": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["sum"]
+      }
+    }
+  }
+}

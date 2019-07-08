@@ -1,0 +1,14 @@
+{
+  "$id": "agreement.execute",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "token"
+  ],
+  "properties": {
+    "token": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

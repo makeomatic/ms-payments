@@ -1,0 +1,45 @@
+version: '2'
+
+services:
+  redis:
+    hostname: redis
+    image: makeomatic/redis-cluster:3.2.9
+
+  rabbitmq:
+    image: makeomatic/rabbitmq:3.6.12
+    hostname: rabbitmq
+
+  ms-users:
+    depends_on:
+      - redis
+      - rabbitmq
+    image: makeomatic/ms-users
+    hostname: ms-users
+    volumes:
+      - ${PWD}/test/configs:/src/configs:ro
+    environment:
+      DEBUG: ${DEBUG}
+      NODE_ENV: 'production'
+      NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.cluster.js","/src/configs/users.redis.cluster.js"]'
+      MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
+
+  tester:
+    # because chrome 71 bugs out with paypal
+    image: makeomatic/node:10.15.3-chrome-tester
+    links:
+      - redis
+      - rabbitmq
+      - ms-users
+    working_dir: /src
+    volumes:
+      - ${PWD}:/src:cached
+      - ./configs:/configs:cached
+    environment:
+      DEBUG: ""
+      NODE_ENV: "test"
+      DOTENV_FILE_PATH: "/src/test/.env"
+      NCONF_FILE_PATH: '["/configs/amqp.js","/configs/cart.js","/configs/redis.cluster.js"]'
+      PAYPAL_RETRY_TIMEOUT: 30000
+      PAYPAL_SANDBOX_USERNAME: test@cappasity.com
+      PAYPAL_SANDBOX_PASSWORD: 12345678
+    command: tail -f /dev/null
