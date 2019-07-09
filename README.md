@@ -1,4 +1,4 @@
-# Microservice for handling PayPal payments over AMQP transport layer
+# Microservice for handling PayPal / Stripe payments over AMQP transport layer
 
 [![Build Status](https://semaphoreci.com/api/v1/makeomatic/ms-payments/branches/master/shields_badge.svg)](https://semaphoreci.com/makeomatic/ms-payments)
 [![Code Climate](https://codeclimate.com/github/makeomatic/ms-payments/badges/gpa.svg)](https://codeclimate.com/github/makeomatic/ms-payments)
