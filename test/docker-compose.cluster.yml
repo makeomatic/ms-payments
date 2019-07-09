@@ -25,7 +25,7 @@ services:
 
   tester:
     # because chrome 71 bugs out with paypal
-    image: makeomatic/node:10.15.3-chrome-tester
+    image: makeomatic/node:10.16.0-chrome-tester
     links:
       - redis
       - rabbitmq
