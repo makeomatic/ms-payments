@@ -11,48 +11,50 @@ const { CHARGE_RESPONSE_FIELDS, charge: chargeResponse } = require('../../../uti
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 const alreadyExecutedError = new HttpStatusError(400, 'already executed');
 
-async function paypalReturnAction(service, request) {
-  const { paymentId, PayerID: payerId } = request.method === 'amqp' ? request.params : request.query;
+async function paypalCaptureAction(service, request) {
+  const { paymentId } = request.params;
   const chargeId = await service.paypal.getInternalId(paymentId);
 
   assertStringNotEmpty(chargeId);
 
   const charge = await service.charge.get(chargeId);
+  const amount = Number(charge.amount);
 
   if (charge.status !== STATUS_INITIALIZED) {
     throw alreadyExecutedError;
   }
 
-  const paypalPayment = await service.paypal.execute(paymentId, payerId);
+  const paypalPayment = await service.paypal.capture(paymentId, amount);
 
-  if (paypalPayment.state === 'approved') {
-    await service.charge.updateSource(charge.id, paypalPayment.id, paypalPayment);
+  if (paypalPayment.state === 'COMPLETED') {
+    const pipeline = service.redis.pipeline();
+
+    await service.charge.markAsComplete(chargeId, paypalPayment.id, paypalPayment, pipeline);
+    await service.balance.increment(
+      charge.owner,
+      Number(charge.amount),
+      paypalPayment.id,
+      paypalPayment.id, // @TODO goal from params
+      pipeline
+    );
+    await pipeline.exec();
   } else {
     await service.charge.markAsFailed(chargeId, paypalPayment.id, paypalPayment, paypalPayment.reason_code);
   }
 
-  if (request.method === 'amqp') {
-    const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
+  const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
 
-    return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
-  }
-
-  return { received: true };
+  return chargeResponse(updatedCharge, { owner: updatedCharge.owner });
 }
 
 async function wrappedAction(request) {
   return Promise
     .using(this, request, acquireLock(
-      this, `tx!paypal:return:${request.query.PayerID}:${request.query.paymentId}`
-    ), paypalReturnAction)
+      this, `tx!paypal:capture:${request.params.paymentId}`
+    ), paypalCaptureAction)
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }
 
-wrappedAction.transports = [ActionTransport.amqp, ActionTransport.http];
-wrappedAction.transportOptions = {
-  [ActionTransport.http]: {
-    methods: ['get'],
-  },
-};
+wrappedAction.transports = [ActionTransport.amqp];
 
 module.exports = wrappedAction;

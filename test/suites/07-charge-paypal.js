@@ -67,7 +67,7 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
           charge.sourceMetadata.includes(
-            '"intent":"sale","state":"created","payer":{"payment_method":"paypal"},'
+            '"intent":"authorize","state":"created","payer":{"payment_method":"paypal"},'
               + '"transactions":[{"amount":{"total":"10.05","currency":"USD"},'
               + `"description":"Feed the cat","custom":"${successChargeId}"`
           ),
@@ -124,7 +124,7 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
           charge.sourceMetadata.includes(
-            '"intent":"sale","state":"created","payer":{"payment_method":"paypal"},'
+            '"intent":"authorize","state":"created","payer":{"payment_method":"paypal"},'
               + '"transactions":[{"amount":{"total":"10.05","currency":"USD"},'
               + `"description":"Feed the cat","custom":"${successChargeId}"`
           ),
@@ -144,6 +144,20 @@ describe('charge.paypal', function suite() {
           token: 'EC-2AG32291P06779036' },
         headers: makeHeader(this.user0.jwt),
         json: true });
+    });
+
+    it.skip('should capture paypal charge', async () => {
+      // eslint-disable-next-line no-unused-vars
+      const response = await service.amqp.publishAndWait('payments.charge.paypal.capture', {
+        paymentId: 'paypalPaymentId',
+      });
+    });
+
+    it.skip('should void paypal charge', async () => {
+      // eslint-disable-next-line no-unused-vars
+      const response = await service.amqp.publishAndWait('payments.charge.paypal.void', {
+        paymentId: 'paypalPaymentId',
+      });
     });
   });
 });

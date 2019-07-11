@@ -109,6 +109,21 @@ class Charge {
     await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
   }
 
+  async markAsCanceled(id, sourceId, sourceMetadata, failReason) {
+    assertStringNotEmpty(id, 'charge id is invalid');
+    assertStringNotEmpty(failReason, 'failReason is invalid');
+    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
+    assertStringNotEmpty(failReason, 'failReason is invalid');
+
+    const chargeUpdateData = {
+      sourceId,
+      failReason,
+      sourceMetadata: JSON.stringify(sourceMetadata),
+      status: Charge.STATUS_CANCELED };
+
+    await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
+  }
+
   // NOTE: how to `fields` works
   // NOTE: does not safe for pagination, could return less results than expected
   async list(owner, offset, limit, fields = []) {
@@ -171,7 +186,8 @@ class Charge {
 
 Charge.STATUS_INITIALIZED = 0;
 Charge.STATUS_FAILED = 1;
-Charge.STATUS_COMPLETED = 2;
+Charge.STATUS_CANCELED = 2;
+Charge.STATUS_COMPLETED = 3;
 
 Charge.CHARGE_SOURCE_STRIPE = 'stripe';
 Charge.CHARGE_SOURCE_PAYPAL = 'paypal';
