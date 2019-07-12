@@ -11,6 +11,7 @@ const { isUUIDv4 } = require('../helpers/uuid');
 
 describe('stripe', function suite() {
   const Payments = require('../../src');
+  const Charge = require('../../src/utils/charge');
   const service = new Payments({ stripe: { enabled: true, webhook: { enabled: true } } });
   let successChargeId;
   let failChargeId;
@@ -90,7 +91,7 @@ describe('stripe', function suite() {
       strictEqual(charge.description, 'Feed the cat');
       strictEqual(charge.owner, this.user0.user.id);
       strictEqual(charge.createAt !== undefined, true);
-      strictEqual(charge.status, '2');
+      strictEqual(charge.status, String(Charge.STATUS_COMPLETED));
       strictEqual(charge.failReason, '');
       strictEqual(charge.metadata, `{"owner":"${this.user0.user.id}","amount":1001,"description":"Feed the cat",`
         + '"saveCard":true,"email":"perchik@cat.com","metadata":{}}');
@@ -224,7 +225,7 @@ describe('stripe', function suite() {
         strictEqual(response.data[1].attributes.description, 'Feed the cat');
         strictEqual(response.data[1].attributes.owner, 'user0');
         strictEqual(response.data[1].attributes.createAt !== undefined, true);
-        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.status, String(Charge.STATUS_COMPLETED));
         strictEqual(response.data[1].attributes.failReason, '');
         strictEqual(response.data[1].attributes.metadata === undefined, true);
         strictEqual(response.data[1].attributes.source === undefined, true);
@@ -268,7 +269,7 @@ describe('stripe', function suite() {
         strictEqual(response.data[1].attributes.description, 'Feed the cat');
         strictEqual(response.data[1].attributes.owner, 'user0');
         strictEqual(response.data[1].attributes.createAt !== undefined, true);
-        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.status, String(Charge.STATUS_COMPLETED));
         strictEqual(response.data[1].attributes.failReason, '');
         strictEqual(response.data[1].attributes.metadata === undefined, true);
         strictEqual(response.data[1].attributes.source === undefined, true);
@@ -329,7 +330,7 @@ describe('stripe', function suite() {
         strictEqual(response.data[1].attributes.description, 'Feed the cat');
         strictEqual(response.data[1].attributes.owner, 'user0');
         strictEqual(response.data[1].attributes.createAt !== undefined, true);
-        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.status, String(Charge.STATUS_COMPLETED));
         strictEqual(response.data[1].attributes.failReason, '');
         strictEqual(response.data[1].attributes.metadata === undefined, true);
         strictEqual(response.data[1].attributes.source === undefined, true);
@@ -373,7 +374,7 @@ describe('stripe', function suite() {
         strictEqual(response.data[1].attributes.description, 'Feed the cat');
         strictEqual(response.data[1].attributes.owner, 'user0');
         strictEqual(response.data[1].attributes.createAt !== undefined, true);
-        strictEqual(response.data[1].attributes.status, '2');
+        strictEqual(response.data[1].attributes.status, String(Charge.STATUS_COMPLETED));
         strictEqual(response.data[1].attributes.failReason, '');
         strictEqual(response.data[1].attributes.metadata === undefined, true);
         strictEqual(response.data[1].attributes.source === undefined, true);
@@ -410,7 +411,7 @@ describe('stripe', function suite() {
       strictEqual(response.data.attributes.description, 'Feed the cat');
       strictEqual(response.data.attributes.owner, '[[protected]]');
       strictEqual(response.data.attributes.createAt !== undefined, true);
-      strictEqual(response.data.attributes.status, 2);
+      strictEqual(response.data.attributes.status, Charge.STATUS_COMPLETED);
       strictEqual(response.data.attributes.failReason, '');
       strictEqual(response.data.attributes.metadata === undefined, true);
       strictEqual(response.data.attributes.source === undefined, true);

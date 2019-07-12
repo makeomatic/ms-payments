@@ -118,12 +118,14 @@ class Stripe {
   async dropHooks() {
     assert(this.livemode === false, 'must not drop hooks in live mode');
 
-    const { data: webhooks } = await this.request('webhookEndpoints.list', [{
+    const webhooks = await this.request('webhookEndpoints.list', [{
       limit: 100,
     }]);
 
+    console.info('%j', webhooks);
+
     const work = [];
-    for (const webhook of webhooks) {
+    for (const webhook of webhooks.data) {
       work.push(this.request('webhookEndpoints.del', [webhook.id]));
     }
 
