@@ -1,5 +1,6 @@
 const { ValidationError } = require('common-errors');
 const Promise = require('bluebird');
+const assert = require('assert');
 const pick = require('lodash/pick');
 const invoke = require('lodash/invoke');
 const isEqual = require('lodash/isEqual');
@@ -39,6 +40,7 @@ class Stripe {
     assertStringNotEmpty(config.client.apiVersion, invalidConfig);
 
     this.client = StripeClient(config.secretKey);
+    this.livemode = config.secretKey.startsWith('sk_live_');
     this.client.setApiVersion(config.client.apiVersion);
     this.config = config;
     this.redis = redis;
@@ -113,6 +115,23 @@ class Stripe {
     return this.request('charges.create', [chargeParams], `charge:${internalId}`);
   }
 
+  async dropHooks() {
+    assert(this.livemode === false, 'must not drop hooks in live mode');
+
+    const webhooks = await this.request('webhookEndpoints.list', [{
+      limit: 100,
+    }]);
+
+    console.info('%j', webhooks);
+
+    const work = [];
+    for (const webhook of webhooks.data) {
+      work.push(this.request('webhookEndpoints.del', [webhook.id]));
+    }
+
+    await Promise.all(work);
+  }
+
   async setupWebhook() {
     for (const webhookConfig of this.config.webhook.endpoints) {
       const { id, forceRecreate, url, enabledEvents } = webhookConfig;
@@ -127,7 +146,8 @@ class Stripe {
 
         if (webhook !== null) {
           // eslint-disable-next-line no-await-in-loop
-          await Promise.resolve(this.request('webhookEndpoints.del', [webhook.stripeId]))
+          await Promise
+            .resolve(this.request('webhookEndpoints.del', [webhook.stripeId]))
             .catch({ statusCode: 404 }, noop);
         }
 

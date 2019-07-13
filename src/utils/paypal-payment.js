@@ -7,6 +7,7 @@ const retry = require('bluebird-retry');
 const assertArray = require('./asserts/array');
 const assertStringNotEmpty = require('./asserts/string-not-empty');
 const assertPlainObject = require('./asserts/plain-object');
+const assertInteger = require('./asserts/integer');
 
 const invalidConfig = new ValidationError('Paypal config is invalid');
 // @todo from config
@@ -18,6 +19,14 @@ const retryConfig = {
   max_tries: 10,
   throw_original: true,
   predicate: { code: 429 } };
+
+function payloadAmount(amount) {
+  return {
+    // cents to dollars
+    total: (amount / 100).toFixed(2),
+    currency: 'USD',
+  };
+}
 
 class Paypal {
   static paymentIdToChargeIdKey() {
@@ -54,18 +63,14 @@ class Paypal {
     assertStringNotEmpty(params.cancelUrl, 'params.cancelUrl is invalid');
 
     const payload = {
-      intent: 'sale',
+      intent: 'authorize',
       payer: { payment_method: 'paypal' },
       redirect_urls: {
         return_url: params.returnUrl,
         cancel_url: params.cancelUrl,
       },
       transactions: [{
-        amount: {
-          // cents to dollars
-          total: (params.amount / 100).toFixed(2),
-          currency: 'USD',
-        },
+        amount: payloadAmount(params.amount),
         description: params.description,
         custom: internalId,
       }],
@@ -83,6 +88,24 @@ class Paypal {
     };
 
     return this.request('payment.execute', [paymentId, payload]);
+  }
+
+  async capture(paymentId, amount) {
+    assertStringNotEmpty(paymentId, 'paymentId is invalid');
+    assertInteger(amount, 'amount is invalid');
+
+    const payload = {
+      amount: payloadAmount(amount),
+      is_final_capture: true,
+    };
+
+    return this.request('authorization.capture', [paymentId, payload]);
+  }
+
+  async void(paymentId) {
+    assertStringNotEmpty(paymentId, 'paymentId is invalid');
+
+    return this.request('authorization.void', [paymentId]);
   }
 
   async setInternalId(paypalPaymentId, internalId, pipeline) {

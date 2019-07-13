@@ -54,6 +54,10 @@ class Payments extends Microfleet {
         this.stripe = new Stripe(this.config.stripe, this.redis);
 
         if (this.config.stripe.webhook.enabled === true) {
+          if (process.env.NODE_ENV === 'test') {
+            await this.stripe.dropHooks();
+          }
+
           await this.stripe.setupWebhook();
         }
       }

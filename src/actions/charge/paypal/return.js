@@ -2,6 +2,7 @@ const { ActionTransport } = require('@microfleet/core');
 const { LockAcquisitionError } = require('ioredis-lock');
 const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
+const assert = require('assert');
 
 const acquireLock = require('../../../utils/acquire-lock');
 const assertStringNotEmpty = require('../../../utils/asserts/string-not-empty');
@@ -16,44 +17,30 @@ async function paypalReturnAction(service, request) {
   const chargeId = await service.paypal.getInternalId(paymentId);
 
   assertStringNotEmpty(chargeId);
-
   const charge = await service.charge.get(chargeId);
-
-  if (charge.status !== STATUS_INITIALIZED) {
-    throw alreadyExecutedError;
-  }
+  assert.equal(charge.status, STATUS_INITIALIZED, alreadyExecutedError);
 
   const paypalPayment = await service.paypal.execute(paymentId, payerId);
+  service.log.info({ paypalPayment }, 'authorized payment');
 
-  if (paypalPayment.state === 'approved') {
-    const pipeline = service.redis.pipeline();
+  // ensure we have an authorize and not an immediate sale
+  assert.equal(paypalPayment.intent, 'authorize');
 
-    await service.charge.markAsComplete(chargeId, paypalPayment.id, paypalPayment, pipeline);
-    await service.balance.increment(
-      charge.owner,
-      Number(charge.amount),
-      paypalPayment.id,
-      paypalPayment.id, // @TODO goal from params
-      pipeline
-    );
-    await pipeline.exec();
+  const args = [chargeId, paymentId, paypalPayment];
+  if (paypalPayment.state.toLowerCase() === 'approved') {
+    await service.charge.markAsAuthorized(...args);
   } else {
-    await service.charge.markAsFailed(chargeId, paypalPayment.id, paypalPayment);
+    await service.charge.markAsFailed(...args, paypalPayment.reason_code);
   }
 
-  if (request.method === 'amqp') {
-    const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
-
-    return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
-  }
-
-  return { received: true };
+  const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
+  return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
 }
 
 async function wrappedAction(request) {
   return Promise
     .using(this, request, acquireLock(
-      this, `tx!paypal:return:${request.query.PayerID}:${request.query.paymentId}`
+      this, `tx!paypal:return:${request.query.paymentId}`
     ), paypalReturnAction)
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }

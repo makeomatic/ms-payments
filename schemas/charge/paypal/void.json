@@ -1,0 +1,15 @@
+{
+  "$id": "charge.paypal.void",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "paymentId"
+  ],
+  "properties": {
+    "paymentId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    }
+  }
+}

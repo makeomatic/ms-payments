@@ -63,50 +63,72 @@ class Charge {
     return charge;
   }
 
-  async updateSource(id, sourceId, sourceMetadata, pipeline) {
+  async updateSource({ id, sourceId, sourceMetadata, ...rest }, pipeline) {
     assertStringNotEmpty(id, 'charge id is invalid');
     assertStringNotEmpty(sourceId, 'sourceId is invalid');
     assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
 
-    const chargeUpdateData = { sourceId, sourceMetadata: JSON.stringify(sourceMetadata) };
+    const chargeUpdateData = {
+      sourceId,
+      sourceMetadata: JSON.stringify(sourceMetadata),
+      ...rest,
+    };
 
     if (pipeline !== undefined) {
       pipeline.hmset(Charge.dataRedisKey(id), chargeUpdateData);
     } else {
       await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
     }
+  }
+
+  async markAsAuthorized(id, sourceId, sourceMetadata, pipeline) {
+    const opts = {
+      id,
+      sourceId,
+      sourceMetadata,
+      status: Charge.STATUS_AUTHORIZED,
+    };
+
+    await this.updateSource(opts, pipeline);
   }
 
   async markAsComplete(id, sourceId, sourceMetadata, pipeline) {
-    assertStringNotEmpty(id, 'charge id is invalid');
-    assertStringNotEmpty(sourceId, 'sourceId is invalid');
-    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
-
-    const chargeUpdateData = {
+    const opts = {
+      id,
       sourceId,
-      sourceMetadata: JSON.stringify(sourceMetadata),
-      status: Charge.STATUS_COMPLETED };
+      sourceMetadata,
+      status: Charge.STATUS_COMPLETED,
+    };
 
-    if (pipeline !== undefined) {
-      pipeline.hmset(Charge.dataRedisKey(id), chargeUpdateData);
-    } else {
-      await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
-    }
+    await this.updateSource(opts, pipeline);
   }
 
   async markAsFailed(id, sourceId, sourceMetadata, failReason) {
-    assertStringNotEmpty(id, 'charge id is invalid');
-    assertStringNotEmpty(failReason, 'failReason is invalid');
-    assertPlainObject(sourceMetadata, 'sourceMetadata is invalid');
     assertStringNotEmpty(failReason, 'failReason is invalid');
 
-    const chargeUpdateData = {
+    const opts = {
+      id,
       sourceId,
       failReason,
-      sourceMetadata: JSON.stringify(sourceMetadata),
-      status: Charge.STATUS_FAILED };
+      sourceMetadata,
+      status: Charge.STATUS_FAILED,
+    };
 
-    await this.redis.hmset(Charge.dataRedisKey(id), chargeUpdateData);
+    await this.updateSource(opts);
+  }
+
+  async markAsCanceled(id, sourceId, sourceMetadata, failReason) {
+    assertStringNotEmpty(failReason, 'failReason is invalid');
+
+    const opts = {
+      id,
+      sourceId,
+      failReason,
+      sourceMetadata,
+      status: Charge.STATUS_CANCELED,
+    };
+
+    await this.updateSource(opts);
   }
 
   // NOTE: how to `fields` works
@@ -167,11 +189,20 @@ class Charge {
 
     return charge;
   }
+
+  static retreiveAuthorizationId(paypalPayment) {
+    const [transaction] = paypalPayment.transactions;
+    const [relatedResource] = transaction.related_resources;
+    const { authorization } = relatedResource;
+    return authorization.id;
+  }
 }
 
 Charge.STATUS_INITIALIZED = 0;
+Charge.STATUS_AUTHORIZED = 4;
 Charge.STATUS_FAILED = 1;
-Charge.STATUS_COMPLETED = 2;
+Charge.STATUS_CANCELED = 2;
+Charge.STATUS_COMPLETED = 3;
 
 Charge.CHARGE_SOURCE_STRIPE = 'stripe';
 Charge.CHARGE_SOURCE_PAYPAL = 'paypal';

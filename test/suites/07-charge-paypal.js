@@ -1,17 +1,20 @@
-const { strictEqual } = require('assert');
 const request = require('request-promise');
+const assert = require('assert');
 
+const { strictEqual } = assert;
 const { getToken, makeHeader } = require('../helpers/auth');
 const { isUUIDv4 } = require('../helpers/uuid');
+const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
 
 describe('charge.paypal', function suite() {
   const Payments = require('../../src');
+  const Charge = require('../../src/utils/charge');
   const service = new Payments();
 
   before('start service', () => service.connect());
   before('get user tokens', async () => {
-    this.admin0 = (await getToken.call(service, 'test@test.ru'));
-    this.user0 = (await getToken.call(service, 'user0@test.com'));
+    this.admin0 = await getToken.call(service, 'test@test.ru');
+    this.user0 = await getToken.call(service, 'user0@test.com');
   });
 
   after(async () => {
@@ -20,6 +23,14 @@ describe('charge.paypal', function suite() {
   });
 
   describe('create action', () => {
+    let approvalUrl;
+    let PayerID;
+    let paymentId;
+    let PaymentToken;
+
+    beforeEach('init Chrome', initChrome);
+    afterEach('close chrome', closeChrome);
+
     describe('http', () => {
       it('should create success paypal charge', async () => {
         const response = await request.post({
@@ -67,7 +78,7 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
           charge.sourceMetadata.includes(
-            '"intent":"sale","state":"created","payer":{"payment_method":"paypal"},'
+            '"intent":"authorize","state":"created","payer":{"payment_method":"paypal"},'
               + '"transactions":[{"amount":{"total":"10.05","currency":"USD"},'
               + `"description":"Feed the cat","custom":"${successChargeId}"`
           ),
@@ -77,7 +88,7 @@ describe('charge.paypal', function suite() {
     });
 
     describe('amqp', () => {
-      it('should create success paypal charge', async () => {
+      beforeEach('should create success paypal charge', async () => {
         const response = await service.amqp.publishAndWait(
           'payments.charge.paypal.create',
           {
@@ -124,26 +135,77 @@ describe('charge.paypal', function suite() {
         strictEqual(charge.sourceId.includes('PAYID'), true);
         strictEqual(
           charge.sourceMetadata.includes(
-            '"intent":"sale","state":"created","payer":{"payment_method":"paypal"},'
+            '"intent":"authorize","state":"created","payer":{"payment_method":"paypal"},'
               + '"transactions":[{"amount":{"total":"10.05","currency":"USD"},'
               + `"description":"Feed the cat","custom":"${successChargeId}"`
           ),
           true
         );
-      });
-    });
 
-    // @todo payer_id is not testable, do mock?
-    it.skip('should execute paypal payment and increase balance', async () => {
-      // eslint-disable-next-line no-unused-vars
-      const response = await request.get({
-        url: 'http://localhost:3000/payments/charge/paypal/return',
-        qs: {
-          PayerID: 'CR87QHB7JTRSC',
-          paymentId: 'paypalPaymentId',
-          token: 'EC-2AG32291P06779036' },
-        headers: makeHeader(this.user0.jwt),
-        json: true });
+        approvalUrl = response.meta.paypal.approvalUrl.href;
+      });
+
+      beforeEach('should approve URL', async () => {
+        const query = await approveSale(approvalUrl, /paypal-payments-return\?/);
+
+        PayerID = query.payer_id;
+        paymentId = query.payment_id;
+        PaymentToken = query.token;
+      });
+
+      beforeEach('should execute paypal payment and respond with authorization data', async () => {
+        const response = await service.amqp.publishAndWait('payments.charge.paypal.return', {
+          PayerID,
+          paymentId,
+          token: PaymentToken,
+        }, { timeout: 20000 });
+
+        // normalized format response
+        assert(response.data);
+        assert(response.data.id);
+        assert.equal(response.data.type, 'charge');
+        assert(response.data.attributes);
+        assert.equal(response.data.attributes.status, Charge.STATUS_AUTHORIZED);
+
+        // meta
+        assert(response.meta);
+        assert(response.meta.paypal);
+        assert(response.meta.paypal.payer);
+        strictEqual(response.meta.paypal.payer.payment_method, 'paypal');
+        strictEqual(response.meta.paypal.payer.status, 'VERIFIED');
+        assert(response.meta.paypal.payer.payer_info);
+        strictEqual(response.meta.paypal.payer.payer_info.country_code, 'US');
+      });
+
+      describe('authorize the charge', () => {
+        it('should capture paypal charge', async () => {
+          const response = await service.amqp.publishAndWait('payments.charge.paypal.capture', {
+            paymentId,
+          }, { timeout: 20000 });
+
+          assert.ok(response.data);
+          assert.ok(response.data.id);
+          assert.equal(response.data.type, 'charge');
+          assert.equal(response.data.attributes.status, Charge.STATUS_COMPLETED);
+
+          console.info('%j', response);
+        });
+      });
+
+      describe('void the charge', () => {
+        it('should void paypal charge', async () => {
+          const response = await service.amqp.publishAndWait('payments.charge.paypal.void', {
+            paymentId,
+          }, { timeout: 20000 });
+
+          assert.ok(response.data);
+          assert.ok(response.data.id);
+          assert.equal(response.data.type, 'charge');
+          assert.equal(response.data.attributes.status, Charge.STATUS_CANCELED);
+
+          console.info('%j', response);
+        });
+      });
     });
   });
 });

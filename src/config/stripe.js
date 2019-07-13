@@ -13,7 +13,7 @@ module.exports = {
         throw_original: true,
         predicate: { code: 429 },
       },
-      apiVersion: '2019-03-14',
+      apiVersion: '2019-05-16',
     },
     webhook: {
       enabled: false,
@@ -34,7 +34,7 @@ module.exports = {
             'charge.failed',
             'charge.succeeded',
           ],
-          apiVersion: '2019-03-14',
+          apiVersion: '2019-05-16',
         },
       ],
     },

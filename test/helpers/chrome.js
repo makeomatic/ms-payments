@@ -197,7 +197,7 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   };
 });
 
-exports.approveSale = saveCrashReport(async (saleUrl) => {
+exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-return\?/) => {
   console.info('trying to load %s', saleUrl);
 
   console.info('preload');
@@ -223,9 +223,9 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
 
   try {
     console.info('[after login] --> ', page.url());
-    await confirmRetry(RETRY_LINK, CONFIRM_PAYMENT_METHOD, /paypal-sale-return\?/);
+    await confirmRetry(RETRY_LINK, CONFIRM_PAYMENT_METHOD, regexp);
     console.info('[after payment method] --> ', page.url());
-    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, /paypal-sale-return\?/);
+    await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, regexp);
     console.info('[after confirm] --> ', page.url());
   } catch (e) {
     console.warn('failed to confirm');
@@ -233,7 +233,7 @@ exports.approveSale = saveCrashReport(async (saleUrl) => {
   }
 
   const href = page.url();
-  console.assert(/paypal-sale-return\?/.test(href), 'url is %s - %s', href);
+  console.assert(regexp.test(href), 'url is %s - %s', href);
   const { query } = url.parse(href, true);
 
   return {
