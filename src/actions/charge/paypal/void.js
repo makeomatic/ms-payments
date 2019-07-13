@@ -2,10 +2,11 @@ const { ActionTransport } = require('@microfleet/core');
 const { LockAcquisitionError } = require('ioredis-lock');
 const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
+const assert = require('assert');
 
 const acquireLock = require('../../../utils/acquire-lock');
 const assertStringNotEmpty = require('../../../utils/asserts/string-not-empty');
-const { STATUS_INITIALIZED } = require('../../../utils/charge');
+const { STATUS_AUTHORIZED, retreiveAuthorizationId } = require('../../../utils/charge');
 const { CHARGE_RESPONSE_FIELDS, charge: chargeResponse } = require('../../../utils/json-api');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
@@ -18,29 +19,28 @@ async function paypalVoidAction(service, request) {
   assertStringNotEmpty(chargeId);
 
   const charge = await service.charge.get(chargeId);
+  assert.equal(charge.status, STATUS_AUTHORIZED, alreadyExecutedError);
+  const sourceMetadata = JSON.parse(charge.sourceMetadata);
+  const authorizationId = retreiveAuthorizationId(sourceMetadata);
+  const paypalPayment = await service.paypal.void(authorizationId);
 
-  if (charge.status !== STATUS_INITIALIZED) {
-    throw alreadyExecutedError;
-  }
+  service.log.info({ paypalPayment }, 'voided paypal payment');
 
-  const paypalPayment = await service.paypal.void(paymentId);
+  sourceMetadata.authorization = paypalPayment;
+  const action = paypalPayment.state.toLowerCase() === 'voided'
+    ? 'markAsCanceled'
+    : 'markAsFailed';
 
-  if (paypalPayment.state === 'VOIDED') {
-    await service.charge.markAsCanceled(chargeId, paypalPayment.id, paypalPayment, paypalPayment.reason_code);
-  } else {
-    await service.charge.markAsFailed(chargeId, paypalPayment.id, paypalPayment, paypalPayment.reason_code);
-  }
+  await service.charge[action](chargeId, paymentId, sourceMetadata, paypalPayment.reason_code || 'voided');
 
   const updatedCharge = await service.charge.get(chargeId, CHARGE_RESPONSE_FIELDS);
-
   return chargeResponse(updatedCharge, { owner: updatedCharge.owner });
 }
 
 async function wrappedAction(request) {
+  const lockPromise = acquireLock(this, `tx!paypal:complete:${request.params.paymentId}`);
   return Promise
-    .using(this, request, acquireLock(
-      this, `tx!paypal:void:${request.params.paymentId}`
-    ), paypalVoidAction)
+    .using(this, request, lockPromise, paypalVoidAction)
     .catchThrow(LockAcquisitionError, concurrentRequests);
 }
 
