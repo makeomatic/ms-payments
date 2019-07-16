@@ -1,3 +1,10 @@
+## [6.3.1](https://github.com/makeomatic/ms-payments/compare/v6.3.0...v6.3.1) (2019-07-16)
+
+
+### Bug Fixes
+
+* update deps ([bc94a08](https://github.com/makeomatic/ms-payments/commit/bc94a08))
+
 # [6.3.0](https://github.com/makeomatic/ms-payments/compare/v6.2.3...v6.3.0) (2019-07-13)
 
 
