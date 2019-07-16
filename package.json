@@ -50,7 +50,7 @@
     "ms-conf": "^5.0.0",
     "ms-mailer-client": "^8.0.1",
     "ms-mailer-templates": "^1.14.0",
-    "ms-users": "^11.1.0",
+    "ms-users": "^11.1.1",
     "paypal-rest-sdk": "^1.8.1",
     "prom-client": "^11.5.3",
     "redis-filtered-sort": "^2.3.0",
@@ -58,7 +58,7 @@
     "stdout-stream": "^1.4.1",
     "stripe": "^7.4.0",
     "urlsafe-base64": "^1.0.0",
-    "yargs": "^13.2.2"
+    "yargs": "^13.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.5.0",

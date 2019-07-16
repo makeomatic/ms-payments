@@ -61,7 +61,7 @@ function saveCommon(data) {
   return pipeline.exec().return(data);
 }
 
-function formatItemList({ items }) {
+function formatItemList({ items = [] } = {}) {
   return items.map(({
     name, price, quantity, currency,
   }) => (
