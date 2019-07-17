@@ -178,7 +178,7 @@ class Stripe {
       api_version: apiVersion,
     };
     const stripeWebhook = stripeId === undefined
-      ? await this.request('webhookEndpoints.create', [stripeWebhookParams], `webhook:create:${id}`)
+      ? await this.request('webhookEndpoints.create', [stripeWebhookParams], `webhook:create:${id}:${apiVersion}`)
       : await this.request('webhookEndpoints.update', [stripeId, stripeWebhookParams]);
     const webhook = {
       createAt: moment().format(),
