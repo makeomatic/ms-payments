@@ -1,3 +1,10 @@
+## [6.3.2](https://github.com/makeomatic/ms-payments/compare/v6.3.1...v6.3.2) (2019-07-17)
+
+
+### Bug Fixes
+
+* paypal payments use its own config for client ([#94](https://github.com/makeomatic/ms-payments/issues/94)) ([3aad9fd](https://github.com/makeomatic/ms-payments/commit/3aad9fd))
+
 ## [6.3.1](https://github.com/makeomatic/ms-payments/compare/v6.3.0...v6.3.1) (2019-07-16)
 
 
