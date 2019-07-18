@@ -60,7 +60,7 @@ function agreementBill({ params: input }) {
       state = parsed.state;
       /* eslint-enable prefer-destructuring */
     } catch (e) {
-      this.log.error({ err: e, keys: AGREEMENT_KEYS }, 'failed to fetch agreement data');
+      this.log.error({ err: e, keys: AGREEMENT_KEYS, source: String(data), agreementKey }, 'failed to fetch agreement data');
       throw e;
     }
 
