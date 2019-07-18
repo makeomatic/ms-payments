@@ -1,3 +1,10 @@
+## [6.3.3](https://github.com/makeomatic/ms-payments/compare/v6.3.2...v6.3.3) (2019-07-18)
+
+
+### Bug Fixes
+
+* add extra logging for broken agreements ([a1a06c7](https://github.com/makeomatic/ms-payments/commit/a1a06c7))
+
 ## [6.3.2](https://github.com/makeomatic/ms-payments/compare/v6.3.1...v6.3.2) (2019-07-17)
 
 
