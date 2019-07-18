@@ -96,7 +96,14 @@ async function getPendingAgreements(opts = {}) {
 // 3. bill users
 async function billUser(user) {
   const meta = user.metadata[this.audience];
-  return bill.call(this.service, { params: { ...meta, username: user.id } });
+  const params = { params: { ...meta, username: user.id } };
+  try {
+    return await bill.call(this.service, { params });
+  } catch (e) {
+    this.log.error({ params }, 'failed to bill during agreement sync');
+  }
+
+  return null;
 }
 
 async function agreementSync({ params = {} }) {
