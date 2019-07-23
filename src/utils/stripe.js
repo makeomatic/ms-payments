@@ -122,8 +122,6 @@ class Stripe {
       limit: 100,
     }]);
 
-    console.info('%j', webhooks);
-
     const work = [];
     for (const webhook of webhooks.data) {
       work.push(this.request('webhookEndpoints.del', [webhook.id]));
