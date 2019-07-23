@@ -20,69 +20,69 @@ const ACTION_TO_STATE = {
   cancel: 'cancelled',
 };
 
-function agreementState({ params: message }) {
-  const { config, redis, amqp } = this;
+/**
+ * @api {amqp} <prefix>.agreement.state Changes agreement state
+ * @apiVersion 1.0.0
+ * @apiName agreementState
+ * @apiGroup Agreement
+ *
+ * @apiDescription Change currently used agreement for {owner} to {state}
+ *
+ * @apiParam (Params) {Object} params - request container
+ * @apiParam (Params) {String} params.owner - user to change agreement state for
+ * @apiParam (Params) {String="suspend","reactivate","cancel"} params.state - new state
+ */
+async function agreementState({ params: message }) {
+  const { config, redis, amqp, log } = this;
   const { users: { prefix, postfix, audience } } = config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
+  const getIdPath = `${prefix}.${postfix.getMetadata}`;
+  const getIdRequest = { username: owner, audience };
 
-  function getId() {
-    const path = `${prefix}.${postfix.getMetadata}`;
-    const getRequest = {
-      username: owner,
-      audience,
-    };
+  const meta = await amqp
+    .publishAndWait(getIdPath, getIdRequest, { timeout: 5000 })
+    .get(audience);
 
-    return amqp
-      .publishAndWait(path, getRequest, { timeout: 5000 })
-      .get(audience);
+  const { agreement: id, subscriptionInterval, subscriptionType } = meta;
+  const agreementKey = key(AGREEMENT_DATA, id);
+
+  if (id === FREE_PLAN_ID) {
+    throw new Errors.NotPermittedError('User has free plan/agreement');
   }
 
-  function sendRequest(meta) {
-    const { agreement: id, subscriptionInterval, subscriptionType } = meta;
-
-    if (id === FREE_PLAN_ID) {
-      throw new Errors.NotPermittedError('User has free plan/agreement');
-    }
-
-    if (subscriptionType === 'capp') {
-      throw new Errors.NotPermittedError('Must use capp payments service');
-    }
-
-    return operations[state]
-      .call(this, id, { note }, config.paypal)
-      .catch((err) => {
-        throw new Errors.HttpStatusError(err.httpStatusCode, `${id}: ${err.response.message}`, err.response.name);
-      })
-      .tap(() => syncTransactions.call(this, {
-        params: {
-          id,
-          owner,
-          start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
-          end: moment().add(1, 'day').format('YYYY-MM-DD'),
-        },
-      }))
-      .return(id);
+  if (subscriptionType === 'capp') {
+    throw new Errors.NotPermittedError('Must use capp payments service');
   }
 
-  function updateRedis(id) {
-    const agreementKey = key(AGREEMENT_DATA, id);
-    const promises = [redis.hmset(agreementKey, serialize({ state: ACTION_TO_STATE[state] }))];
-
-    if (state === 'cancel') {
-      promises.push(resetToFreePlan.call(this, owner));
-    }
-
-    return Promise.all(promises).return(state);
+  try {
+    log.info({ state, agreementId: id, note }, 'updating agreement state');
+    await operations[state].call(this, id, { note }, config.paypal);
+  } catch (err) {
+    throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
   }
 
-  return Promise
-    .bind(this)
-    .then(getId)
-    .then(sendRequest)
-    .then(updateRedis);
+  await syncTransactions.call(this, {
+    params: {
+      id,
+      owner,
+      start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+      end: moment().add(1, 'day').format('YYYY-MM-DD'),
+    },
+  });
+
+  const promises = [
+    redis.hmset(agreementKey, serialize({ state: ACTION_TO_STATE[state] })),
+  ];
+
+  if (state === 'cancel') {
+    promises.push(resetToFreePlan.call(this, owner));
+  }
+
+  await Promise.all(promises);
+  return state;
 }
 
-agreementState.transports = [ActionTransport.amqp];
+agreementState.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = agreementState;

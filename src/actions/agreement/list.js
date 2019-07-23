@@ -24,5 +24,6 @@ function planList({ params: opts }) {
     .then(processResult(AGREEMENT_DATA, redis))
     .spread(mapResult(offset, limit));
 }
-planList.transports = [ActionTransport.amqp];
+
+planList.transports = [ActionTransport.amqp, ActionTransport.internal];
 module.exports = planList;

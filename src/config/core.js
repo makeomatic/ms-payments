@@ -31,6 +31,7 @@ exports.plugins = [
   'amqp',
   'redisCluster',
   'http',
+  'prometheus',
 ];
 
 exports.mailer = {

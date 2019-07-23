@@ -24,9 +24,7 @@ const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 // check agreement bill
 function agreementBill({ params: input }) {
   const { agreement: id, subscriptionInterval, username } = input;
-  const {
-    config, redis, amqp, log,
-  } = this;
+  const { config, redis, amqp, log } = this;
   const { users: { prefix, postfix } } = config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
@@ -199,6 +197,6 @@ function agreementBill({ params: input }) {
     });
 }
 
-agreementBill.transports = [ActionTransport.amqp];
+agreementBill.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = agreementBill;

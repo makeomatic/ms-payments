@@ -13,7 +13,6 @@ const { mergeWithNotNull } = require('../../utils/plans');
 // internal actions
 const { agreement: { execute, get: getAgreement }, handleError } = require('../../utils/paypal');
 const pullTransactionsData = require('../transaction/sync');
-const setState = require('./state');
 const getPlan = require('../plan/get');
 
 function sendRequest() {
@@ -117,7 +116,7 @@ function syncTransactions({ agreement, owner, subscriptionInterval }) {
     .return(agreement);
 }
 
-function checkAndDeleteAgreement(input) {
+async function checkAndDeleteAgreement(input) {
   const { data, oldAgreement, subscriptionType } = input;
 
   this.log.info(input, 'checking agreement data');
@@ -130,27 +129,21 @@ function checkAndDeleteAgreement(input) {
     // should we really cancel the agreement?
     this.log.warn({ oldAgreement, agreement: data.agreement }, 'cancelling old agreement because of new agreement');
 
-    // remove old agreement if setting new one
-    return setState
-      .call(this.service, {
-        params: {
-          owner: data.owner,
-          state: 'cancel',
-        },
-      })
-      .catch({ statusCode: 400 }, (err) => {
-        this.log.warn({ err }, 'oldAgreement was already cancelled');
-      })
-      .return(input);
+    await this.service.dispatch('agreement.state', {
+      params: {
+        owner: data.owner,
+        state: 'cancel',
+      },
+    }).catch({ statusCode: 400 }, (err) => {
+      this.log.warn({ err }, 'oldAgreement was already cancelled');
+    });
   }
 
   return input;
 }
 
-function updateMetadata({ data, subscriptionInterval }) {
-  const {
-    subscription, agreement, planId, owner,
-  } = data;
+async function updateMetadata({ data, subscriptionInterval }) {
+  const { subscription, agreement, planId, owner } = data;
   const { prefix, postfix, audience } = this.users;
   const path = `${prefix}.${postfix.updateMetadata}`;
 
@@ -173,19 +166,15 @@ function updateMetadata({ data, subscriptionInterval }) {
     },
   };
 
-  return this.service.amqp
-    .publishAndWait(path, updateRequest, { timeout: 5000 })
-    .return({
-      agreement, owner, planId, subscriptionInterval,
-    });
+  await this.service.amqp
+    .publishAndWait(path, updateRequest, { timeout: 5000 });
+
+  return { agreement, owner, planId, subscriptionInterval };
 }
 
-function updateRedis({
-  agreement, owner, planId, subscriptionInterval,
-}) {
+async function updateRedis({ agreement, owner, planId, subscriptionInterval }) {
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
-  const pipeline = this.service.redis.pipeline();
 
   const data = {
     agreement,
@@ -195,12 +184,16 @@ function updateRedis({
     owner,
   };
 
-  pipeline.hmset(agreementKey, serialize(data));
-  pipeline.sadd(AGREEMENT_INDEX, agreement.id);
-  pipeline.sadd(userAgreementIndex, agreement.id);
-  pipeline.del(this.tokenKey);
+  const pipeline = this.service.redis.pipeline([
+    ['hmset', agreementKey, serialize(data)],
+    ['sadd', AGREEMENT_INDEX, agreement.id],
+    ['sadd', userAgreementIndex, agreement.id],
+    ['del', this.tokenKey],
+  ]);
 
-  return pipeline.exec().return({ agreement, owner, subscriptionInterval });
+  handlePipeline(await pipeline.exec());
+
+  return { agreement, owner, subscriptionInterval };
 }
 
 async function verifyToken() {
