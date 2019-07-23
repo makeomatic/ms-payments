@@ -2,10 +2,6 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const { ActionTransport } = require('@microfleet/core');
 
-// internal actions
-const bill = require('./bill');
-const listAgreements = require('./list');
-
 // constants
 const FETCH_USERS_LIMIT = 20;
 const AGREEMENT_PENDING_STATUS = JSON.stringify('pending');
@@ -55,7 +51,7 @@ async function getPendingAgreements(opts = {}) {
   const { amqp, audience, service, getMetadata, pool, pulledUsers, missingUsers } = this;
   const offset = opts.cursor || 0;
 
-  const response = await listAgreements.call(service, {
+  const response = await service.dispatch('agreement.list', {
     params: {
       offset,
       limit: FETCH_USERS_LIMIT,
@@ -96,9 +92,9 @@ async function getPendingAgreements(opts = {}) {
 // 3. bill users
 async function billUser(user) {
   const meta = user.metadata[this.audience];
-  const params = { params: { ...meta, username: user.id } };
+  const params = { ...meta, username: user.id };
   try {
-    return await bill.call(this.service, { params });
+    return await this.service.dispatch('agreement.bill', { params });
   } catch (e) {
     this.log.error({ params }, 'failed to bill during agreement sync');
   }
