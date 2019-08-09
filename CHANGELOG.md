@@ -1,3 +1,10 @@
+## [6.3.5](https://github.com/makeomatic/ms-payments/compare/v6.3.4...v6.3.5) (2019-08-09)
+
+
+### Bug Fixes
+
+* capture the actual error ([a5c264b](https://github.com/makeomatic/ms-payments/commit/a5c264b))
+
 ## [6.3.4](https://github.com/makeomatic/ms-payments/compare/v6.3.3...v6.3.4) (2019-07-23)
 
 
