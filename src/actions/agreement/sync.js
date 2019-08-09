@@ -95,8 +95,8 @@ async function billUser(user) {
   const params = { ...meta, username: user.id };
   try {
     return await this.service.dispatch('agreement.bill', { params });
-  } catch (e) {
-    this.log.error({ params }, 'failed to bill during agreement sync');
+  } catch (err) {
+    this.log.error({ params, err }, 'failed to bill during agreement sync');
   }
 
   return null;

@@ -62,8 +62,7 @@ services:
         ipv4_address: 172.16.238.16
 
   tester:
-    # because chrome 71 bugs out with paypal
-    image: makeomatic/node:10.16.0-chrome-tester
+    image: makeomatic/node:10.16.1-chrome-tester
     links:
       - redis-sentinel
       - rabbitmq
