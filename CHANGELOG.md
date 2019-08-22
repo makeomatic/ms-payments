@@ -1,3 +1,10 @@
+## [6.3.6](https://github.com/makeomatic/ms-payments/compare/v6.3.5...v6.3.6) (2019-08-22)
+
+
+### Bug Fixes
+
+* use internal dispatch for validation, update deps ([0d8a0eb](https://github.com/makeomatic/ms-payments/commit/0d8a0eb))
+
 ## [6.3.5](https://github.com/makeomatic/ms-payments/compare/v6.3.4...v6.3.5) (2019-08-09)
 
 
