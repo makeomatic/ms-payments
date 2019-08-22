@@ -20,6 +20,6 @@ function saleList({ params: opts }) {
     .spread(mapResult(offset, limit));
 }
 
-saleList.transports = [ActionTransport.amqp];
+saleList.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = saleList;
