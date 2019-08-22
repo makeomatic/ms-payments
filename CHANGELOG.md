@@ -1,3 +1,10 @@
+## [6.3.7](https://github.com/makeomatic/ms-payments/compare/v6.3.6...v6.3.7) (2019-08-22)
+
+
+### Bug Fixes
+
+* access to sale.list via internal dispatch ([d544e98](https://github.com/makeomatic/ms-payments/commit/d544e98))
+
 ## [6.3.6](https://github.com/makeomatic/ms-payments/compare/v6.3.5...v6.3.6) (2019-08-22)
 
 
