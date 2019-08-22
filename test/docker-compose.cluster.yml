@@ -6,7 +6,7 @@ services:
     image: makeomatic/redis-cluster:3.2.9
 
   rabbitmq:
-    image: makeomatic/rabbitmq:3.6.12
+    image: rabbitmq:3.7-alpine
     hostname: rabbitmq
 
   ms-users:
@@ -24,7 +24,7 @@ services:
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
 
   tester:
-    image: makeomatic/node:10.16.1-chrome-tester
+    image: makeomatic/node:10.16.3-chrome-tester
     links:
       - redis
       - rabbitmq

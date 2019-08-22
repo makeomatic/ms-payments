@@ -11,7 +11,7 @@ const resolvedUsers = new Map();
 function getAMQPTransport(amqpConfig) {
   return AMQPTransport
     .connect(amqpConfig)
-    .disposer(amqp => amqp.close());
+    .disposer((amqp) => amqp.close());
 }
 
 /**
@@ -76,7 +76,7 @@ function changeOwner(key) {
 
   return redis
     .hget(key, 'owner')
-    .then(owner => JSON.parse(owner))
+    .then((owner) => JSON.parse(owner))
     .then((owner) => {
       // owner can be "null" in database
       if (owner === null) {
@@ -213,7 +213,7 @@ function processKeys(amqp) {
 
   return masterNode
     .keys(`${keyPrefix}*`)
-    .map(key => key.replace(keyPrefix, ''))
+    .map((key) => key.replace(keyPrefix, ''))
     .each((key) => {
       log.info('Process key:', key);
 
@@ -273,7 +273,7 @@ function migrate(app) {
   return Promise
     .using(
       getAMQPTransport(amqpConfig),
-      amqp => processKeys.call(app, amqp)
+      (amqp) => processKeys.call(app, amqp)
     );
 }
 

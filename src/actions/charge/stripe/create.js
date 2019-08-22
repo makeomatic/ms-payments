@@ -43,7 +43,7 @@ async function createStripeCharge(service, charge, source, params) {
   }
 
   try {
-    await service.stripe.charge(charge.id, Object.assign({}, source, stripeChargeParams));
+    await service.stripe.charge(charge.id, { ...source, ...stripeChargeParams });
   } catch (error) {
     service.log.error(`Stripe charge for ${charge.owner} is failed`, error, charge);
   }
@@ -56,7 +56,7 @@ async function createStripeChargeAction(service, request) {
   const { audience } = service.config.users;
   const { alias } = request.auth.credentials.metadata[audience];
   // use owner id instead of alias
-  const params = Object.assign({ owner: ownerId }, request.params);
+  const params = { owner: ownerId, ...request.params };
   const { owner, amount, description } = params;
   // next method should call first because it's validate source
   const stripeChargeSource = await selectChargeSource(service, params);

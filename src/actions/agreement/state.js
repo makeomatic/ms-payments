@@ -3,9 +3,6 @@ const Errors = require('common-errors');
 const moment = require('moment');
 const { ActionTransport } = require('@microfleet/core');
 
-// internal actions
-const syncTransactions = require('../transaction/sync');
-
 // helpers
 const key = require('../../redis-key');
 const { agreement: operations } = require('../../utils/paypal');
@@ -62,7 +59,7 @@ async function agreementState({ params: message }) {
     throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
   }
 
-  await syncTransactions.call(this, {
+  await this.dispatch('transaction.sync', {
     params: {
       id,
       owner,

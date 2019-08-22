@@ -3,9 +3,6 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const forEach = require('lodash/forEach');
 
-// internal actions
-const salelist = require('./list');
-
 // helpers
 const key = require('../../redis-key');
 const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
@@ -23,7 +20,7 @@ function transactionSync({ params: message = {} }) {
     return Promise.bind(this, parseSale(sale, owner)).then(saveCommon);
   }
 
-  function getLatest() {
+  const getLatest = async () => {
     if (message.next_id) {
       return null;
     }
@@ -35,8 +32,10 @@ function transactionSync({ params: message = {} }) {
       limit: 1,
     };
 
-    return salelist.call(this, { params: query }).get('items');
-  }
+    const { items } = await this.dispatch('sale.list', { params: query });
+
+    return items;
+  };
 
   function sendRequest(items) {
     const query = {

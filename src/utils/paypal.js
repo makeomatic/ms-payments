@@ -1,5 +1,5 @@
 const Promise = require('bluebird');
-const get = require('lodash/get');
+const get = require('get-value');
 const { HttpStatusError } = require('common-errors');
 const { billingAgreement, billingPlan, payment } = require('paypal-rest-sdk');
 
@@ -50,7 +50,7 @@ exports.states = {
 };
 
 exports.is = {
-  active: plan => get(plan, 'state', '').toLowerCase() === exports.states.active,
+  active: (plan) => get(plan, 'state', '').toLowerCase() === exports.states.active,
 };
 
 exports.agreement = promisify([

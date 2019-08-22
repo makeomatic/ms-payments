@@ -108,7 +108,7 @@ function sendRequest(rawPlanData) {
 
       return billingPlanCreate(trialPlan, this.config.paypal)
         .get('id')
-        .tap(planId => (
+        .tap((planId) => (
           billingPlanUpdate(planId, [{ op: 'replace', path: '/', value: { state: active } }], this.config.paypal)
         ))
         .catch(handleError);

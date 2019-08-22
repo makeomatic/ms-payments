@@ -12,8 +12,6 @@ const { mergeWithNotNull } = require('../../utils/plans');
 
 // internal actions
 const { agreement: { execute, get: getAgreement }, handleError } = require('../../utils/paypal');
-const pullTransactionsData = require('../transaction/sync');
-const getPlan = require('../plan/get');
 
 function sendRequest() {
   return execute(this.token, {}, this.paypal).catch(handleError).get('id');
@@ -57,6 +55,8 @@ async function fetchPlan(agreement) {
     .hgetall(this.tokenKey)
     .then(deserialize);
 
+  this.log.info({ data, token: this.tokenKey }, 'fetched plan for token');
+
   return {
     owner: data.owner,
     planId: data.planId,
@@ -71,7 +71,9 @@ async function fetchSubscription(data) {
   const { planId, agreement, owner } = data;
   const subscriptionName = agreement.plan.payment_definitions[0].frequency.toLowerCase();
 
-  const plan = await getPlan.call(this.service, { params: planId });
+  this.log.info({ data }, 'fetch subscription');
+
+  const plan = await this.service.dispatch('plan.get', { params: planId });
   const subscription = find(plan.subs, { name: subscriptionName });
 
   return {
@@ -103,23 +105,24 @@ async function getCurrentAgreement(data) {
   };
 }
 
-function syncTransactions({ agreement, owner, subscriptionInterval }) {
-  return pullTransactionsData
-    .call(this.service, {
-      params: {
-        id: agreement.id,
-        owner,
-        start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
-        end: moment().add(1, 'day').format('YYYY-MM-DD'),
-      },
-    })
-    .return(agreement);
+async function syncTransactions({ agreement, owner, subscriptionInterval }) {
+  await this.service.dispatch('transaction.sync', {
+    params: {
+      id: agreement.id,
+      owner,
+      start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+      end: moment().add(1, 'day').format('YYYY-MM-DD'),
+    },
+  });
+
+  return agreement;
 }
 
 async function checkAndDeleteAgreement(input) {
   const { data, oldAgreement, subscriptionType } = input;
 
   this.log.info(input, 'checking agreement data');
+
   const oldAgreementIsNotFree = oldAgreement !== FREE_PLAN_ID;
   const oldAgreementIsNotNew = oldAgreement !== data.agreement.id;
   const oldAgreementIsPresent = oldAgreement && oldAgreementIsNotFree && oldAgreementIsNotNew;

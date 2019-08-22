@@ -22,12 +22,6 @@ const Paypal = require('./utils/paypal-payment');
  */
 class Payments extends Microfleet {
   /**
-   * Configuration options for the service
-   * @type {Object}
-   */
-  static defaultOpts = conf.get('/', { env: process.env.NODE_ENV });
-
-  /**
    * Create Payments instance
    * @param  {Object} opts
    * @return {Payments}
@@ -87,7 +81,7 @@ class Payments extends Microfleet {
     const { defaultPlans } = this.config;
     return Promise
       .bind(this, defaultPlans)
-      .map(plan => createPlan.call(this, { params: plan }).reflect())
+      .map((plan) => createPlan.call(this, { params: plan }).reflect())
       .map(function iterateOverPlans(plan) {
         if (plan.isFulfilled()) {
           this.log.info('Created plan %s', plan.value().name);
@@ -136,7 +130,7 @@ class Payments extends Microfleet {
       this.redisDuplicate = () => new RedisCluster(config.redis.hosts, { ...config.redis.options, lazyConnect: true });
     } else if (config.plugins.includes('redisSentinel')) {
       this.redisType = 'redisSentinel';
-      this.redisDuplicate = redis => redis.duplicate();
+      this.redisDuplicate = (redis) => redis.duplicate();
     } else {
       throw new Error('must include redis family plugins');
     }
@@ -167,5 +161,11 @@ class Payments extends Microfleet {
     });
   }
 }
+
+/**
+ * Configuration options for the service
+ * @type {Object}
+ */
+Payments.defaultOpts = conf.get('/', { env: process.env.NODE_ENV });
 
 module.exports = Payments;

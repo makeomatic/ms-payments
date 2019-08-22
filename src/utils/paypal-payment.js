@@ -49,9 +49,9 @@ class Paypal {
     assertStringNotEmpty(path, 'invalid path');
     assertArray(params, 'invalid params');
 
-    return Promise.fromCallback(callback => retry(
+    return Promise.fromCallback((callback) => retry(
       invoke,
-      Object.assign({ args: [paypalClient, path, ...params, this.config.client, callback] }, retryConfig)
+      { args: [paypalClient, path, ...params, this.config.client, callback], ...retryConfig }
     ));
   }
 

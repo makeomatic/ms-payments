@@ -50,7 +50,7 @@ exports.handlePipeline = function handlePipelineError(args) {
   args.forEach(responseIterator, { errors, response });
 
   if (errors.length > 0) {
-    const message = errors.map(err => err.message).join('; ');
+    const message = errors.map((err) => err.message).join('; ');
     throw new RedisError(message);
   }
 

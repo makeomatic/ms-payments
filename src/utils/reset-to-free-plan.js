@@ -1,4 +1,3 @@
-const find = require('lodash/find');
 const { FREE_PLAN_ID } = require('../constants');
 
 module.exports = function resetToFreePlan(owner) {
@@ -16,7 +15,7 @@ module.exports = function resetToFreePlan(owner) {
         plan: FREE_PLAN_ID,
         subscriptionPrice: '0.00',
         subscriptionInterval: 'month',
-        modelPrice: find(config.defaultPlans, { id: FREE_PLAN_ID }).subscriptions[0].price,
+        modelPrice: config.defaultPlans.find((x) => x.id === FREE_PLAN_ID).subscriptions[0].price,
       },
       $remove: ['subscriptionType'],
     },

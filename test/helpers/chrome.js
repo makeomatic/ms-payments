@@ -18,7 +18,7 @@ let chrome;
 let context;
 
 // save screenshot in case of crash
-const saveCrashReport = fn => async (...args) => {
+const saveCrashReport = (fn) => async (...args) => {
   let response;
   try {
     response = await fn(...args);
@@ -51,8 +51,8 @@ const typeAndSubmit = async (selector, text) => {
 const dispose = async (...handlers) => {
   await Promise.all((
     handlers
-      .filter(x => x != null)
-      .map(x => x.dispose())
+      .filter((x) => x != null)
+      .map((x) => x.dispose())
   ));
 };
 

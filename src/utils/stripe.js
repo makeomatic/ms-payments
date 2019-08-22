@@ -59,7 +59,7 @@ class Stripe {
       args.push({ idempotency_key: idempotencyKey });
     }
 
-    return retry(invoke, Object.assign({ args }, retryConfig));
+    return retry(invoke, { args, ...retryConfig });
   }
 
   async storedCustomer(owner) {
@@ -109,8 +109,8 @@ class Stripe {
 
     const metadata = params.metadata === undefined
       ? { internalId }
-      : Object.assign({}, params.metadata, { internalId });
-    const chargeParams = Object.assign({ currency: 'USD' }, params, { metadata });
+      : ({ ...params.metadata, internalId });
+    const chargeParams = { currency: 'USD', ...params, metadata };
 
     return this.request('charges.create', [chargeParams], `charge:${internalId}`);
   }

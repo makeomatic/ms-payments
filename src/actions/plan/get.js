@@ -73,6 +73,6 @@ function planGet({ params }) {
   return retrievePlan(this.redis, id, fetchParent);
 }
 
-planGet.transports = [ActionTransport.amqp];
+planGet.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = planGet;

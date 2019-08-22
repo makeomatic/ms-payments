@@ -19,7 +19,7 @@ function planState({ params: message }) {
   function getPlan() {
     return redis
       .hget(key(PLANS_DATA, id), PLAN_ALIAS_FIELD)
-      .then(alias => alias && alias.length > 0 && JSON.parse(alias));
+      .then((alias) => alias && alias.length > 0 && JSON.parse(alias));
   }
 
   function sendRequest() {
@@ -30,13 +30,13 @@ function planState({ params: message }) {
     }];
 
     const ids = id.split('|');
-    const requests = map(ids, planId => update(planId, request, paypalConfig));
+    const requests = map(ids, (planId) => update(planId, request, paypalConfig));
     return Promise.all(requests);
   }
 
   function updateRedis(alias) {
     const ids = compact(uniq(id.split('|').concat([id, alias])));
-    const keys = map(ids, planId => key(PLANS_DATA, planId));
+    const keys = map(ids, (planId) => key(PLANS_DATA, planId));
     const pipeline = redis.pipeline();
 
     forEach(keys, (planId) => {
@@ -55,6 +55,6 @@ function planState({ params: message }) {
     .then(updateRedis);
 }
 
-planState.transports = [ActionTransport.amqp];
+planState.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = planState;

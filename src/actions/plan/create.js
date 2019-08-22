@@ -6,9 +6,6 @@ const cloneDeep = require('lodash/cloneDeep');
 const reduce = require('lodash/reduce');
 const find = require('lodash/find');
 
-// internal actions
-const statePlan = require('./state');
-
 // helpers
 const key = require('../../redis-key');
 const { cleanupCache } = require('../../list-utils');
@@ -48,12 +45,11 @@ function sendRequest(config, message) {
   }
 
   // activate the plan if we requested it
-  return plans.map((planData) => {
+  return plans.map(async (planData) => {
     const { id } = planData;
     planData.state = active;
-    return statePlan
-      .call(this, { params: { id, state: active } })
-      .return(planData);
+    await this.dispatch('plan.state', { params: { id, state: active } });
+    return planData;
   });
 }
 
@@ -75,7 +71,7 @@ function createSaveToRedis(redis, message) {
     pipeline.sadd(PLANS_INDEX, aliasedId);
 
     const subscriptions = message.subscriptions.map((subscription) => {
-      subscription.definition = find(plan.payment_definitions, item => (
+      subscription.definition = find(plan.payment_definitions, (item) => (
         item.frequency.toLowerCase() === subscription.name
       ));
       return subscription;

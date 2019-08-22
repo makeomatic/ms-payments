@@ -65,8 +65,7 @@ async function getPendingAgreements(opts = {}) {
 
   const { items: agreements, cursor, page, pages } = response;
 
-  for (const agreement of agreements) {
-    const { owner } = agreement;
+  for (const { owner } of agreements) {
     if (!pulledUsers.has(owner)) {
       missingUsers.add(owner);
     }

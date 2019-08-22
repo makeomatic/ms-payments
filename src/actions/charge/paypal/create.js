@@ -16,7 +16,7 @@ async function createPaypalChargeAction(service, request) {
   const { alias } = request.auth.credentials.metadata[audience];
 
   // use owner id instead of alias
-  const params = Object.assign({ owner: ownerId }, request.params);
+  const params = { owner: ownerId, ...request.params };
   const { amount, description, owner, returnUrl, cancelUrl } = params;
 
   // create internal record
@@ -26,7 +26,7 @@ async function createPaypalChargeAction(service, request) {
   // create paypal payment
   const paypalPayment = await service.paypal
     .createPayment(chargeId, { amount, description, returnUrl, cancelUrl });
-  const approvalUrl = paypalPayment.links.find(link => link.rel === 'approval_url');
+  const approvalUrl = paypalPayment.links.find((link) => link.rel === 'approval_url');
   const sourceId = paypalPayment.id;
 
   const pipeline = service.redis.pipeline();

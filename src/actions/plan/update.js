@@ -5,7 +5,7 @@ const set = require('lodash/set');
 const assign = require('lodash/assign');
 const mergeWith = require('lodash/mergeWith');
 const findIndex = require('lodash/findIndex');
-const get = require('lodash/get');
+const get = require('get-value');
 const each = require('lodash/each');
 
 // helpers
@@ -31,7 +31,7 @@ function joinPlans(plans) {
 }
 
 function prepareUpdate(subscription, plans, period) {
-  const index = findIndex(plans, it => get(it, 'plan.payment_definitions[0].frequency', '').toLowerCase() === period);
+  const index = findIndex(plans, (it) => get(it, 'plan.payment_definitions[0].frequency', '').toLowerCase() === period);
   const planData = plans[index];
 
   if (subscription.models) {
@@ -54,14 +54,14 @@ function updateSubscriptions(plans, subscriptions) {
 
 function setField(_plans, path, value) {
   const plans = Array.isArray(_plans) ? _plans : [_plans];
-  return plans.forEach(plan => set(plan, path, value));
+  return plans.forEach((plan) => set(plan, path, value));
 }
 
 function createSaveToRedis(message) {
   const { redis } = this;
   return Promise
     .bind(this, message.id.split('|'))
-    .map(id => redis.hgetall(key(PLANS_DATA, id)).then(deserialize))
+    .map((id) => redis.hgetall(key(PLANS_DATA, id)).then(deserialize))
     .then(function updatePlansInRedis(plans) {
       const additionalData = {};
 

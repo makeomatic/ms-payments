@@ -2,9 +2,6 @@ const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const { HttpStatusError } = require('bluebird');
 
-// internal actions
-const setState = require('./state');
-
 // helpers
 const key = require('../../redis-key');
 const { cleanupCache } = require('../../list-utils');
@@ -32,15 +29,14 @@ function deleteFromRedis(id, redis) {
   });
 }
 
-function actualDelete(id) {
+async function actualDelete(id) {
   const { redis } = this;
-  if (id.indexOf('|') >= 0) {
-    return deleteFromRedis(id, redis);
+
+  if (id.indexOf('|') === -1) {
+    await this.dispatch('plan.state', { params: { id, state: 'inactive' } });
   }
 
-  return setState
-    .call(this, { params: { id, state: 'inactive' } })
-    .then(() => deleteFromRedis(id, redis));
+  await deleteFromRedis(id, redis);
 }
 
 function planDelete({ params: id }) {

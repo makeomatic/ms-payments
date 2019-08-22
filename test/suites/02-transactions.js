@@ -88,13 +88,15 @@ describe('Transactions suite', function TransactionsSuite() {
       const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
       const end = moment().endOf('year').format('YYYY-MM-DD');
 
-      let state;
-      do {
-        // eslint-disable-next-line
+      let state = 'Pending';
+      /* eslint-disable no-await-in-loop */
+      while (state === 'Pending') {
         state = (await dispatch(syncTransaction, { id: agreement.id, start, end })).agreement.state;
-        // eslint-disable-next-line
-        if (state === 'Pending') await Promise.delay(5000);
-      } while (state === 'Pending');
+        if (state === 'Pending') {
+          await Promise.delay(5000);
+        }
+      }
+      /* eslint-enable no-await-in-loop */
     });
 
     it('Should list all transactions', () => (

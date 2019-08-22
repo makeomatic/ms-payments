@@ -2,7 +2,7 @@ const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const forEach = require('lodash/forEach');
-const get = require('lodash/get');
+const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
@@ -20,25 +20,27 @@ const { mergeWithNotNull } = require('../../utils/plans');
  * Gets transactions for the passed agreementId
  * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
  */
-function sendRequest() {
+async function sendRequest() {
   const {
     agreementId, paypalConfig, start, end,
   } = this;
 
-  return Promise.props({
-    agreement: getAgreement(agreementId, paypalConfig)
-      .catch(handleError),
-    transactions: searchTransactions(agreementId, start, end, paypalConfig)
-      .catch(handleError)
-      .get('agreement_transaction_list'),
-  });
+  // we request agreement & transactions sequentially so that
+  // if transactions request goes through first and contains non-finished transactions
+  // but agreement is already in active state we dont get an inconsistency
+  const agreement = await getAgreement(agreementId, paypalConfig).catch(handleError);
+  const transactions = await searchTransactions(agreementId, start, end, paypalConfig)
+    .catch(handleError)
+    .get('agreement_transaction_list');
+
+  return { agreement, transactions };
 }
 
 /**
  * Fetch owner of transactions from ms-users
  * @return {Promise<String>}
  */
-function findOwner() {
+async function findOwner() {
   // verify if we already have passed owner
   const { owner } = this;
   if (owner) {
@@ -56,16 +58,19 @@ function findOwner() {
     },
   };
 
-  return this.amqp
+  const users = await this.amqp
     .publishAndWait(this.path, getRequest, { timeout: 5000 })
-    .get('users')
-    .then((users) => {
-      if (users.length > 0) {
-        return users[0].id;
-      }
+    .get('users');
 
-      throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
-    });
+  if (users.length === 0) {
+    throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
+  }
+
+  if (users.length !== 1) {
+    throw new Errors.HttpStatusError(409, `Multipel users for agreement ${this.agreementId}`);
+  }
+
+  return users[0].id;
 }
 
 /**
@@ -191,6 +196,6 @@ function transactionSync({ params }) {
     .spread(saveToRedis);
 }
 
-transactionSync.transports = [ActionTransport.amqp];
+transactionSync.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = transactionSync;

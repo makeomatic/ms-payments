@@ -31,7 +31,7 @@ function listAggregateTransactions({ params }) {
     const index = key(TRANSACTIONS_INDEX, owner);
     return redis
       .fsort(index, pattern, '', 'DESC', strFilter, Date.now(), 0, 10, 5000, true)
-      .then(idlist => redis.fsortAggregate(idlist.slice(prefixLength), pattern, agg))
+      .then((idlist) => redis.fsortAggregate(idlist.slice(prefixLength), pattern, agg))
       .then(JSON.parse);
   });
 }

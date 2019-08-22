@@ -1,5 +1,5 @@
 const { isArray } = Array;
-const get = require('lodash/get');
+const get = require('get-value');
 const mergeWith = require('lodash/mergeWith');
 const isNull = require('lodash/isNull');
 const compact = require('lodash/compact');

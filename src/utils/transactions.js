@@ -1,5 +1,5 @@
 const Promise = require('bluebird');
-const getPath = require('lodash/get');
+const getPath = require('get-value');
 
 // helpers
 const { serialize } = require('./redis');

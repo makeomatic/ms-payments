@@ -54,7 +54,7 @@ function hmget(fields, func = passThrough, ctx, defaults) {
 }
 
 function transform(keys, prefixLength) {
-  return keys.map(key => key.slice(prefixLength));
+  return keys.map((key) => key.slice(prefixLength));
 }
 
 function cleanupCache(_index) {
