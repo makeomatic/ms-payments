@@ -14,6 +14,8 @@ const syncAgreements = require('./actions/agreement/sync');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
 const Paypal = require('./utils/paypal-payment');
+const Stripe = require('./utils/stripe');
+const Users = require('./utils/users');
 
 /**
  * Class representing payments handling
@@ -46,6 +48,8 @@ class Payments extends Microfleet {
       this.balance = new Balance(this.redis);
       this.charge = new Charge(this.redis);
       this.paypal = new Paypal({ urls: this.config.urls, ...this.config.charge.paypal }, this.redis);
+      this.users = new Users(this.config.users, this.amqp);
+      this.stripe = new Stripe(this.config.stripe, this.redis, this.users);
     });
 
     // init plans and sync transactions during startup of production

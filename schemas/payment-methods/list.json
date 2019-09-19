@@ -1,0 +1,5 @@
+{
+  "$id": "payment-methods.list",
+  "type": "object",
+  "additionalProperties": false
+}
