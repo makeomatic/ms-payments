@@ -23,4 +23,7 @@ module.exports = {
   PLAN_ALIAS_FIELD: 'alias',
   AGR_TX_FIELD: 't',
   ARG_AGR_ID_FIELD: 'agreement',
+  // Shared lock keys for actions
+  // create one lock for all actions that update user metadata for payment method
+  LOCK_EDIT_PAYMENT_METHOD: 'tx!edit:payment:method',
 };

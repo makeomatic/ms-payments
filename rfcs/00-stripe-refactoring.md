@@ -34,10 +34,11 @@ No
 {
   "data": [
     {
-      "type": "payment-method-stripe",
+      "type": "payment-method-stripe-card",
       "id": "<internal-uuid>"
       "attributes": {
-        // @TODO
+        "cardBrand": "visa",
+        "cardLast4": "7771",
       }
     }
   ]
@@ -74,8 +75,15 @@ There are three endpoints here.
 
 `POST /stripe/setup-intent`
 
-1. Create setup intent
-2. Return client secret
+1. Resolve internal customer id from user's metadata
+  1. If internal customer id doesn't exist
+    1. Create customer using stripe API
+    2. Generate internal customer id (uuid v4)
+    3. Save customer to redis
+    4. Set internal customer id to user's metadata
+2. Retrieve internal customer from redis
+3. Create intents using stripe API
+4. Return client_secret
 
 - [Create a SetupIntent on the server](https://stripe.com/docs/payments/cards/saving-cards-without-payment#create-setup-intent)
 - [Create a SetupIntent API](https://stripe.com/docs/api/setup_intents/create)
@@ -93,7 +101,7 @@ No
 ```json
 {
   "data": {
-    "type": "stripe-setup-intent",
+    "type": "stripe-payment-intent",
     "id": "<random-uuid>",
     "attributes": {
       "clientSecret": "<client-secret>"
@@ -104,12 +112,15 @@ No
 
 ##### Save card
 
-`POST /stripe/save-card`
+`POST /stripe/attach-payment-methods`
 
-1. Create local customer if not exists
-2. Create stripe customer if not exists or attach `intent.payment_method` to stripe customer
-3. Save payment method to local db
-4. Return payment method object
+1. Resolve internal customer id from user's metadata
+2. Retrieve internal customer from redis
+3. Attach payment method using Stripe API
+4. Save payment method to redis
+5. Resolve default payment method from user's metadata
+5. If `useAsDefault === true` or default payment method is not set, save payment method as default to user's metadata
+6. Return payment method object
 
 ###### Auth
 
@@ -118,24 +129,23 @@ Required
 ###### Params
 `JSON` body
 
-Name | Description
---- | ---
-`intent` | intent object from stripe
-`useAsDefault` | use this payment method as default
+Name | Required | Default | Description
+--- | --- | --- | ---
+`paymentMethod` | yes |  | `intent.payment_method` from `stripe.js`
+`useAsDefault` | no | true | Use this payment method as default, if default payment is not set, forced true
 
 ###### Response
 
 ```json
 {
-  "data": [
-    {
-      "type": "payment-method-stripe",
-      "id": "<internal-uuid>"
-      "attributes": {
-        // @TODO
-      }
+  "data": {
+    "type": "payment-method-stripe-card",
+    "id": "<internal-uuid>"
+    "attributes": {
+      "cardBrand": "visa",
+      "cardLast4": "7771",
     }
-  ]
+  }
 }
 ```
 
@@ -152,9 +162,9 @@ Required
 ###### Params
 `JSON` body
 
-Name | Description
---- | ---
-`id` | internal payment method id
+Name | Required | Default | Description
+--- | --- | --- | ---
+`id` | | | internal payment method id
 
 ###### Response
 

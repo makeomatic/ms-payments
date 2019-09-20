@@ -1,0 +1,5 @@
+{
+  "$id": "stripe.setup-intents",
+  "type": "object",
+  "additionalProperties": false
+}
