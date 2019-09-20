@@ -1,6 +1,7 @@
 module.exports = {
   users: {
     audience: '*.localhost',
+    paymentAudience: '*.payments',
     prefix: 'users',
     postfix: {
       getInternalData: 'getInternalData',

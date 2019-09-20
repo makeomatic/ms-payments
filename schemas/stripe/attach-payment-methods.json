@@ -1,0 +1,19 @@
+{
+  "$id": "stripe.attach-payment-methods",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "paymentMethod"
+  ],
+  "properties": {
+    "paymentMethod": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "useAsDefault": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

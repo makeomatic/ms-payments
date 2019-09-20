@@ -20,4 +20,8 @@ module.exports = {
 
   // field constant
   PLAN_ALIAS_FIELD: 'alias',
+
+  // Shared lock keys for actions
+  // create one lock for all actions that update user metadata for payment method
+  LOCK_EDIT_PAYMENT_METHOD: 'tx!edit:payment:method',
 };
