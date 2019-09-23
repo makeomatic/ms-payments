@@ -32,13 +32,17 @@ No
 
 ```json
 {
+  "meta": {
+    "defaultPaymentMethodType": "payment-method-stripe-card",
+    "defaultPaymentMethodId": "<internal-uuid>"
+  },
   "data": [
     {
       "type": "payment-method-stripe-card",
-      "id": "<internal-uuid>"
+      "id": "<internal-uuid>",
       "attributes": {
         "cardBrand": "visa",
-        "cardLast4": "7771",
+        "cardLast4": "7771"
       }
     }
   ]
@@ -58,14 +62,23 @@ Required
 ###### Params
 `JSON` body
 
-Name | Description
---- | ---
-`id` | internal payment method id
-`type` | type of payment method (`payment-method-stripe`)
+Name | Required | Default | Description
+--- | --- | --- | ---
+`id` | yes | | internal payment method id
+`type` | yes | | type of payment method (`payment-method-stripe-card`)
 
 ###### Response
 
-No
+```json
+{
+  "meta": {
+    "updated": true,
+    "id": "<internal-uuid>",
+    "defaultPaymentMethodType": "payment-method-stripe-card",
+    "defaultPaymentMethodId": "<internal-uuid>"
+  }
+}
+```
 
 #### Save card using Stripe API
 
@@ -73,7 +86,7 @@ There are three endpoints here.
 
 ##### Setup intent
 
-`POST /stripe/setup-intent`
+`POST /stripe/setup-intents/create`
 
 1. Resolve internal customer id from user's metadata
   1. If internal customer id doesn't exist
@@ -112,7 +125,9 @@ No
 
 ##### Save card
 
-`POST /stripe/attach-payment-methods`
+`POST /stripe/payment-methods/attach`
+
+Attach payment method to user
 
 1. Resolve internal customer id from user's metadata
 2. Retrieve internal customer from redis
@@ -140,20 +155,24 @@ Name | Required | Default | Description
 {
   "data": {
     "type": "payment-method-stripe-card",
-    "id": "<internal-uuid>"
+    "id": "<internal-uuid>",
     "attributes": {
       "cardBrand": "visa",
-      "cardLast4": "7771",
+      "cardLast4": "7771"
     }
   }
 }
 ```
 
-##### Remove card
+##### Remove payment method
 
-`POST /stripe/remove-card`
+`POST /stripe/payment-methods/delete`
 
-Remove payment method from stripe
+Remove payment method from user
+
+1. Remove payment method from redis
+2. Detach payment method using stripe API
+3. If it's default payment method set any other as default
 
 ###### Auth
 
@@ -164,8 +183,17 @@ Required
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-`id` | | | internal payment method id
+`id` | yes | | internal payment method id
 
 ###### Response
 
-No
+```json
+{
+  "meta": {
+    "deleted": true,
+    "id": "<internal-uuid>",
+    "defaultPaymentMethodType": "payment-method-stripe-card",
+    "defaultPaymentMethodId": "<internal-uuid>"
+  }
+}
+```

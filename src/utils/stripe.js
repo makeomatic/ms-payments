@@ -14,6 +14,7 @@ const assertStringNotEmpty = require('./asserts/string-not-empty');
 
 const invalidConfig = new ValidationError('Stripe config is invalid');
 const isNotEnabled = new HttpStatusError(501, 'Stripe is not enabled');
+const customerNotFound = new HttpStatusError(412, 'Create stripe customer first');
 
 class Stripe {
   static customerRedisKey(internalCustomerId) {
@@ -22,10 +23,28 @@ class Stripe {
     return `${internalCustomerId}:stripe:customer`;
   }
 
-  static paymentMethodRedisSetKey(internalCustomerId) {
+  static paymentMethodRedisCollectionKey(internalCustomerId) {
     assertStringNotEmpty(internalCustomerId, 'internalCustomerId is invalid');
 
     return `${internalCustomerId}:stripe:payment:methods`;
+  }
+
+  static paymentMethodRedisDataKeyPrefix() {
+    return 'stripe:payment:methods:data';
+  }
+
+  static getCustomerIdFromPaymentsMeta(metadata, options) {
+    assertPlainObject(metadata, 'metadata is invalid');
+    assertPlainObject(metadata, 'options is invalid');
+
+    const { internalStripeCustomerId = null } = metadata;
+    const { assertNotNull = false } = options;
+
+    if (internalStripeCustomerId === null && assertNotNull === true) {
+      throw customerNotFound;
+    }
+
+    return internalStripeCustomerId;
   }
 
   constructor(config, redis, users) {
@@ -153,7 +172,8 @@ class Stripe {
     };
 
     await this.redisMapper.addToCollection(
-      Stripe.paymentMethodRedisSetKey(internalCustomerId),
+      Stripe.paymentMethodRedisCollectionKey(internalCustomerId),
+      Stripe.paymentMethodRedisDataKeyPrefix(),
       internalId,
       internalData
     );
@@ -164,7 +184,35 @@ class Stripe {
   internalGetPaymentMethods(internalCustomerId) {
     assertStringNotEmpty(internalCustomerId, 'internalCustomerId is invalid');
 
-    return this.redisMapper.fetchCollection(Stripe.paymentMethodRedisSetKey(internalCustomerId));
+    return this.redisMapper.fetchCollection(
+      Stripe.paymentMethodRedisCollectionKey(internalCustomerId),
+      Stripe.paymentMethodRedisDataKeyPrefix()
+    );
+  }
+
+  internalGetPaymentMethod(internalPaymentMethodId) {
+    assertStringNotEmpty(internalPaymentMethodId, 'internalPaymentMethodId is invalid');
+
+    return this.redisMapper.get([Stripe.paymentMethodRedisDataKeyPrefix(), internalPaymentMethodId].join(':'));
+  }
+
+  async deletePaymentMethod(internalCustomerId, internalPaymentMethodId) {
+    assertStringNotEmpty(internalCustomerId, 'internalCustomerId is invalid');
+    assertStringNotEmpty(internalPaymentMethodId, 'internalPaymentMethodId is invalid');
+
+    const paymentMethod = await this.internalGetPaymentMethod(internalPaymentMethodId);
+
+    // it's more important to delete a payment method form redis
+    // than to delete a payment method from stripe
+    // move this to stripe webhook callback if consistent delete is needed
+    await this.redisMapper.deleteFromCollection(
+      Stripe.paymentMethodRedisCollectionKey(internalCustomerId),
+      Stripe.paymentMethodRedisDataKeyPrefix(),
+      internalPaymentMethodId
+    );
+
+    return this
+      .request('paymentMethods.detach', [paymentMethod.stripeId], `payment:methods:detach:${paymentMethod.stripeId}`);
   }
 
   assertIsEnabled() {
