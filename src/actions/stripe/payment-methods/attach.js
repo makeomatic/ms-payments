@@ -1,12 +1,9 @@
-const { HttpStatusError } = require('common-errors');
 const { ActionTransport } = require('@microfleet/core');
 
-const { LOCK_EDIT_PAYMENT_METHOD } = require('../../constants');
-const actionLockWrapper = require('../../utils/action/acquire-lock');
-const { modelResponse } = require('../../utils/json-api/payment-method-stripe-card');
-const { PAYMENT_METHOD_CARD } = require('../../utils/stripe');
-
-const customerNotFound = new HttpStatusError(412, 'Create stripe customer first');
+const { LOCK_EDIT_PAYMENT_METHOD } = require('../../../constants');
+const actionLockWrapper = require('../../../utils/action/acquire-lock');
+const { modelResponse } = require('../../../utils/json-api/payment-method-stripe-card');
+const { PAYMENT_METHOD_CARD, getCustomerIdFromPaymentsMeta } = require('../../../utils/stripe');
 
 async function attachPaymentMethodsAction(request) {
   const { stripe, users } = this;
@@ -16,11 +13,8 @@ async function attachPaymentMethodsAction(request) {
   const { id: userId } = request.auth.credentials;
   const { paymentMethod, useAsDefault } = request.params;
   const metadata = await users.getMetadata(userId, users.paymentAudience, { public: false });
-  const { internalStripeCustomerId = null, defaultPaymentMethodType = null } = metadata;
-
-  if (internalStripeCustomerId === null) {
-    throw customerNotFound;
-  }
+  const internalStripeCustomerId = getCustomerIdFromPaymentsMeta(metadata, { assertNotNull: true });
+  const { defaultPaymentMethodType = null } = metadata;
 
   const internalPaymentMethod = await this.stripe.attachPaymentMethod(paymentMethod, internalStripeCustomerId);
 

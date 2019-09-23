@@ -25,24 +25,38 @@ class RedisMapper {
     return data.every(isNull) ? null : zipObject(fields, data);
   }
 
-  addToCollection(collectionKey, id, data) {
+  addToCollection(collectionKey, dataKeyPrefix, id, data) {
     assertStringNotEmpty(collectionKey, 'collectionKey is invalid');
+    assertStringNotEmpty(dataKeyPrefix, 'dataKeyPrefix is invalid');
     assertStringNotEmpty(id, 'id is invalid');
     assertPlainObject(data, 'data is invalid');
 
     const pipeline = this.redis.pipeline();
 
     pipeline.zadd(collectionKey, Date.now(), id);
-    pipeline.hmset([collectionKey, id].join(':'), data);
+    pipeline.hmset([dataKeyPrefix, id].join(':'), data);
 
     return pipeline.exec();
   }
 
-  async fetchCollection(collectionKey) {
+  deleteFromCollection(collectionKey, dataKeyPrefix, id) {
+    assertStringNotEmpty(collectionKey, 'collectionKey is invalid');
+    assertStringNotEmpty(dataKeyPrefix, 'dataKeyPrefix is invalid');
+    assertStringNotEmpty(id, 'id is invalid');
+
+    const pipeline = this.redis.pipeline();
+
+    pipeline.zrem(collectionKey, id);
+    pipeline.del([dataKeyPrefix, id].join(':'));
+
+    return pipeline.exec();
+  }
+
+  async fetchCollection(collectionKey, dataKeyPrefix) {
     assertStringNotEmpty(collectionKey, 'collectionKey is invalid');
 
     const ids = await this.redis.zrange(collectionKey, 0, -1);
-    const dataKeys = ids.map((id) => [collectionKey, id].join(':'));
+    const dataKeys = ids.map((id) => [dataKeyPrefix, id].join(':'));
     const pipeline = this.redis.pipeline();
 
     for (const dataKey of dataKeys) {

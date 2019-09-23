@@ -1,19 +1,16 @@
 {
-  "$id": "stripe.attach-payment-methods",
+  "$id": "stripe.payment-methods.delete",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "paymentMethod"
+    "id"
   ],
   "properties": {
-    "paymentMethod": {
+    "id": {
       "type": "string",
+      "format": "uuid",
       "minLength": 1,
       "maxLength": 1024
-    },
-    "useAsDefault": {
-      "type": "boolean",
-      "default": true
     }
   }
 }
