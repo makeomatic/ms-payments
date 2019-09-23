@@ -1,9 +1,9 @@
 const { ActionTransport } = require('@microfleet/core');
 
-const actionLockWrapper = require('../../utils/action/acquire-lock');
-const { modelResponse } = require('../../utils/json-api/stripe-payment-intent');
+const actionLockWrapper = require('../../../utils/action/acquire-lock');
+const { modelResponse } = require('../../../utils/json-api/stripe-payment-intent');
 
-async function stripeSetupIntentAction(request) {
+async function stripeSetupIntentCreateAction(request) {
   const { stripe } = this;
 
   stripe.assertIsEnabled();
@@ -15,7 +15,7 @@ async function stripeSetupIntentAction(request) {
   return modelResponse(intent);
 }
 
-const actionWrapper = actionLockWrapper(stripeSetupIntentAction, 'tx!stripe:setup:intents', 'auth.credentials.id');
+const actionWrapper = actionLockWrapper(stripeSetupIntentCreateAction, 'tx!stripe:setup:intents', 'auth.credentials.id');
 
 actionWrapper.auth = 'token';
 actionWrapper.transports = [ActionTransport.http];
