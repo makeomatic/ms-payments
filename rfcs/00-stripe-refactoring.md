@@ -14,11 +14,11 @@ All unused stripe things must be removed (use `git` for recover it)
 
 ### List of missing endpoints
 
-#### List of payment methods
+#### Get a list of stripe payment methods
 
-`GET /payment-methods/list`
+`GET /stripe/payment-methods/list`
 
-Return a list of payment methods. Stripe the only one payment method now. Availability depends on config (e.g. `config.stripe.enabled = true/false`).
+Return a list of stripe payment methods.
 
 ###### Auth
 
@@ -33,7 +33,6 @@ No
 ```json
 {
   "meta": {
-    "defaultPaymentMethodType": "payment-method-stripe-card",
     "defaultPaymentMethodId": "<internal-uuid>"
   },
   "data": [
@@ -49,11 +48,11 @@ No
 }
 ```
 
-#### Set default payment method
+#### Set a default payment method for stripe
 
-`POST /payment-methods/set-default`
+`POST /stripe/payment-methods/set-default`
 
-Set default payment method. Stripe the only one payment method now.
+Set a default payment method for stripe.
 
 ###### Auth
 
@@ -65,7 +64,6 @@ Required
 Name | Required | Default | Description
 --- | --- | --- | ---
 `id` | yes | | internal payment method id
-`type` | yes | | type of payment method (`payment-method-stripe-card`)
 
 ###### Response
 
@@ -73,18 +71,12 @@ Name | Required | Default | Description
 {
   "meta": {
     "updated": true,
-    "id": "<internal-uuid>",
-    "defaultPaymentMethodType": "payment-method-stripe-card",
-    "defaultPaymentMethodId": "<internal-uuid>"
+    "id": "<internal-uuid>"
   }
 }
 ```
 
-#### Save card using Stripe API
-
-There are three endpoints here.
-
-##### Setup intent
+#### Setup intent
 
 `POST /stripe/setup-intents/create`
 
@@ -101,15 +93,15 @@ There are three endpoints here.
 - [Create a SetupIntent on the server](https://stripe.com/docs/payments/cards/saving-cards-without-payment#create-setup-intent)
 - [Create a SetupIntent API](https://stripe.com/docs/api/setup_intents/create)
 
-###### Auth
+##### Auth
 
 Required
 
-###### Params
+##### Params
 
 No
 
-###### Response
+##### Response
 
 ```json
 {
@@ -123,7 +115,7 @@ No
 }
 ```
 
-##### Save card
+#### Save card
 
 `POST /stripe/payment-methods/attach`
 
@@ -137,11 +129,11 @@ Attach payment method to user
 5. If `useAsDefault === true` or default payment method is not set, save payment method as default to user's metadata
 6. Return payment method object
 
-###### Auth
+##### Auth
 
 Required
 
-###### Params
+##### Params
 `JSON` body
 
 Name | Required | Default | Description
@@ -149,7 +141,7 @@ Name | Required | Default | Description
 `paymentMethod` | yes |  | `intent.payment_method` from `stripe.js`
 `useAsDefault` | no | true | Use this payment method as default, if default payment is not set, forced true
 
-###### Response
+##### Response
 
 ```json
 {
@@ -164,8 +156,7 @@ Name | Required | Default | Description
 }
 ```
 
-##### Remove payment method
-
+#### Remove payment method
 `POST /stripe/payment-methods/delete`
 
 Remove payment method from user
@@ -174,11 +165,10 @@ Remove payment method from user
 2. Detach payment method using stripe API
 3. If it's default payment method set any other as default
 
-###### Auth
-
+##### Auth
 Required
 
-###### Params
+##### Params
 `JSON` body
 
 Name | Required | Default | Description
@@ -192,7 +182,6 @@ Name | Required | Default | Description
   "meta": {
     "deleted": true,
     "id": "<internal-uuid>",
-    "defaultPaymentMethodType": "payment-method-stripe-card",
     "defaultPaymentMethodId": "<internal-uuid>"
   }
 }

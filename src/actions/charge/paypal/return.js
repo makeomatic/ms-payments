@@ -1,15 +1,12 @@
 const { ActionTransport } = require('@microfleet/core');
-const { LockAcquisitionError } = require('ioredis-lock');
 const { HttpStatusError } = require('common-errors');
-const Promise = require('bluebird');
 const assert = require('assert');
 
-const acquireLock = require('../../../utils/acquire-lock');
+const lockWrapper = require('../../../utils/action/helpers/acquire-lock');
 const assertStringNotEmpty = require('../../../utils/asserts/string-not-empty');
 const { STATUS_INITIALIZED } = require('../../../utils/charge');
 const { CHARGE_RESPONSE_FIELDS, charge: chargeResponse } = require('../../../utils/json-api');
 
-const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 const alreadyExecutedError = new HttpStatusError(400, 'already executed');
 
 async function paypalReturnAction(service, request) {
@@ -37,19 +34,13 @@ async function paypalReturnAction(service, request) {
   return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
 }
 
-async function wrappedAction(request) {
-  return Promise
-    .using(this, request, acquireLock(
-      this, `tx!paypal:return:${request.query.paymentId}`
-    ), paypalReturnAction)
-    .catchThrow(LockAcquisitionError, concurrentRequests);
-}
+const actionWrapper = lockWrapper(paypalReturnAction, 'tx!paypal:return', 'query.paymentId');
 
-wrappedAction.transports = [ActionTransport.amqp, ActionTransport.http];
-wrappedAction.transportOptions = {
+actionWrapper.transports = [ActionTransport.amqp, ActionTransport.http];
+actionWrapper.transportOptions = {
   [ActionTransport.http]: {
     methods: ['get'],
   },
 };
 
-module.exports = wrappedAction;
+module.exports = actionWrapper;

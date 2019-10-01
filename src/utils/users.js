@@ -19,6 +19,18 @@ class Users {
     return this.config.paymentAudience;
   }
 
+  get METADATA_FIELD_FIRST_NAME() {
+    return this.config.consts.METADATA_FIELD_FIRST_NAME;
+  }
+
+  get METADATA_FIELD_LAST_NAME() {
+    return this.config.consts.METADATA_FIELD_LAST_NAME;
+  }
+
+  get METADATA_FIELD_EMAIL() {
+    return this.config.consts.METADATA_FIELD_EMAIL;
+  }
+
   // @TODO I hope we can use this method in other files
   getMetadata(userId, audience, requestParams = { public: true }) {
     assertStringNotEmpty(userId, 'userId is invalid');

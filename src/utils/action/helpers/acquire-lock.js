@@ -4,7 +4,7 @@ const Promise = require('bluebird');
 const has = require('lodash/has');
 const get = require('lodash/get');
 
-const acquireLock = require('../acquire-lock');
+const acquireLock = require('../../acquire-lock');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 

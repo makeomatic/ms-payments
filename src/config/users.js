@@ -14,5 +14,10 @@ module.exports = {
     timeouts: {
       verify: 5000,
     },
+    consts: {
+      METADATA_FIELD_FIRST_NAME: 'firstName',
+      METADATA_FIELD_LAST_NAME: 'lastName',
+      METADATA_FIELD_EMAIL: 'username',
+    },
   },
 };

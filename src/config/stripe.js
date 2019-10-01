@@ -13,7 +13,11 @@ module.exports = {
         throw_original: true,
         predicate: { code: 429 },
       },
-      apiVersion: '2019-05-16',
+      apiVersion: '2019-09-09',
+    },
+    consts: {
+      METADATA_FIELD_CUSTOMER_ID: 'stripeInternalCustomerId',
+      METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID: 'stripeDefaultPaymentMethodId',
     },
   },
 };

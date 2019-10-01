@@ -1,5 +1,5 @@
 {
-  "$id": "payment-methods.list",
+  "$id": "stripe.payment-methods.list",
   "type": "object",
   "additionalProperties": false
 }

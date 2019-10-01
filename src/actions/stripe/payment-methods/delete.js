@@ -1,60 +1,57 @@
 const { HttpStatusError } = require('common-errors');
 const { ActionTransport } = require('@microfleet/core');
 
-const { LOCK_EDIT_PAYMENT_METHOD } = require('../../../constants');
-const actionLockWrapper = require('../../../utils/action/acquire-lock');
+const { LOCK_STRIPE_DEFAULT_PAYMENT_METHOD } = require('../../../constants');
+const lockWrapper = require('../../../utils/action/helpers/acquire-lock');
 const { deletedResponse } = require('../../../utils/json-api/payment-method-stripe-card');
-const { PAYMENT_METHOD_CARD, getCustomerIdFromPaymentsMeta } = require('../../../utils/stripe');
 
-const mapInternalId = (data) => data.internalId;
-
-function getUpdatedPaymentMethod(internalPaymentMethodId, paymentMethodIds, metadata) {
-  const { defaultPaymentMethodType = null, defaultPaymentMethodId = null } = metadata;
-  const updatedMetada = { defaultPaymentMethodType: null, defaultPaymentMethodId: null };
-
-  if (defaultPaymentMethodType === PAYMENT_METHOD_CARD && defaultPaymentMethodId === internalPaymentMethodId) {
-    const availablePaymentMethodIds = paymentMethodIds.filter((id) => id !== internalPaymentMethodId);
-
-    if (availablePaymentMethodIds.length !== 0) {
-      updatedMetada.defaultPaymentMethodType = PAYMENT_METHOD_CARD;
-      [updatedMetada.defaultPaymentMethodId] = availablePaymentMethodIds;
-    }
-  }
-
-  return updatedMetada;
-}
+const getId = (data) => data.id;
 
 async function deletePaymentMethodsAction(request) {
   const { stripe, users } = this;
+  const { customers, paymentMethods } = stripe;
   const { id: userId } = request.auth.credentials;
-  const { id: internalPaymentMethodId } = request.params;
+  const { id: paymentMethodId } = request.params;
 
   stripe.assertIsEnabled();
 
-  const metadata = await users.getMetadata(userId, users.paymentAudience, { public: false });
-  const internalStripeCustomerId = getCustomerIdFromPaymentsMeta(metadata, { assertNotNull: true });
-  const paymentMethods = await stripe.internalGetPaymentMethods(internalStripeCustomerId);
-  const paymentMethodIds = paymentMethods.map(mapInternalId);
+  const {
+    [customers.METADATA_FIELD_CUSTOMER_ID]: customerId = null,
+    [paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID]: defaultPaymentMethodId = null,
+  } = await users.getMetadata(userId, users.paymentAudience, { public: false });
 
-  if (paymentMethodIds.includes(internalPaymentMethodId) === false) {
-    throw new HttpStatusError(404, `Payment method #${internalPaymentMethodId} not found`);
+  const paymentMethod = await paymentMethods.internalGet(paymentMethodId);
+
+  if (paymentMethod === null) {
+    throw new HttpStatusError(404, `Payment method #${paymentMethodId} not found`);
   }
 
-  const updatedPaymentMethod = getUpdatedPaymentMethod(internalPaymentMethodId, paymentMethodIds, metadata);
+  const meta = { [paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID]: defaultPaymentMethodId };
 
   // it's more important to unset a default payment method than to delete a payment method
-  if (updatedPaymentMethod.defaultPaymentMethodType === null) {
-    await users.setMetadata(userId, users.paymentAudience, { $unset: ['defaultPaymentMethodType', 'defaultPaymentMethodId'] });
-  } else {
-    await users.setMetadata(userId, users.paymentAudience, { $set: updatedPaymentMethod });
+  if (paymentMethodId === defaultPaymentMethodId) {
+    const paymentMethodsList = await paymentMethods.internalGetAll(customerId);
+    const [newPaymentMethodId] = await paymentMethodsList.map(getId).filter((id) => id !== paymentMethodId);
+
+    if (newPaymentMethodId !== undefined) {
+      meta[paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID] = newPaymentMethodId;
+
+      await users.setMetadata(userId, users.paymentAudience, { $set: meta });
+    } else {
+      meta[paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID] = null;
+
+      await users.setMetadata(userId, users.paymentAudience, {
+        $remove: [paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID],
+      });
+    }
   }
 
-  await stripe.deletePaymentMethod(internalStripeCustomerId, internalPaymentMethodId);
+  await paymentMethods.delete(customerId, paymentMethodId);
 
-  return deletedResponse(internalPaymentMethodId, updatedPaymentMethod);
+  return deletedResponse(paymentMethodId, meta);
 }
 
-const actionWrapper = actionLockWrapper(deletePaymentMethodsAction, LOCK_EDIT_PAYMENT_METHOD, 'auth.credentials.id');
+const actionWrapper = lockWrapper(deletePaymentMethodsAction, ...LOCK_STRIPE_DEFAULT_PAYMENT_METHOD);
 
 actionWrapper.auth = 'token';
 actionWrapper.transports = [ActionTransport.http];

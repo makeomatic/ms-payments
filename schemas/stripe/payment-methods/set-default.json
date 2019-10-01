@@ -1,10 +1,9 @@
 {
-  "$id": "payment-methods.set-default",
+  "$id": "stripe.payment-methods.set-default",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "id",
-    "type"
+    "id"
   ],
   "properties": {
     "id": {
@@ -12,10 +11,6 @@
       "format": "uuid",
       "minLength": 1,
       "maxLength": 1024
-    },
-    "type": {
-      "type": "string",
-      "enum": ["payment-method-stripe-card"]
     }
   }
 }
