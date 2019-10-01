@@ -8,7 +8,7 @@ async function decrementBalanceAction(request) {
   return this.balance.decrement(ownerId, amount, idempotency, goal);
 }
 
-const actionWrapper = lockWrapper(decrementBalanceAction, 'tx!balance:decrement', 'params.owner', 'params.idempotency');
+const actionWrapper = lockWrapper(decrementBalanceAction, 'tx!balance:decrement', 'params.ownerId', 'params.idempotency');
 
 actionWrapper.transports = [ActionTransport.amqp];
 

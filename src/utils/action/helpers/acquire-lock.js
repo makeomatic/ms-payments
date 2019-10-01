@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const isFunction = require('lodash/isFunction');
 
 const acquireLock = require('../../acquire-lock');
+const assertStringNotEmpty = require('../../asserts/string-not-empty');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 
@@ -19,13 +20,19 @@ function acquireLockWrapper(request, action, keyPrefix, ...requestKeyPaths) {
   const keyParts = [keyPrefix];
 
   for (const path of requestKeyPaths) {
+    let keyPart = '';
+
     if (isFunction(path) === true) {
-      keyParts.push(path(request));
+      keyPart = path(request);
     } else {
       assertPathExists(request, path);
 
-      keyParts.push(get(request, path));
+      keyPart = get(request, path);
     }
+
+    assertStringNotEmpty(keyPart, 'keyPart is invalid');
+
+    keyParts.push(keyPart);
   }
 
   const lock = acquireLock(this, keyParts.join(':'));
