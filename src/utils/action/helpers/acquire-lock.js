@@ -3,6 +3,7 @@ const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const has = require('lodash/has');
 const get = require('lodash/get');
+const isFunction = require('lodash/isFunction');
 
 const acquireLock = require('../../acquire-lock');
 
@@ -18,9 +19,13 @@ function acquireLockWrapper(request, action, keyPrefix, ...requestKeyPaths) {
   const keyParts = [keyPrefix];
 
   for (const path of requestKeyPaths) {
-    assertPathExists(request, path);
+    if (isFunction(path) === true) {
+      keyParts.push(path(request));
+    } else {
+      assertPathExists(request, path);
 
-    keyParts.push(get(request, path));
+      keyParts.push(get(request, path));
+    }
   }
 
   const lock = acquireLock(this, keyParts.join(':'));

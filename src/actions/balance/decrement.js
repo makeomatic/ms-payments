@@ -2,10 +2,10 @@ const { ActionTransport } = require('@microfleet/core');
 
 const lockWrapper = require('../../utils/action/helpers/acquire-lock');
 
-async function decrementBalanceAction(service, request) {
+async function decrementBalanceAction(request) {
   const { ownerId, amount, idempotency, goal } = request.params;
 
-  return service.balance.decrement(ownerId, amount, idempotency, goal);
+  return this.balance.decrement(ownerId, amount, idempotency, goal);
 }
 
 const actionWrapper = lockWrapper(decrementBalanceAction, 'tx!balance:decrement', 'params.owner', 'params.idempotency');
