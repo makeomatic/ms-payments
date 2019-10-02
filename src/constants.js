@@ -21,7 +21,8 @@ module.exports = {
   // field constant
   PLAN_ALIAS_FIELD: 'alias',
 
-  // Shared lock keys for actions
-  // create one lock for all actions that update user metadata for payment method
-  LOCK_EDIT_PAYMENT_METHOD: 'tx!edit:payment:method',
+  // Shared lock params for actions
+  // create one lock for all actions that update user metadata for stripe default payment method
+  LOCK_STRIPE_DEFAULT_PAYMENT_METHOD: ['tx!edit:payment:method', 'auth.credentials.id'],
+  LOCK_PAYPAL_CHARGE_COMPLETE: ['tx!paypal:complete', 'params.paymentId'],
 };
