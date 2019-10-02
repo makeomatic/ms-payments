@@ -1,33 +1,40 @@
+const { strictEqual } = require('assert');
 const { ActionTransport } = require('@microfleet/core');
+const { HttpStatusError } = require('common-errors');
 
-const { LOCK_EDIT_PAYMENT_METHOD } = require('../../../constants');
-const actionLockWrapper = require('../../../utils/action/acquire-lock');
+const { LOCK_STRIPE_DEFAULT_PAYMENT_METHOD } = require('../../../constants');
+const lockWrapper = require('../../../utils/action/helpers/acquire-lock');
 const { modelResponse } = require('../../../utils/json-api/payment-method-stripe-card');
-const { PAYMENT_METHOD_CARD, getCustomerIdFromPaymentsMeta } = require('../../../utils/stripe');
+
+const customerNotFound = new HttpStatusError(412, 'Create setup intent first');
 
 async function attachPaymentMethodsAction(request) {
   const { stripe, users } = this;
+  const { customers, paymentMethods } = stripe;
+  const { id: userId } = request.auth.credentials;
+  const { paymentMethod: paymentMethodToken, useAsDefault } = request.params;
 
   stripe.assertIsEnabled();
 
-  const { id: userId } = request.auth.credentials;
-  const { paymentMethod, useAsDefault } = request.params;
-  const metadata = await users.getMetadata(userId, users.paymentAudience, { public: false });
-  const internalStripeCustomerId = getCustomerIdFromPaymentsMeta(metadata, { assertNotNull: true });
-  const { defaultPaymentMethodType = null } = metadata;
+  const {
+    [customers.METADATA_FIELD_CUSTOMER_ID]: customerId = null,
+    [paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID]: defaultPaymentMethodId = null,
+  } = await users.getMetadata(userId, users.paymentAudience, { public: false });
 
-  const internalPaymentMethod = await this.stripe.attachPaymentMethod(paymentMethod, internalStripeCustomerId);
+  strictEqual(customerId !== null, true, customerNotFound);
 
-  if (useAsDefault === true || defaultPaymentMethodType === null) {
+  const paymentMethod = await paymentMethods.attach(paymentMethodToken, customerId);
+
+  if (useAsDefault === true || defaultPaymentMethodId === null) {
     await users.setMetadata(userId, users.paymentAudience, {
-      $set: { defaultPaymentMethodType: PAYMENT_METHOD_CARD, defaultPaymentMethodId: internalPaymentMethod.internalId },
+      $set: { [paymentMethods.METADATA_FIELD_DEFAULT_PAYMENT_METHOD_ID]: paymentMethod.id },
     });
   }
 
-  return modelResponse(internalPaymentMethod);
+  return modelResponse(paymentMethod);
 }
 
-const actionWrapper = actionLockWrapper(attachPaymentMethodsAction, LOCK_EDIT_PAYMENT_METHOD, 'auth.credentials.id');
+const actionWrapper = lockWrapper(attachPaymentMethodsAction, ...LOCK_STRIPE_DEFAULT_PAYMENT_METHOD);
 
 actionWrapper.auth = 'token';
 actionWrapper.transports = [ActionTransport.http];

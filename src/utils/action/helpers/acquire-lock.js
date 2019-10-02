@@ -3,8 +3,10 @@ const { HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const has = require('lodash/has');
 const get = require('lodash/get');
+const isFunction = require('lodash/isFunction');
 
-const acquireLock = require('../acquire-lock');
+const acquireLock = require('../../acquire-lock');
+const assertStringNotEmpty = require('../../asserts/string-not-empty');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 
@@ -18,9 +20,19 @@ function acquireLockWrapper(request, action, keyPrefix, ...requestKeyPaths) {
   const keyParts = [keyPrefix];
 
   for (const path of requestKeyPaths) {
-    assertPathExists(request, path);
+    let keyPart = '';
 
-    keyParts.push(get(request, path));
+    if (isFunction(path) === true) {
+      keyPart = path(request);
+    } else {
+      assertPathExists(request, path);
+
+      keyPart = get(request, path);
+    }
+
+    assertStringNotEmpty(keyPart, 'keyPart is invalid');
+
+    keyParts.push(keyPart);
   }
 
   const lock = acquireLock(this, keyParts.join(':'));

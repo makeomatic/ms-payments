@@ -1,26 +1,15 @@
 const { ActionTransport } = require('@microfleet/core');
-const { LockAcquisitionError } = require('ioredis-lock');
-const { HttpStatusError } = require('common-errors');
-const Promise = require('bluebird');
 
-const acquireLock = require('../../utils/acquire-lock');
+const lockWrapper = require('../../utils/action/helpers/acquire-lock');
 
-const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
-
-async function decrementBalanceAction(service, request) {
+async function decrementBalanceAction(request) {
   const { ownerId, amount, idempotency, goal } = request.params;
 
-  return service.balance.decrement(ownerId, amount, idempotency, goal);
+  return this.balance.decrement(ownerId, amount, idempotency, goal);
 }
 
-async function wrappedAction(request) {
-  return Promise
-    .using(this, request, acquireLock(
-      this, `tx!balance:decrement:${request.params.owner}:${request.params.idempotency}`
-    ), decrementBalanceAction)
-    .catchThrow(LockAcquisitionError, concurrentRequests);
-}
+const actionWrapper = lockWrapper(decrementBalanceAction, 'tx!balance:decrement', 'params.ownerId', 'params.idempotency');
 
-wrappedAction.transports = [ActionTransport.amqp];
+actionWrapper.transports = [ActionTransport.amqp];
 
-module.exports = wrappedAction;
+module.exports = actionWrapper;
