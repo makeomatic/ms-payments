@@ -6,7 +6,7 @@ const { LOCK_STRIPE_DEFAULT_PAYMENT_METHOD } = require('../../../constants');
 const lockWrapper = require('../../../utils/action/helpers/acquire-lock');
 const { modelResponse } = require('../../../utils/json-api/payment-method-stripe-card');
 
-const customerNotFound = new HttpStatusError(412, 'Setup intent first');
+const customerNotFound = new HttpStatusError(412, 'Create setup intent first');
 
 async function attachPaymentMethodsAction(request) {
   const { stripe, users } = this;
