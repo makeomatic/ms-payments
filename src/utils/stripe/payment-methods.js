@@ -48,6 +48,8 @@ class PaymentMethods {
       stripeType: stripePaymentMethod.type,
       cardBrand: stripePaymentMethod.card.brand,
       cardLast4: stripePaymentMethod.card.last4,
+      cardExpMonth: String(stripePaymentMethod.card.exp_month),
+      cardExpYear: String(stripePaymentMethod.card.exp_year),
       cardholderName: stripePaymentMethod.billing_details.name || '',
       cardholderEmail: stripePaymentMethod.billing_details.email || '',
       cardholderPhone: stripePaymentMethod.billing_details.phone || '',
