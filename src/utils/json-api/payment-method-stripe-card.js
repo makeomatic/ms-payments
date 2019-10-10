@@ -1,5 +1,5 @@
 function makeModel(data) {
-  const { id, cardBrand, cardLast4, cardholderName } = data;
+  const { id, cardBrand, cardLast4, cardholderName, cardExpMonth, cardExpYear } = data;
 
   return {
     id,
@@ -8,6 +8,8 @@ function makeModel(data) {
       cardBrand,
       cardLast4,
       cardholderName,
+      cardExpMonth,
+      cardExpYear,
     },
   };
 }

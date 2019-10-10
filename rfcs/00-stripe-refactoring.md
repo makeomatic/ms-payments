@@ -26,7 +26,11 @@ Required
 
 ###### Params
 
-No
+`JSON` body
+
+```json
+{}
+```
 
 ###### Response
 
@@ -41,7 +45,10 @@ No
       "id": "<internal-uuid>",
       "attributes": {
         "cardBrand": "visa",
-        "cardLast4": "7771"
+        "cardLast4": "7771",
+        "cardholderName": "PERCHIK",
+        "cardExpMonth": "10",
+        "cardExpYear": "2020"
       }
     }
   ]
@@ -63,7 +70,7 @@ Required
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-`id` | yes | | internal payment method id
+`id` | yes | | Internal payment method id
 
 ###### Response
 
@@ -87,7 +94,7 @@ Name | Required | Default | Description
     3. Save customer to redis
     4. Set internal customer id to user's metadata
 2. Retrieve internal customer from redis
-3. Create intents using stripe API
+3. Create a intent using stripe API
 4. Return client_secret
 
 - [Create a SetupIntent on the server](https://stripe.com/docs/payments/cards/saving-cards-without-payment#create-setup-intent)
@@ -99,7 +106,11 @@ Required
 
 ##### Params
 
-No
+`JSON` body
+
+```json
+{}
+```
 
 ##### Response
 
@@ -150,7 +161,10 @@ Name | Required | Default | Description
     "id": "<internal-uuid>",
     "attributes": {
       "cardBrand": "visa",
-      "cardLast4": "7771"
+      "cardLast4": "7771",
+      "cardholderName": "PERSIK",
+      "cardExpMonth": "10",
+      "cardExpYear": "2020"
     }
   }
 }
@@ -173,7 +187,7 @@ Required
 
 Name | Required | Default | Description
 --- | --- | --- | ---
-`id` | yes | | internal payment method id
+`id` | yes | | Internal payment method id
 
 ###### Response
 
