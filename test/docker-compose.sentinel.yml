@@ -1,54 +1,11 @@
-version: '2'
-
-volumes:
-  certs:
-  vhost:
-  html:
-
-networks:
-  static:
-    driver: bridge
-    ipam:
-      driver: default
-      config:
-      - subnet: 172.16.238.0/24
+version: '3'
 
 services:
-  redis:
-    image: redis:5-alpine
-    hostname: redis
-    expose:
-      - "6379"
-    networks:
-      static:
-        ipv4_address: 172.16.238.10
-
-  redis-sentinel:
-    depends_on:
-      - redis
-    volumes:
-      - ./helpers/redis-sentinel:/etc/redis-sentinel
-    image: redis:5-alpine
-    hostname: redis-sentinel
-    expose:
-      - "26379"
-    command: redis-server /etc/redis-sentinel/redis-sentinel.conf --sentinel
-    networks:
-      static:
-        ipv4_address: 172.16.238.15
-
-  rabbitmq:
-    image: rabbitmq:3.7-alpine
-    hostname: rabbitmq
-    networks:
-      static:
-        ipv4_address: 172.16.238.11
-
   ms-users:
     depends_on:
-      - redis
+      - redis-sentinel
       - rabbitmq
-    image: makeomatic/ms-users
+    image: makeomatic/ms-users:12.13.0-12.0.0
     hostname: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
@@ -57,20 +14,16 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.sentinel.js","/src/configs/users.redis.sentinel.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
-    networks:
-      static:
-        ipv4_address: 172.16.238.16
+    command: '/bin/sh -c "sleep 6; exec node ./node_modules/.bin/mfleet"'
 
   tester:
-    image: makeomatic/node:10.16.3-chrome-tester
     links:
       - redis-sentinel
       - rabbitmq
       - ms-users
-    working_dir: /src
     volumes:
       - ${PWD}:/src:cached
-      - ./configs:/configs:cached
+      - ${PWD}/test/configs:/configs:cached
     environment:
       DEBUG: ${DEBUG}
       NODE_ENV: "test"
@@ -81,6 +34,3 @@ services:
       PAYPAL_SANDBOX_USERNAME: test@cappasity.com
       PAYPAL_SANDBOX_PASSWORD: 12345678
     command: tail -f /dev/null
-    networks:
-      static:
-        ipv4_address: 172.16.238.14

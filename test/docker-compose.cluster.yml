@@ -1,19 +1,11 @@
-version: '2'
+version: '3'
 
 services:
-  redis:
-    hostname: redis
-    image: makeomatic/redis-cluster:3.2.9
-
-  rabbitmq:
-    image: rabbitmq:3.7-alpine
-    hostname: rabbitmq
-
   ms-users:
     depends_on:
-      - redis
+      - redis-cluster
       - rabbitmq
-    image: makeomatic/ms-users
+    image: makeomatic/ms-users:12.13.0-12.0.0
     hostname: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
@@ -22,19 +14,18 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.cluster.js","/src/configs/users.redis.cluster.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
+    command: '/bin/sh -c "sleep 6; exec node ./node_modules/.bin/mfleet"'
 
   tester:
-    image: makeomatic/node:10.16.3-chrome-tester
-    links:
-      - redis
+    depends_on:
+      - redis-cluster
       - rabbitmq
       - ms-users
-    working_dir: /src
     volumes:
       - ${PWD}:/src:cached
-      - ./configs:/configs:cached
+      - ${PWD}/test/configs:/configs:cached
     environment:
-      DEBUG: ""
+      DEBUG: "${DEBUG}"
       NODE_ENV: "test"
       DOTENV_FILE_PATH: "/src/test/.env"
       NCONF_FILE_PATH: '["/configs/amqp.js","/configs/cart.js","/configs/redis.cluster.js"]'

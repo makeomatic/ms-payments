@@ -2,7 +2,7 @@
   "$id": "sale.createDynamic",
   "type": "object",
   "additionalProperties": false,
-  "require": [
+  "required": [
     "owner",
     "amount",
     "cart",

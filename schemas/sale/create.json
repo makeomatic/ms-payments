@@ -2,7 +2,7 @@
   "$id": "sale.create",
   "type": "object",
   "additionalProperties": false,
-  "require": [
+  "required": [
     "owner",
     "amount"
   ],
