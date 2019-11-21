@@ -14,6 +14,7 @@ services:
       NODE_ENV: 'production'
       NCONF_FILE_PATH: '["/src/configs/amqp.js","/src/configs/redis.sentinel.js","/src/configs/users.redis.sentinel.js"]'
       MS_USERS__INIT_ADMIN_ACCOUNTS_DELAY: '1'
+    command: '/bin/sh -c "sleep 6; exec node ./node_modules/.bin/mfleet"'
 
   tester:
     links:
