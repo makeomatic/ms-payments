@@ -1,7 +1,7 @@
 /* eslint-disable import/no-unresolved, import/no-absolute-path */
 const ld = require('/src/node_modules/lodash');
 const moment = require('/src/node_modules/moment');
-const setMetadata = require('/src/lib/utils/updateMetadata');
+const setMetadata = require('/src/lib/utils/update-metadata');
 /* eslint-enable import/no-unresolved, import/no-absolute-path */
 
 const FREE_PLAN_ID = 'free';
