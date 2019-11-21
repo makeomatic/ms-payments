@@ -1,3 +1,15 @@
+# [7.0.0](https://github.com/makeomatic/ms-payments/compare/v6.3.7...v7.0.0) (2019-11-21)
+
+
+### Features
+
+* node 12, upgraded deps ([#101](https://github.com/makeomatic/ms-payments/issues/101)) ([a8a4696](https://github.com/makeomatic/ms-payments/commit/a8a469603cf80439e15f0141fed4874f31c9439b))
+
+
+### BREAKING CHANGES
+
+* uses node 12, slightly change config formats, upgrades all deps with multiple breaking changes
+
 ## [6.3.7](https://github.com/makeomatic/ms-payments/compare/v6.3.6...v6.3.7) (2019-08-22)
 
 
