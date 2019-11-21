@@ -1,4 +1,12 @@
 {
-  "node": "10.16.3",
-  "sleep": 10
+  "node": "12.13.0",
+  "sleep": 10,
+  "auto_compose": true,
+  "with_local_compose": true,
+  "tester_flavour": "chrome-tester",
+  "services": [
+    "redisCluster",
+    "redisSentinel",
+    "rabbitmq"
+  ]
 }

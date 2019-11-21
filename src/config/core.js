@@ -1,3 +1,4 @@
+const path = require('path');
 const { FREE_PLAN_ID } = require('../constants');
 
 /**
@@ -56,7 +57,12 @@ exports.paypal = {
  * Validator Plugin Configuration
  * @type {Array}
  */
-exports.validator = ['../schemas'];
+exports.validator = {
+  schemas: [path.resolve(__dirname, '../../schemas')],
+  ajv: {
+    $meta: 'ms-validation AJV schema validator options',
+  },
+};
 
 /**
  * Plans that are initialized during startup of the service.
