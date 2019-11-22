@@ -15,6 +15,7 @@ RUN \
     make \
     python \
   && yarn --production --frozen-lockfile \
+  && yarn cache clean \
   && apk del \
     .buildDeps \
     wget \
