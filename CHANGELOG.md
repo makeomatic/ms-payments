@@ -1,3 +1,10 @@
+## [7.0.1](https://github.com/makeomatic/ms-payments/compare/v7.0.0...v7.0.1) (2019-11-22)
+
+
+### Bug Fixes
+
+* gracefully handle out of sync of plan deletes ([89df755](https://github.com/makeomatic/ms-payments/commit/89df755b7f838a44a93d66c9317e77ae68b32f59))
+
 # [7.0.0](https://github.com/makeomatic/ms-payments/compare/v6.3.7...v7.0.0) (2019-11-21)
 
 
