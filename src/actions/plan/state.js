@@ -1,58 +1,57 @@
 const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
-const map = require('lodash/map');
-const forEach = require('lodash/forEach');
 const uniq = require('lodash/uniq');
 const compact = require('lodash/compact');
 
 // helpers
 const key = require('../../redis-key');
 const { PLANS_DATA, PLAN_ALIAS_FIELD } = require('../../constants');
-const { serialize } = require('../../utils/redis');
+const { serialize, handlePipeline } = require('../../utils/redis');
 const { plan: { update } } = require('../../utils/paypal');
 
-function planState({ params: message }) {
-  const { config, redis, log } = this;
+function isAlreadyInState(err) {
+  return err.httpStatusCode === 400
+    && err.response
+    && err.response.name === 'BUSINESS_VALIDATION_ERROR'
+    && err.response.details
+    && err.response.details.find((el) => (
+      el.issue === 'Plan already in same state.'
+    ));
+}
+
+async function planState({ log, params: message }) {
+  const { config, redis } = this;
   const { id, state } = message;
   const { paypal: paypalConfig } = config;
 
-  function getPlan() {
-    return redis
-      .hget(key(PLANS_DATA, id), PLAN_ALIAS_FIELD)
-      .then((alias) => alias && alias.length > 0 && JSON.parse(alias));
+  const possibleAlias = await redis.hget(key(PLANS_DATA, id), PLAN_ALIAS_FIELD);
+  const alias = possibleAlias && possibleAlias.length > 0 && JSON.parse(possibleAlias);
+  const request = [{
+    op: 'replace',
+    path: '/',
+    value: { state },
+  }];
+
+  const partialIds = id.split('|');
+  const requests = [];
+  for (const planId of partialIds) {
+    requests.push(
+      update(planId, request, paypalConfig).catchReturn(isAlreadyInState, 'OK')
+    );
   }
 
-  function sendRequest() {
-    const request = [{
-      op: 'replace',
-      path: '/',
-      value: { state },
-    }];
+  await Promise.all(requests);
 
-    const ids = id.split('|');
-    const requests = map(ids, (planId) => update(planId, request, paypalConfig));
-    return Promise.all(requests);
-  }
+  const ids = compact(uniq(partialIds.concat([id, alias])));
+  const serializedState = serialize({ state });
 
-  function updateRedis(alias) {
-    const ids = compact(uniq(id.split('|').concat([id, alias])));
-    const keys = map(ids, (planId) => key(PLANS_DATA, planId));
-    const pipeline = redis.pipeline();
+  const pipeline = redis.pipeline(ids.map((planId) => [
+    'hmset', key(PLANS_DATA, planId), serializedState,
+  ]));
 
-    forEach(keys, (planId) => {
-      pipeline.hmset(planId, serialize({ state }));
-    });
+  log.debug({ state, ids }, 'updating state for ids %s to %s', ids.join(', '), state);
 
-    log.debug('updating state for ids %s to %s', ids.join(', '), state);
-
-    return pipeline.exec();
-  }
-
-  return Promise
-    .bind(this)
-    .then(getPlan)
-    .tap(sendRequest)
-    .then(updateRedis);
+  return handlePipeline(await pipeline.exec());
 }
 
 planState.transports = [ActionTransport.amqp, ActionTransport.internal];
