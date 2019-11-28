@@ -1,3 +1,10 @@
+## [7.0.3](https://github.com/makeomatic/ms-payments/compare/v7.0.2...v7.0.3) (2019-11-28)
+
+
+### Bug Fixes
+
+* **deps:** @microfleet/transport-amqp, dlock, dev deps ([c7ca6f5](https://github.com/makeomatic/ms-payments/commit/c7ca6f529acdcce89cec4d990b51b547c7a6edd8))
+
 ## [7.0.2](https://github.com/makeomatic/ms-payments/compare/v7.0.1...v7.0.2) (2019-11-22)
 
 

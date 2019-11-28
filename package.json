@@ -1,7 +1,7 @@
 {
   "name": "ms-payments",
   "description": "Core of the microservice for handling payments",
-  "version": "7.0.2",
+  "version": "7.0.3",
   "main": "./lib/index.js",
   "scripts": {
     "compile": "rimraf ./lib && babel -d ./lib --copy-files ./src",
