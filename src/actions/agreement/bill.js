@@ -62,10 +62,11 @@ const freeAgreementForUser = (username) => ({
   },
 });
 
+const kBannedStates = ['cancelled', 'suspended'];
 const verifyAgreementState = (state) => {
   // verify state
-  if (!state || state.toLowerCase() === 'cancelled') {
-    throw new NotPermitted('Operation not permitted on cancelled agreements.');
+  if (!state || kBannedStates.includes(state.toLowerCase())) {
+    throw new NotPermitted(`Operation not permitted on "${state}" agreements.`);
   }
 };
 

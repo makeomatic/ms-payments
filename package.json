@@ -32,7 +32,7 @@
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
     "@hapi/hapi": "^18.4.0",
-    "@microfleet/core": "^15.6.0",
+    "@microfleet/core": "^15.6.1",
     "@microfleet/transport-amqp": "^15.1.4",
     "@microfleet/validation": "^8.1.2",
     "@sentry/node": "^5.10.2",

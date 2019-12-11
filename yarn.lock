@@ -710,10 +710,10 @@
     debug "^3.1.0"
     lodash "^4.17.10"
 
-"@microfleet/core@^15.6.0":
-  version "15.6.0"
-  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-15.6.0.tgz#4df10224daf032ad4f10b9cec4048d064f92deda"
-  integrity sha512-4mf5LubaZth1b067Of9B42uPpVg40LKDzMtEV9XjZtq7FhPUKZfyonuGhVnC3nUa+8GpsdzEtVzJEtvDfLJvlw==
+"@microfleet/core@^15.6.0", "@microfleet/core@^15.6.1":
+  version "15.6.1"
+  resolved "https://registry.yarnpkg.com/@microfleet/core/-/core-15.6.1.tgz#d6d6710e4973da0bdb0554ae08c9e7ba1dcc3229"
+  integrity sha512-D4bxGQBcP6PmwcM3yEVjqu+aQYT4Qu20AGv8HVsR4FVQOAhNTi/ancm2pbko0fuUGlGi2Je8L5gaxQMsTaG95g==
   dependencies:
     bluebird "^3.7.1"
     bluebird-retry "^0.11.0"
