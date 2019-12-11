@@ -1,6 +1,6 @@
 const assert = require('assert');
 const { ActionTransport } = require('@microfleet/core');
-const { NotPermitted } = require('common-errors');
+const { NotPermitted, HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const moment = require('moment');
 const get = require('get-value');
@@ -195,6 +195,12 @@ const saveToRedis = async (ctx, agreement, subs) => {
 
   const planFreq = get(agreement, 'plan.payment_definitions[0].frequency', 'month').toLowerCase();
   const sub = subs.find((x) => x.name === planFreq);
+
+  if (!sub) {
+    ctx.log.error({ subs, agreement, planFreq }, 'failed to fetch subs');
+    throw new HttpStatusError(500, 'internal application error');
+  }
+
   const models = sub.models * ctx.cyclesBilled;
 
   const updateRequest = {
@@ -216,9 +222,9 @@ const saveToRedis = async (ctx, agreement, subs) => {
 };
 
 // check agreement bill
-async function agreementBill({ params }) {
+async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username } = params;
-  const { config, log } = this;
+  const { config } = this;
   const { users: { prefix, postfix } } = config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
@@ -227,6 +233,7 @@ async function agreementBill({ params }) {
 
   const ctx = {
     service: this,
+    log,
 
     // used params
     id,
