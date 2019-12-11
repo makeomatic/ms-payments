@@ -1,3 +1,11 @@
+## [7.0.4](https://github.com/makeomatic/ms-payments/compare/v7.0.3...v7.0.4) (2019-12-11)
+
+
+### Bug Fixes
+
+* add another log handler to bill ([80e893d](https://github.com/makeomatic/ms-payments/commit/80e893d0103b08a0926fd81bc6b90a2b95a18968))
+* cancel suspended plans ([be3004d](https://github.com/makeomatic/ms-payments/commit/be3004d9d89e7cc21e1670181fb49014f825e903))
+
 ## [7.0.3](https://github.com/makeomatic/ms-payments/compare/v7.0.2...v7.0.3) (2019-11-28)
 
 
