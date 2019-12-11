@@ -56,7 +56,7 @@ function updateRedis(sale) {
 
   const updateTransaction = redis
     .pipeline()
-    .hmgetBuffer(saleKey, 'owner', 'cart')
+    .hmget(saleKey, 'owner', 'cart')
     .hmset(saleKey, serialize(updateData))
     .exec()
     .spread((resp) => {

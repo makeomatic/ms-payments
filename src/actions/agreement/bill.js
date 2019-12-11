@@ -1,3 +1,4 @@
+const assert = require('assert');
 const { ActionTransport } = require('@microfleet/core');
 const { NotPermitted } = require('common-errors');
 const Promise = require('bluebird');
@@ -28,7 +29,7 @@ const kValidTxStatuses = {
 async function parseAgreementData(service, id) {
   const { redis, log } = service;
   const agreementKey = key(AGREEMENT_DATA, id);
-  const data = await redis.hmgetBuffer(agreementKey, AGREEMENT_KEYS);
+  const data = await redis.hmget(agreementKey, AGREEMENT_KEYS);
 
   try {
     const parsed = agreementParser(data);
@@ -95,12 +96,14 @@ const getPlan = async (ctx, agreement) => {
   const { redis, log } = service;
 
   const planKey = key(PLANS_DATA, agreement.plan.id);
-  const response = await redis.hmgetBuffer(planKey, PLAN_KEYS);
+  const response = await redis.hmget(planKey, PLAN_KEYS);
 
   try {
-    return planParser(response).subs;
+    const { subs } = planParser(response);
+    assert(subs, 'subs not present');
+    return subs;
   } catch (e) {
-    log.error('failed to fetch plan in redis "%s" for owner "%s"', planKey, username);
+    log.error({ response, planKey, username }, 'failed to fetch plan in redis');
     throw e;
   }
 };
