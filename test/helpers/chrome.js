@@ -6,7 +6,7 @@ const fs = require('fs').promises;
 // selector constants
 const EMAIL_INPUT = '#email';
 const PWD_INPUT = '#password';
-const CONFIRM_PAYMENT_METHOD = '.confirmButton';
+const CONFIRM_PAYMENT_METHOD = '#payment-submit-btn';
 const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton, #btnNext, #btnLogin';
 const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
