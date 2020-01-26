@@ -1,3 +1,16 @@
+# [8.0.0](https://github.com/makeomatic/ms-payments/compare/v7.0.4...v8.0.0) (2020-01-26)
+
+
+### Features
+
+* upgrades all deps, node 12.14.x ([#105](https://github.com/makeomatic/ms-payments/issues/105)) ([3d9c94b](https://github.com/makeomatic/ms-payments/commit/3d9c94beafd927ea07ccf43eb84ee1f6f4c6394f))
+
+
+### BREAKING CHANGES
+
+* min runtime required is node 12.14.x, configuration changes
+in transient dependencies
+
 ## [7.0.4](https://github.com/makeomatic/ms-payments/compare/v7.0.3...v7.0.4) (2019-12-11)
 
 
