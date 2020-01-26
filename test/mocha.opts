@@ -1,6 +1,0 @@
---require @babel/register
---timeout 120000
---bail
---slow 2000
--R spec
---exit

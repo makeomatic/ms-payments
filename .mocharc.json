@@ -1,0 +1,8 @@
+{
+  "require": ["@babel/register"],
+  "timeout": 120000,
+  "bail": true,
+  "slow": 2000,
+  "report": "spec",
+  "exit": true
+}

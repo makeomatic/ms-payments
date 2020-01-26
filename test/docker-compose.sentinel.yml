@@ -5,7 +5,7 @@ services:
     depends_on:
       - redis-sentinel
       - rabbitmq
-    image: makeomatic/ms-users:12.13.0-12.0.0
+    image: makeomatic/ms-users:12.14.1
     hostname: ms-users
     volumes:
       - ${PWD}/test/configs:/src/configs:ro
