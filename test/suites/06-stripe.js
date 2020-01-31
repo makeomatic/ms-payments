@@ -131,7 +131,7 @@ describe('stripe', function suite() {
       strictEqual(response1.data.attributes.cardBrand, 'visa');
       strictEqual(response1.data.attributes.cardLast4, '3184');
       strictEqual(response1.data.attributes.cardExpMonth, currentMonth);
-      strictEqual(response1.data.attributes.cardExpYear, '2020');
+      strictEqual(response1.data.attributes.cardExpYear, '2021');
       strictEqual(response1.data.attributes.cardholderName, '');
 
       const paymentsMetadata1 = await service.amqp.publishAndWait(
@@ -156,7 +156,7 @@ describe('stripe', function suite() {
       strictEqual(redisObjectData1.cardBrand, 'visa');
       strictEqual(redisObjectData1.cardLast4, '3184');
       strictEqual(redisObjectData1.cardExpMonth, currentMonth);
-      strictEqual(redisObjectData1.cardExpYear, '2020');
+      strictEqual(redisObjectData1.cardExpYear, '2021');
       strictEqual(redisObjectData1.cardholderName, '');
       strictEqual(redisObjectData1.cardholderPhone, '');
       strictEqual(redisObjectData1.cardholderEmail, '');
@@ -178,7 +178,7 @@ describe('stripe', function suite() {
       strictEqual(response2.data.attributes.cardBrand, 'mastercard');
       strictEqual(response2.data.attributes.cardLast4, '4444');
       strictEqual(response2.data.attributes.cardExpMonth, currentMonth);
-      strictEqual(response2.data.attributes.cardExpYear, '2020');
+      strictEqual(response2.data.attributes.cardExpYear, '2021');
       strictEqual(response2.data.attributes.cardholderName, '');
 
       const paymentsMetadata2 = await service.amqp.publishAndWait(
@@ -203,7 +203,7 @@ describe('stripe', function suite() {
       strictEqual(redisObjectData2.cardBrand, 'mastercard');
       strictEqual(redisObjectData2.cardLast4, '4444');
       strictEqual(redisObjectData2.cardExpMonth, currentMonth);
-      strictEqual(redisObjectData2.cardExpYear, '2020');
+      strictEqual(redisObjectData2.cardExpYear, '2021');
       strictEqual(redisObjectData2.cardholderName, '');
       strictEqual(redisObjectData2.cardholderPhone, '');
       strictEqual(redisObjectData2.cardholderEmail, '');
@@ -225,7 +225,7 @@ describe('stripe', function suite() {
       strictEqual(response3.data.attributes.cardBrand, 'visa');
       strictEqual(response3.data.attributes.cardLast4, '3155');
       strictEqual(response3.data.attributes.cardExpMonth, currentMonth);
-      strictEqual(response3.data.attributes.cardExpYear, '2020');
+      strictEqual(response3.data.attributes.cardExpYear, '2021');
       strictEqual(response3.data.attributes.cardholderName, '');
 
       const paymentsMetadata3 = await service.amqp.publishAndWait(
@@ -251,7 +251,7 @@ describe('stripe', function suite() {
       strictEqual(redisObjectData3.cardBrand, 'visa');
       strictEqual(redisObjectData3.cardLast4, '3155');
       strictEqual(redisObjectData3.cardExpMonth, currentMonth);
-      strictEqual(redisObjectData3.cardExpYear, '2020');
+      strictEqual(redisObjectData3.cardExpYear, '2021');
       strictEqual(redisObjectData3.cardholderName, '');
       strictEqual(redisObjectData3.cardholderPhone, '');
       strictEqual(redisObjectData3.cardholderEmail, '');
@@ -290,7 +290,7 @@ describe('stripe', function suite() {
       strictEqual(response.data[0].attributes.cardBrand, 'visa');
       strictEqual(response.data[0].attributes.cardLast4, '3184');
       strictEqual(response.data[0].attributes.cardExpMonth, currentMonth);
-      strictEqual(response.data[0].attributes.cardExpYear, '2020');
+      strictEqual(response.data[0].attributes.cardExpYear, '2021');
       strictEqual(response.data[0].attributes.cardholderName, '');
 
       strictEqual(response.data[1].id, paymentMethodId2);
@@ -298,7 +298,7 @@ describe('stripe', function suite() {
       strictEqual(response.data[1].attributes.cardBrand, 'mastercard');
       strictEqual(response.data[1].attributes.cardLast4, '4444');
       strictEqual(response.data[1].attributes.cardExpMonth, currentMonth);
-      strictEqual(response.data[1].attributes.cardExpYear, '2020');
+      strictEqual(response.data[1].attributes.cardExpYear, '2021');
       strictEqual(response.data[1].attributes.cardholderName, '');
 
       strictEqual(response.data[2].id, paymentMethodId3);
@@ -306,7 +306,7 @@ describe('stripe', function suite() {
       strictEqual(response.data[2].attributes.cardBrand, 'visa');
       strictEqual(response.data[2].attributes.cardLast4, '3155');
       strictEqual(response.data[2].attributes.cardExpMonth, currentMonth);
-      strictEqual(response.data[2].attributes.cardExpYear, '2020');
+      strictEqual(response.data[2].attributes.cardExpYear, '2021');
       strictEqual(response.data[2].attributes.cardholderName, '');
     });
   });
