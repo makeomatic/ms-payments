@@ -8,6 +8,11 @@
 [![codecov.io](https://codecov.io/github/makeomatic/ms-payments/coverage.svg?branch=master)](https://codecov.io/github/makeomatic/ms-payments?branch=master)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fmakeomatic%2Fms-payments?ref=badge_shield)
 
+## Tests
+
+Before running tests, you should create your "/test/.env" file with stripe private and public keys.  
+Details are in ["./test/.env.example"](./test/.env.example).
+
 ## Plans
 
 ### Plans workflow

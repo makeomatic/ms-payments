@@ -56,7 +56,9 @@ async function agreementState({ params: message }) {
     log.info({ state, agreementId: id, note }, 'updating agreement state');
     await operations[state].call(this, id, { note }, config.paypal);
   } catch (err) {
-    throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    if (err.httpStatusCode !== 400) {
+      throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    }
   }
 
   await this.dispatch('transaction.sync', {

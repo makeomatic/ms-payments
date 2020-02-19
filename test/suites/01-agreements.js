@@ -1,8 +1,15 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
+const conf = require('../../src/conf');
 const { duration, simpleDispatcher } = require('../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
+const {
+  agreement: { cancel: billingAgreementCancel },
+  handleError,
+} = require('../../src/utils/paypal');
+
+const paypalConfig = conf.get('/paypal', { env: process.env.NODE_ENV });
 
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
@@ -114,10 +121,6 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement.id = result.id;
     });
 
-    it('Should list all agreements', () => {
-      return dispatch(listAgreement, {});
-    });
-
     it('Should get agreement for user', async () => {
       const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
@@ -159,6 +162,68 @@ describe('Agreements suite', function AgreementSuite() {
     it('Should get free agreement for user after cancelling', async () => {
       const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
       assert.equal(result.id, 'free');
+    });
+
+    it('Should create and execute an agreement for a case when statuses for Paypal and Redis are different', async () => {
+      const data = {
+        agreement: {
+          ...testAgreementData,
+          description: 'Redis and Paypal',
+        },
+        owner: 'test@test.ru',
+        trialDiscount: 20,
+      };
+
+      billingAgreement = await dispatch(createAgreement, data);
+
+      const params = await approveSubscription(billingAgreement.url);
+      const result = await dispatch(executeAgreement, { token: params.token });
+
+      billingAgreement.id = result.id;
+    });
+
+    it('Should pull updates for an agreement for a case when statuses for Paypal and Redis are different', async () => {
+      this.timeout(duration);
+
+      async function waitForAgreementToBecomeActive() {
+        await dispatch(syncAgreements, {});
+
+        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
+        if (agreement.state.toLowerCase() === 'pending') {
+          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
+        }
+
+        agreement.agreement.plan.payment_definitions.forEach((definition) => {
+          assert.ok(definition.id);
+          assert.ok(definition.name);
+        });
+
+        return null;
+      }
+
+      return waitForAgreementToBecomeActive(); // the billing agreement in Redis and Paypal is ACTIVE
+    });
+
+    it('should deactivate agreement on Paypal only', async () => {
+      await billingAgreementCancel(billingAgreement.id, { note: 'Canceled for testing scenario' }, paypalConfig)
+        .catch(handleError)
+        .then((result) => {
+          assert.deepStrictEqual(result, { httpStatusCode: 204 }); // the same billing agreement in Paypal is CANCELLED
+          return null;
+        });
+    });
+
+    it('Should cancel the agreement with unsynchronized statuses', () => {
+      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
+    });
+
+    it('Should get free agreement for user after cancelling', async () => {
+      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
+      assert.equal(result.id, 'free');
+    });
+
+    it('Should list all agreements', () => {
+      return dispatch(listAgreement, {});
     });
   });
 });
