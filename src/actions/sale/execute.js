@@ -91,8 +91,8 @@ function updateMetadata({ sale: { sale, username, cart }, parsedSale }) {
 
   const { amqp, config } = this;
   const { users: { prefix, postfix, audience } } = config;
+  const usersUpdateMetadataRoute = `${prefix}.${postfix.updateMetadata}`;
   const models = sale.transactions[0].item_list.items[0].quantity;
-  const path = `${prefix}.${postfix.updateMetadata}`;
 
   const updateRequest = {
     username,
@@ -105,7 +105,7 @@ function updateMetadata({ sale: { sale, username, cart }, parsedSale }) {
   };
 
   return amqp
-    .publishAndWait(path, updateRequest)
+    .publishAndWait(usersUpdateMetadataRoute, updateRequest)
     .return({ sale, cart, parsedSale });
 }
 

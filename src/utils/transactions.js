@@ -1,13 +1,13 @@
 const Promise = require('bluebird');
-const getPath = require('get-value');
+const getValue = require('get-value');
 
 // helpers
 const { serialize } = require('./redis');
 const key = require('../redis-key');
 
 // constants
-const FIND_OWNER_REGEXP = /\[([^\]]+)\]/;
 const {
+  FIND_OWNER_REGEXP,
   TRANSACTION_TYPE_RECURRING,
   TRANSACTION_TYPE_SALE,
   TRANSACTION_TYPE_3D,
@@ -86,7 +86,7 @@ function parseSale(sale, owner) {
   // to catch errors automatically
   return Promise.try(() => {
     // reasonable default?
-    const payer = getPath(sale, 'payer.payer_info.email', owner);
+    const payer = getValue(sale, 'payer.payer_info.email', owner);
     const [transaction] = sale.transactions;
     const description = formatItemList(transaction.item_list);
     const type = description.indexOf('3d printing') >= 0 ? TRANSACTION_TYPE_3D : TRANSACTION_TYPE_SALE;
@@ -116,14 +116,14 @@ function parseAgreementTransaction(transaction, owner, agreementId) {
     agreementId,
     payer: transaction.payer_email || undefined,
     date: new Date(transaction.time_stamp).getTime(),
-    amount: getPath(transaction, 'amount.value', '0.00'),
+    amount: getValue(transaction, 'amount.value', '0.00'),
     description: prepareDescription(transaction.amount, owner, transaction.status),
     status: transaction.status,
   }));
 }
 
 function getOwner(sale) {
-  const description = getPath(sale, 'transactions[0].item_list.items[0].name', false);
+  const description = getValue(sale, 'transactions[0].item_list.items[0].name', false);
   const match = description && FIND_OWNER_REGEXP.exec(description);
   const result = match && match[1];
   return result || (sale.payer_info && sale.payer_info.email) || null;

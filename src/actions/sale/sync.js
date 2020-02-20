@@ -5,14 +5,12 @@ const forEach = require('lodash/forEach');
 
 // helpers
 const key = require('../../redis-key');
-const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
+const { PAYPAL_DATE_FORMAT, SALES_ID_INDEX, SALES_DATA_PREFIX, TRANSACTIONS_LIMIT } = require('../../constants');
 const { parseSale, saveCommon, getOwner } = require('../../utils/transactions');
 const { serialize } = require('../../utils/redis');
-const { payment: { list: listTransactions } } = require('../../utils/paypal');
+const { payment: { list: fetchPaymentList } } = require('../../utils/paypal');
 
-const TRANSACTIONS_LIMIT = 20;
-
-function transactionSync({ params: message = {} }) {
+function saleSync({ params: message = {} }) {
   const { config, redis } = this;
   const { paypal: paypalConfig } = config;
 
@@ -48,7 +46,7 @@ function transactionSync({ params: message = {} }) {
       query.start_time = moment(items[0].start_time).format(PAYPAL_DATE_FORMAT);
     }
 
-    return listTransactions(query, paypalConfig);
+    return fetchPaymentList(query, paypalConfig);
   }
 
   function saveToRedis(data) {
@@ -83,13 +81,13 @@ function transactionSync({ params: message = {} }) {
       }
 
       // recursively sync until we are done
-      return transactionSync.call(this, { params: { next_id: data.next_id } });
+      return saleSync.call(this, { params: { next_id: data.next_id } });
     });
   }
 
   return Promise.bind(this).then(getLatest).then(sendRequest).then(saveToRedis);
 }
 
-transactionSync.transports = [ActionTransport.amqp];
+saleSync.transports = [ActionTransport.amqp];
 
-module.exports = transactionSync;
+module.exports = saleSync;

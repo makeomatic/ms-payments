@@ -23,7 +23,7 @@ const {
 /**
  * Fetches plan data
  */
-function fetchPlan() {
+function getPlanFromRedis() {
   const { redis, planId } = this;
 
   return redis
@@ -194,7 +194,7 @@ function agreementCreate({ log, params }) {
 
   return Promise
     .bind(ctx)
-    .then(fetchPlan)
+    .then(getPlanFromRedis)
     .then(sendRequest)
     .then(setToken);
 }
