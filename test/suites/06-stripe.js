@@ -5,7 +5,7 @@ const path = require('path');
 const replace = require('lodash/replace');
 const { inspectPromise } = require('@makeomatic/deploy');
 
-const { createSignature } = require('../helpers/stripe');
+const { createSignature, routes: { listCharge } } = require('../helpers/stripe');
 const { getToken, makeHeader } = require('../helpers/auth');
 const { isUUIDv4 } = require('../helpers/uuid');
 
@@ -283,7 +283,7 @@ describe('stripe', function suite() {
       it('should return error if not admin', async () => {
         const error = await service.amqp
           .publishAndWait(
-            'payments.charge.list',
+            listCharge,
             { owner: 'admin0' },
             { headers: makeHeader(this.user0.jwt) }
           )
@@ -297,7 +297,7 @@ describe('stripe', function suite() {
 
       it('should be able to get charges list by user', async () => {
         const response = await service.amqp.publishAndWait(
-          'payments.charge.list',
+          listCharge,
           { owner: 'user0' },
           { headers: makeHeader(this.user0.jwt) }
         );
@@ -341,7 +341,7 @@ describe('stripe', function suite() {
 
       it('should be able to get charges list by admin', async () => {
         const response = await service.amqp.publishAndWait(
-          'payments.charge.list',
+          listCharge,
           { owner: 'user0' },
           { headers: makeHeader(this.admin0.jwt) }
         );

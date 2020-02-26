@@ -94,7 +94,7 @@ async function getCurrentAgreement(data) {
 
   const metadata = await this.service
     .amqp
-    .publishAndWait(path, getRequest, { timeout: 5000 })
+    .publishAndWait(path, getRequest, { timeout: 10000 })
     .get(audience);
 
   return {
@@ -170,7 +170,7 @@ async function updateMetadata({ data, subscriptionInterval }) {
   };
 
   await this.service.amqp
-    .publishAndWait(path, updateRequest, { timeout: 5000 });
+    .publishAndWait(path, updateRequest, { timeout: 15000 });
 
   return { agreement, owner, planId, subscriptionInterval };
 }

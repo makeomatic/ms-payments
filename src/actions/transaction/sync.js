@@ -59,7 +59,7 @@ async function findOwner() {
   };
 
   const users = await this.amqp
-    .publishAndWait(this.path, getRequest, { timeout: 5000 })
+    .publishAndWait(this.path, getRequest, { timeout: 10000 })
     .get('users');
 
   if (users.length === 0) {

@@ -2,24 +2,25 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
+const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
+const { simpleDispatcher } = require('../utils');
+const { routesPaypal: {
+  createPlan,
+  deletePlan,
+  createAgreement,
+  getAgreement,
+  executeAgreement,
+  syncTransaction,
+  listTransaction,
+  aggregateTransactions,
+  listCommonTransactions,
+} } = require('../helpers/paypal');
+const { testAgreementData, testPlanData } = require('../data/paypal');
+const Payments = require('../../src');
+
 
 describe('Transactions suite', function TransactionsSuite() {
-  const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
-  const { duration, simpleDispatcher } = require('../utils');
-  const { testAgreementData, testPlanData } = require('../data/paypal');
-  const Payments = require('../../src');
-
-  const syncTransaction = 'payments.transaction.sync';
-  const listTransaction = 'payments.transaction.list';
-  const getAgreement = 'payments.agreement.forUser';
-  const createPlan = 'payments.plan.create';
-  const deletePlan = 'payments.plan.delete';
-  const createAgreement = 'payments.agreement.create';
-  const executeAgreement = 'payments.agreement.execute';
-  const transactionsAggregate = 'payments.transaction.aggregate';
-  const listCommonTransactions = 'payments.transaction.common';
-
-  this.timeout(duration * 30);
+  this.timeout(350000);
 
   let payments;
   let agreement;
@@ -67,7 +68,7 @@ describe('Transactions suite', function TransactionsSuite() {
   });
 
   before('getAgreement', async () => {
-    const result = await dispatch(getAgreement, { user: userId })
+    const result = await dispatch(getAgreement, { user: userId, id: agreement.id })
       .get('agreement');
 
     assert(agreement.id, result.id);
@@ -75,56 +76,56 @@ describe('Transactions suite', function TransactionsSuite() {
 
   after('cleanUp', () => dispatch(deletePlan, planId).reflect());
 
-  describe('transactions tests', () => {
-    it('Should not sync transaction on invalid data', async () => {
-      const error = await dispatch(syncTransaction, { wrong: 'data' })
-        .reflect()
-        .then(inspectPromise(false));
 
-      assert.equal(error.name, 'HttpStatusError');
-    });
+  it('Should not sync transaction on invalid data', async () => {
+    const error = await dispatch(syncTransaction, { wrong: 'data' })
+      .reflect()
+      .then(inspectPromise(false));
 
-    it('Should sync transactions', async () => {
-      const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
-      const end = moment().endOf('year').format('YYYY-MM-DD');
+    assert.equal(error.name, 'HttpStatusError');
+  });
 
-      let state = 'Pending';
-      /* eslint-disable no-await-in-loop */
-      while (state === 'Pending') {
-        state = (await dispatch(syncTransaction, { id: agreement.id, start, end })).agreement.state;
-        if (state === 'Pending') {
-          await Promise.delay(5000);
-        }
+  it('Should sync transactions', async () => {
+    const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
+    const end = moment().endOf('year').format('YYYY-MM-DD');
+
+    let state = 'Pending';
+    /* eslint-disable no-await-in-loop */
+    while (state === 'Pending') {
+      state = (await dispatch(syncTransaction, { id: agreement.id, start, end })).agreement.state;
+      if (state === 'Pending') {
+        await Promise.delay(5000);
       }
-      /* eslint-enable no-await-in-loop */
-    });
+    }
+    /* eslint-enable no-await-in-loop */
+  });
 
-    it('Should list all transactions', () => (
-      dispatch(listTransaction, {})
-    ));
+  it('Should list all transactions', () => (
+    dispatch(listTransaction, {})
+  ));
 
-    it('Should list common transactions', () => (
-      dispatch(listCommonTransactions, {
-        owner: userId,
-        filter: {
-          status: 'Completed',
-        },
-      })
-    ));
+  it('Should list common transactions', () => (
+    dispatch(listCommonTransactions, {
+      owner: userId,
+      filter: {
+        status: 'Completed',
+      },
+    })
+  ));
 
-    it('should return aggregate list of transactions', async () => {
-      const opts = {
-        owners: [userId],
-        filter: {
-          status: 'Completed',
-        },
-        aggregate: {
-          amount: 'sum',
-        },
-      };
+  it('should return aggregate list of transactions', async () => {
+    const opts = {
+      owners: [userId],
+      filter: {
+        status: 'Completed',
+      },
+      aggregate: {
+        amount: 'sum',
+      },
+    };
 
-      const [response] = await dispatch(transactionsAggregate, opts);
-      assert.ok(response.amount);
-    });
+    const [response] = await dispatch(aggregateTransactions, opts);
+
+    assert.ok(response.amount);
   });
 });

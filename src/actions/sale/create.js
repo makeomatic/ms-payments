@@ -42,7 +42,7 @@ function saleCreate({ params: message }) {
       audience,
     };
 
-    return amqp.publishAndWait(path, getRequest, { timeout: 5000 })
+    return amqp.publishAndWait(path, getRequest, { timeout: 10000 })
       .get(audience)
       .then((metadata) => {
         if (metadata.modelPrice) {

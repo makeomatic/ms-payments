@@ -21,5 +21,5 @@ module.exports = function resetToFreePlan(owner) {
     },
   };
 
-  return amqp.publishAndWait(path, updateRequest, { timeout: 5000 });
+  return amqp.publishAndWait(path, updateRequest, { timeout: 15000 });
 };

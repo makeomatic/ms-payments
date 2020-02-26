@@ -38,7 +38,7 @@ async function agreementState({ params: message }) {
   const getIdRequest = { username: owner, audience };
 
   const meta = await amqp
-    .publishAndWait(getIdPath, getIdRequest, { timeout: 5000 })
+    .publishAndWait(getIdPath, getIdRequest, { timeout: 10000 })
     .get(audience);
 
   const { agreement: id, subscriptionInterval, subscriptionType } = meta;
@@ -56,7 +56,10 @@ async function agreementState({ params: message }) {
     log.info({ state, agreementId: id, note }, 'updating agreement state');
     await operations[state].call(this, id, { note }, config.paypal);
   } catch (err) {
-    if (err.httpStatusCode !== 400) {
+    if (err.httpStatusCode !== 400
+      && err.response.name !== 'STATUS_INVALID'
+      && err.response.message !== 'Invalid profile status for cancel action; profile should be active or suspended'
+    ) {
       throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
     }
   }

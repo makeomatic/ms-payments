@@ -1,229 +1,208 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
-const conf = require('../../src/conf');
-const { duration, simpleDispatcher } = require('../utils');
+const { simpleDispatcher } = require('../utils');
+const { routesPaypal: {
+  createPlan,
+  deletePlan,
+  getAgreement,
+  createAgreement,
+  executeAgreement,
+  stateAgreement,
+  listAgreement,
+  forUserAgreement,
+  syncAgreements,
+} } = require('../helpers/paypal');
 const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
+const Payments = require('../../src');
+const { testAgreementData, testPlanData } = require('../data/paypal');
 const {
-  agreement: { cancel: billingAgreementCancel },
+  agreement: {
+    cancel: billingAgreementCancel,
+  },
   handleError,
 } = require('../../src/utils/paypal');
+const conf = require('../../src/conf');
 
 const paypalConfig = conf.get('/paypal', { env: process.env.NODE_ENV });
 
-describe('Agreements suite', function AgreementSuite() {
-  const Payments = require('../../src');
 
-  const { testAgreementData, testPlanData } = require('../data/paypal');
-
-  const createPlan = 'payments.plan.create';
-  const deletePlan = 'payments.plan.delete';
-  const getAgreement = 'payments.agreement.get';
-  const createAgreement = 'payments.agreement.create';
-  const executeAgreement = 'payments.agreement.execute';
-  const stateAgreement = 'payments.agreement.state';
-  const listAgreement = 'payments.agreement.list';
-  const forUserAgreement = 'payments.agreement.forUser';
-  const syncAgreements = 'payments.agreement.sync';
-
-  let billingAgreement;
-  let planId;
-  let payments;
+describe('Agreements suite', function AgreementsSuite() {
   let dispatch;
+  let planId;
+  let agreementParams;
+  let trialAgreementParams;
+  let unsynchronizedAgreementParams;
 
-  this.timeout(duration * 16);
+  this.timeout(900000);
 
-  before('startService', async () => {
-    payments = new Payments();
+  before('start service', async () => {
+    const payments = new Payments();
     await payments.connect();
     dispatch = simpleDispatcher(payments);
   });
 
-  before('initPlan', async () => {
+  before('init plan', async () => {
     const data = await dispatch(createPlan, testPlanData);
     const id = data.plan.id.split('|')[0];
-
     planId = data.plan.id;
+
     testAgreementData.plan.id = id;
   });
+
+  before('init testing agreements params', async () => {
+    agreementParams = {
+      owner: 'test@test.ru',
+      agreement: testAgreementData,
+    };
+
+    trialAgreementParams = {
+      owner: 'test@test.ru',
+      agreement: {
+        ...testAgreementData,
+        description: 'Trial agreement',
+      },
+      trialDiscount: 10,
+    };
+
+    unsynchronizedAgreementParams = {
+      owner: 'test@test.ru',
+      agreement: {
+        ...testAgreementData,
+        description: 'Redis and Paypal',
+      },
+      trialDiscount: 20,
+    };
+  });
+
+  beforeEach('init Chrome', initChrome);
 
   after(() => {
     return dispatch(deletePlan, planId).reflect();
   });
 
-  beforeEach('init Chrome', initChrome);
   afterEach('close chrome', closeChrome);
 
-  describe('unit tests', function UnitSuite() {
-    it('Should fail to create agreement on invalid schema', async () => {
-      const error = await dispatch(createAgreement, { random: true })
-        .reflect()
-        .then(inspectPromise(false));
+  async function getNewAgreement(params) {
+    return dispatch(createAgreement, params);
+  }
 
-      assert.equal(error.name, 'HttpStatusError');
-    });
+  async function pullUpdatesForAgreement(agreementId) {
+    async function waitForAgreementToBecomeActive() {
+      await dispatch(syncAgreements, {});
 
-    it('By default user should have free agreement', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'pristine@test.ru' });
-      assert.equal(result.id, 'free');
-      assert.equal(result.agreement.id, 'free');
-    });
+      const agreement = await dispatch(getAgreement, { id: agreementId });
 
-    it('Should create an agreement', async () => {
-      const data = {
-        agreement: testAgreementData,
-        owner: 'test@test.ru',
-      };
+      if (agreement.state.toLowerCase() === 'pending') {
+        return Promise.delay(5000).then(await waitForAgreementToBecomeActive);
+      }
 
-      billingAgreement = await dispatch(createAgreement, data);
-    });
-
-    it('Should fail to execute on an unknown token', () => {
-      return dispatch(executeAgreement, 'random token')
-        .reflect()
-        .then(inspectPromise(false));
-    });
-
-    it('Should reject unapproved agreement', () => {
-      return dispatch(executeAgreement, { token: billingAgreement.token })
-        .reflect()
-        .then(inspectPromise(false));
-    });
-
-    it('Should execute an approved agreement', async () => {
-      console.info('trying to approve %s', billingAgreement.url);
-
-      const params = await approveSubscription(billingAgreement.url);
-      const result = await dispatch(executeAgreement, { token: params.token });
-
-      result.plan.payment_definitions.forEach((definition) => {
+      agreement.agreement.plan.payment_definitions.forEach((definition) => {
         assert.ok(definition.id);
         assert.ok(definition.name);
       });
 
-      billingAgreement.id = result.id;
+      return null;
+    }
+
+    return waitForAgreementToBecomeActive();
+  }
+
+  async function executeApprovedAgreement(token) {
+    return dispatch(executeAgreement, { token });
+  }
+
+
+  it('Should fail to create agreement on invalid schema', async () => {
+    const error = await dispatch(createAgreement, { random: true })
+      .reflect()
+      .then(inspectPromise(false));
+
+    assert.equal(error.name, 'HttpStatusError');
+  });
+
+  it('By default user should have free agreement', async () => {
+    const result = await dispatch(forUserAgreement, { user: 'pristine@test.ru' });
+
+    assert.equal(result.id, 'free');
+    assert.equal(result.agreement.id, 'free');
+  });
+
+  it('Should fail to execute on an unknown token', () => {
+    return dispatch(executeAgreement, 'random token')
+      .reflect()
+      .then(inspectPromise(false));
+  });
+
+  it('Should reject unapproved agreement', async () => {
+    const agreement = await getNewAgreement(agreementParams);
+    return dispatch(executeAgreement, { token: agreement.token })
+      .reflect()
+      .then(inspectPromise(false));
+  });
+
+  it('Should approve and execute a free agreement', async () => {
+    const agreement = await getNewAgreement(agreementParams);
+
+    console.info('trying to approve %s', agreement.url);
+    const approvedSubscription = await approveSubscription(agreement.url);
+    const executedAgreement = await executeApprovedAgreement(approvedSubscription.token);
+
+    executedAgreement.plan.payment_definitions.forEach((definition) => {
+      assert.ok(definition.id);
+      assert.ok(definition.name);
     });
+  });
 
-    it('Should create a trial agreement', async () => {
-      const data = {
-        agreement: testAgreementData,
-        owner: 'test@test.ru',
-        trialDiscount: 10,
-      };
+  it('Should fetch from Redis executed trial agreement for user', async () => {
+    const trialAgreement = await getNewAgreement(trialAgreementParams);
+    const trialAgreementApproved = await approveSubscription(trialAgreement.url);
+    const trialAgreementExecuted = await executeApprovedAgreement(trialAgreementApproved.token);
+    const trialAgreementFromRedis = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
-      billingAgreement = await dispatch(createAgreement, data);
+    assert.equal(trialAgreement.agreement.description, 'Trial agreement');
+    assert.equal(trialAgreementFromRedis.agreement.id, trialAgreementExecuted.id);
+    trialAgreementFromRedis.agreement.plan.payment_definitions.forEach((definition) => {
+      assert.ok(definition.id);
+      assert.ok(definition.name);
     });
+  });
 
-    it('Should execute an approved trial agreement', async () => {
-      const params = await approveSubscription(billingAgreement.url);
-      const result = await dispatch(executeAgreement, { token: params.token });
+  it('Should get free agreement for user after cancelling trial agreement', async () => {
+    const trialAgreement = await getNewAgreement(trialAgreementParams);
+    const trialAgreementApproved = await approveSubscription(trialAgreement.url);
+    const trialAgreementExecuted = await executeApprovedAgreement(trialAgreementApproved.token);
+    await pullUpdatesForAgreement(trialAgreementExecuted.id);
+    await dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
+    const agreementAfterCancel = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
-      billingAgreement.id = result.id;
-    });
+    assert.equal(agreementAfterCancel.id, 'free');
+  });
 
-    it('Should get agreement for user', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-
-      assert.equal(result.agreement.id, billingAgreement.id);
-      result.agreement.plan.payment_definitions.forEach((definition) => {
-        assert.ok(definition.id);
-        assert.ok(definition.name);
-      });
-    });
-
-    it('Should pull updates for an agreement', async () => {
-      this.timeout(duration);
-
-      async function waitForAgreementToBecomeActive() {
-        await dispatch(syncAgreements, {});
-
-        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
-
-        if (agreement.state.toLowerCase() === 'pending') {
-          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
-        }
-
-        agreement.agreement.plan.payment_definitions.forEach((definition) => {
-          assert.ok(definition.id);
-          assert.ok(definition.name);
-        });
-
+  it('Should handle an agreement for a case when statuses for Paypal and Redis are get unsynchronized', async () => {
+    const unsynchronizedAgreement = await getNewAgreement(unsynchronizedAgreementParams);
+    const unsynchronizedAgreementApproved = await approveSubscription(unsynchronizedAgreement.url);
+    const unsynchronizedAgreementExecuted = await executeApprovedAgreement(unsynchronizedAgreementApproved.token);
+    await pullUpdatesForAgreement(unsynchronizedAgreementExecuted.id); // the billing agreement in Redis and Paypal have ACTIVE status
+    await billingAgreementCancel(unsynchronizedAgreementExecuted.id, { note: 'Canceled for testing scenario' }, paypalConfig)
+      .then((response) => {
+        assert.deepStrictEqual(response, { httpStatusCode: 204 }); // the same billing agreement in Paypal have CANCELLED status
         return null;
-      }
+      })
+      .catch(handleError);
+    await dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' }); // Cancel the agreement with unsynchronized status
+    const agreementAfterCancel = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
-      return waitForAgreementToBecomeActive();
-    });
+    assert.equal(agreementAfterCancel.id, 'free');
 
-    // this test is perf
-    it('Should cancel agreement', () => {
-      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
-    });
+    // get from Paypal a list of all agreements
+    const agreements = await dispatch(listAgreement, {});
+    console.info('\nagreements list from paypal:\n', JSON.stringify(agreements));
 
-    it('Should get free agreement for user after cancelling', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.equal(result.id, 'free');
-    });
+    const unsynchronizedAgreementId = (item) => item.agreement.id === unsynchronizedAgreementExecuted.id;
+    assert.ok(agreements.items.some(unsynchronizedAgreementId));
 
-    it('Should create and execute an agreement for a case when statuses for Paypal and Redis are different', async () => {
-      const data = {
-        agreement: {
-          ...testAgreementData,
-          description: 'Redis and Paypal',
-        },
-        owner: 'test@test.ru',
-        trialDiscount: 20,
-      };
-
-      billingAgreement = await dispatch(createAgreement, data);
-
-      const params = await approveSubscription(billingAgreement.url);
-      const result = await dispatch(executeAgreement, { token: params.token });
-
-      billingAgreement.id = result.id;
-    });
-
-    it('Should pull updates for an agreement for a case when statuses for Paypal and Redis are different', async () => {
-      this.timeout(duration);
-
-      async function waitForAgreementToBecomeActive() {
-        await dispatch(syncAgreements, {});
-
-        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
-        if (agreement.state.toLowerCase() === 'pending') {
-          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
-        }
-
-        agreement.agreement.plan.payment_definitions.forEach((definition) => {
-          assert.ok(definition.id);
-          assert.ok(definition.name);
-        });
-
-        return null;
-      }
-
-      return waitForAgreementToBecomeActive(); // the billing agreement in Redis and Paypal is ACTIVE
-    });
-
-    it('should deactivate agreement on Paypal only', async () => {
-      await billingAgreementCancel(billingAgreement.id, { note: 'Canceled for testing scenario' }, paypalConfig)
-        .catch(handleError)
-        .then((result) => {
-          assert.deepStrictEqual(result, { httpStatusCode: 204 }); // the same billing agreement in Paypal is CANCELLED
-          return null;
-        });
-    });
-
-    it('Should cancel the agreement with unsynchronized statuses', () => {
-      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
-    });
-
-    it('Should get free agreement for user after cancelling', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.equal(result.id, 'free');
-    });
-
-    it('Should list all agreements', () => {
-      return dispatch(listAgreement, {});
-    });
+    const unsynchronizedAgreementToken = (item) => item.token === unsynchronizedAgreementApproved.token;
+    assert.ok(agreements.items.some(unsynchronizedAgreementToken));
   });
 });

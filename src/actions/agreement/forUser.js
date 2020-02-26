@@ -18,7 +18,7 @@ function forUser({ params: message }) {
     };
 
     return amqp
-      .publishAndWait(path, getRequest, { timeout: 5000 })
+      .publishAndWait(path, getRequest, { timeout: 10000 })
       .then((metadata) => metadata[audience].agreement);
   }
 

@@ -99,7 +99,7 @@ const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
 
       await Promise.all([
         jsHandle.asElement().click({ delay: 100 }),
-        Promise.some([idle('0', { timeout: 20000 }), Promise.delay(15000)], 1),
+        Promise.some([idle('0', { timeout: 30000 }), Promise.delay(15000)], 1),
       ]);
     } catch (e) {
       if (isIgnorableError(e)) {
