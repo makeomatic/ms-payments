@@ -2,7 +2,7 @@ const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const forEach = require('lodash/forEach');
-const get = require('get-value');
+const getValue = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
@@ -17,8 +17,8 @@ const { mergeWithNotNull } = require('../../utils/plans');
  */
 
 /**
- * Gets transactions for the passed agreementId
- * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
+ * Gets agreement and transactions for the passed agreementId
+ * @return object { agreement: {object}, transactions: [{object}] }
  */
 async function sendRequest() {
   const {
@@ -47,7 +47,7 @@ async function findOwner() {
     return owner;
   }
 
-  const getRequest = {
+  const agreementRequest = {
     audience: this.audience,
     offset: 0,
     limit: 1,
@@ -58,19 +58,19 @@ async function findOwner() {
     },
   };
 
-  const users = await this.amqp
-    .publishAndWait(this.path, getRequest, { timeout: 10000 })
+  const userOfAgreement = await this.amqp
+    .publishAndWait(this.usersListRoute, agreementRequest, { timeout: this.usersListTimeout })
     .get('users');
 
-  if (users.length === 0) {
+  if (userOfAgreement.length === 0) {
     throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
   }
 
-  if (users.length !== 1) {
-    throw new Errors.HttpStatusError(409, `Multipel users for agreement ${this.agreementId}`);
+  if (userOfAgreement.length !== 1) {
+    throw new Errors.HttpStatusError(409, `Found multiple users for agreement ${this.agreementId}`);
   }
 
-  return users[0].id;
+  return userOfAgreement[0].id;
 }
 
 /**
@@ -124,7 +124,7 @@ function saveToRedis(owner, paypalData, oldAgreement) {
   pipeline.hmset(agreementKey, serialize({
     agreement: {
       ...agreement,
-      plan: mergeWithNotNull(get(oldAgreement, 'agreement.plan'), agreement.plan),
+      plan: mergeWithNotNull(getValue(oldAgreement, 'agreement.plan'), agreement.plan),
     },
     state: agreement.state,
   }));
@@ -171,8 +171,8 @@ function invoke(fn) {
 function transactionSync({ params }) {
   const { config, redis, amqp, log } = this;
   const { paypal: paypalConfig } = config;
-  const { users: { prefix, postfix, audience } } = config;
-  const path = `${prefix}.${postfix.list}`;
+  const { users: { prefix, postfix, audience, timeouts: { list: usersListTimeout } } } = config;
+  const usersListRoute = `${prefix}.${postfix.list}`;
   const agreementId = params.id;
 
   const ctx = {
@@ -184,7 +184,8 @@ function transactionSync({ params }) {
 
     // input attributes
     agreementId,
-    path,
+    usersListRoute,
+    usersListTimeout,
     audience,
     start: params.start || '',
     end: params.end || '',

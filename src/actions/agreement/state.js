@@ -31,14 +31,14 @@ const ACTION_TO_STATE = {
  */
 async function agreementState({ params: message }) {
   const { config, redis, amqp, log } = this;
-  const { users: { prefix, postfix, audience } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: timeout } } } = config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
-  const getIdPath = `${prefix}.${postfix.getMetadata}`;
+  const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
   const getIdRequest = { username: owner, audience };
 
   const meta = await amqp
-    .publishAndWait(getIdPath, getIdRequest, { timeout: 10000 })
+    .publishAndWait(usersMetadataRoute, getIdRequest, { timeout })
     .get(audience);
 
   const { agreement: id, subscriptionInterval, subscriptionType } = meta;

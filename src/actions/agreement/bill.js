@@ -3,17 +3,20 @@ const { ActionTransport } = require('@microfleet/core');
 const { NotPermitted, HttpStatusError } = require('common-errors');
 const Promise = require('bluebird');
 const moment = require('moment');
-const get = require('get-value');
+const getValue = require('get-value');
 
-// helpers
 const key = require('../../redis-key');
 const resetToFreePlan = require('../../utils/reset-to-free-plan');
 const { hmget } = require('../../list-utils');
-const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 
-// constants
-const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
-const PLAN_KEYS = ['subs'];
+const {
+  AGREEMENT_DATA,
+  AGREEMENT_KEYS,
+  FREE_PLAN_ID,
+  PLANS_DATA,
+  PLAN_KEYS,
+} = require('../../constants');
+
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
 const kValidTxStatuses = {
@@ -23,12 +26,12 @@ const kValidTxStatuses = {
 /**
  * Parses agreement data retrieved from redis
  * @param  {Object} service - current microfleet
- * @param  {String} id - agreement id
+ * @param  {String} agreementId - agreement id
  * @return {Object} agreement
  */
-async function parseAgreementData(service, id) {
+async function parseAgreementData(service, agreementId) {
   const { redis, log } = service;
-  const agreementKey = key(AGREEMENT_DATA, id);
+  const agreementKey = key(AGREEMENT_DATA, agreementId);
   const data = await redis.hmget(agreementKey, AGREEMENT_KEYS);
 
   try {
@@ -41,7 +44,6 @@ async function parseAgreementData(service, id) {
     // bug in paypal
     parsed.agreement.plan.id = parsed.plan;
 
-    // return data
     return parsed;
   } catch (e) {
     log.error({
@@ -62,27 +64,27 @@ const freeAgreementForUser = (username) => ({
   },
 });
 
-const kBannedStates = ['cancelled', 'suspended'];
+const bannedStates = ['cancelled', 'suspended'];
 const verifyAgreementState = (state) => {
   // verify state
-  if (!state || kBannedStates.includes(state.toLowerCase())) {
+  if (!state || bannedStates.includes(state.toLowerCase())) {
     throw new NotPermitted(`Operation not permitted on "${state}" agreements.`);
   }
 };
 
 /**
  * Retrieves agreement data from redis & parses it
- * @return {Agreement}
+ * @return {object} Agreement
  */
 async function getAgreement(ctx) {
-  const { id, username, service } = ctx;
+  const { service, params } = ctx;
+  const { agreement: agreementId, username } = params;
 
-  if (id === FREE_PLAN_ID) {
+  if (agreementId === FREE_PLAN_ID) {
     return freeAgreementForUser(username);
   }
 
-  // parsed correctly
-  const { agreement, state } = await parseAgreementData(service, id);
+  const { agreement, state } = await parseAgreementData(service, agreementId);
   verifyAgreementState(state);
 
   return agreement;
@@ -93,7 +95,8 @@ async function getAgreement(ctx) {
  * @return {Object} { plan, subs }
  */
 const getPlan = async (ctx, agreement) => {
-  const { service, username } = ctx;
+  const { service, params } = ctx;
+  const { username } = params;
   const { redis, log } = service;
 
   const planKey = key(PLANS_DATA, agreement.plan.id);
@@ -111,7 +114,8 @@ const getPlan = async (ctx, agreement) => {
 
 // fetch transactions from paypal
 const getTransactions = async (ctx, agreement) => {
-  const { service, id, start, end } = ctx;
+  const { service, start, end, params } = ctx;
+  const { agreement: id } = params;
 
   if (agreement.plan.id === FREE_PLAN_ID) {
     return {};
@@ -129,15 +133,15 @@ const getTransactions = async (ctx, agreement) => {
 };
 
 // bill next free cycle
-const billNextFreeCycle = (ctx) => {
+const prepareFreeCycles = (ctx) => {
   const { params } = ctx;
 
   const nextCycle = moment(params.nextCycle);
   const current = moment();
 
-  // 0 or 1
-  ctx.cyclesBilled = Number(nextCycle.isBefore(current));
+  // determine how many free cycles and next billing date
   ctx.nextCycle = nextCycle;
+  ctx.cyclesBilled = Number(nextCycle.isBefore(current));
 
   // if we missed many cycles
   if (ctx.cyclesBilled) {
@@ -147,7 +151,7 @@ const billNextFreeCycle = (ctx) => {
   }
 };
 
-function billPaidCycle(ctx, details) {
+function preparePaidCycles(ctx, details) {
   const { params } = ctx;
 
   // agreement nextCycle date
@@ -155,7 +159,7 @@ function billPaidCycle(ctx, details) {
   const currentCycle = moment(params.nextCycle).subtract(1, 'day');
   const { transactions } = details;
 
-  // determine how many cycles and next billing date
+  // determine how many paid cycles and next billing date
   ctx.nextCycle = nextCycle;
   ctx.cyclesBilled = transactions.reduce((acc, it) => {
     const status = it.status && it.status.toLowerCase();
@@ -170,10 +174,11 @@ function billPaidCycle(ctx, details) {
   }, 0);
 }
 
-// verify transactions data
-const checkData = (ctx, agreement, details) => {
+// determine how many cycles and next billing date
+// i.e. it fills in ctx the nextCycle and cyclesBilled
+const prepareBillingCyclesParams = (ctx, agreement, details) => {
   if (agreement.plan.id === FREE_PLAN_ID) {
-    return billNextFreeCycle(ctx);
+    return prepareFreeCycles(ctx);
   }
 
   if (details.transactions.length === 0) {
@@ -182,24 +187,16 @@ const checkData = (ctx, agreement, details) => {
     return false;
   }
 
-  return billPaidCycle(ctx, details);
+  return preparePaidCycles(ctx, details);
 };
 
-const saveToRedis = async (ctx, agreement, subs) => {
-  const { updateMetadata, service, audience } = ctx;
+const saveToRedis = async (ctx, agreement, sub) => {
+  const { usersUpdateMetadataRoute, usersUpdateMetadataTimeout, service, audience } = ctx;
   const { amqp } = service;
 
   // no updates yet - skip to next
   if (ctx.shouldUpdate === false) {
     return 'OK';
-  }
-
-  const planFreq = get(agreement, 'plan.payment_definitions[0].frequency', 'month').toLowerCase();
-  const sub = subs.find((x) => x.name === planFreq);
-
-  if (!sub) {
-    ctx.log.error({ subs, agreement, planFreq }, 'failed to fetch subs');
-    throw new HttpStatusError(500, 'internal application error');
   }
 
   const models = sub.models * ctx.cyclesBilled;
@@ -217,16 +214,15 @@ const saveToRedis = async (ctx, agreement, subs) => {
     },
   };
 
-  await amqp.publishAndWait(updateMetadata, updateRequest, { timeout: 15000 });
+  await amqp.publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout: usersUpdateMetadataTimeout });
 
   return 'OK';
 };
 
-// check agreement bill
 async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username } = params;
   const { config } = this;
-  const { users: { prefix, postfix } } = config;
+  const { users: { prefix, postfix, timeouts: { updateMetadata: usersUpdateMetadataTimeout } } } = config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
@@ -237,15 +233,14 @@ async function agreementBill({ log, params }) {
     log,
 
     // used params
-    id,
-    username,
     start,
     end,
     params,
     audience: config.users.audience,
 
     // pre-calculated vars
-    updateMetadata: `${prefix}.${postfix.updateMetadata}`,
+    usersUpdateMetadataRoute: `${prefix}.${postfix.updateMetadata}`,
+    usersUpdateMetadataTimeout,
   };
 
   try {
@@ -256,9 +251,16 @@ async function agreementBill({ log, params }) {
       getTransactions(ctx, agreement),
     ]);
 
-    checkData(ctx, agreement, details);
+    const planFreq = getValue(agreement, 'plan.payment_definitions[0].frequency', 'month').toLowerCase();
+    const sub = subs.find((x) => x.name === planFreq);
+    if (!sub) {
+      ctx.log.error({ subs, agreement, planFreq }, 'failed to fetch subs');
+      throw new HttpStatusError(500, 'internal application error');
+    }
 
-    return await saveToRedis(ctx, agreement, subs);
+    prepareBillingCyclesParams(ctx, agreement, details);
+
+    return await saveToRedis(ctx, agreement, sub);
   } catch (e) {
     if (e instanceof NotPermitted) {
       log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);

@@ -13,9 +13,9 @@ const { payment: { create: createPayment } } = require('../../utils/paypal');
 
 function saleCreate({ params: message }) {
   const { config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: timeout } } } = config;
   const promise = Promise.bind(this);
-  const path = `${prefix}.${postfix.getMetadata}`;
+  const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
 
   // convert request to sale object
   const sale = {
@@ -42,7 +42,7 @@ function saleCreate({ params: message }) {
       audience,
     };
 
-    return amqp.publishAndWait(path, getRequest, { timeout: 10000 })
+    return amqp.publishAndWait(usersMetadataRoute, getRequest, { timeout })
       .get(audience)
       .then((metadata) => {
         if (metadata.modelPrice) {
