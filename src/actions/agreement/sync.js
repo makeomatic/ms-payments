@@ -101,7 +101,7 @@ async function bill(user) {
 
 async function agreementSync({ params = {} }) {
   const { config, amqp, log } = this;
-  const { users: { prefix, postfix, audience, timeouts } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: usersMetadataTimeout } } } = config;
   const ctx = {
     amqp,
     log,
@@ -111,7 +111,7 @@ async function agreementSync({ params = {} }) {
     audience,
     usersListRoute: `${prefix}.${postfix.list}`,
     usersMetadataRoute: `${prefix}.${postfix.getMetadata}`,
-    usersMetadataTimeout: timeouts.getMetadata,
+    usersMetadataTimeout,
     usersWithSubscription: new Set(),
     usersToProcess: new Set(),
     poolUsersMetadata: [],

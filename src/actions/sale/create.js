@@ -13,7 +13,7 @@ const { payment: { create: createPayment } } = require('../../utils/paypal');
 
 function saleCreate({ params: message }) {
   const { config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience, timeouts } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: timeout } } } = config;
   const promise = Promise.bind(this);
   const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
 
@@ -42,7 +42,7 @@ function saleCreate({ params: message }) {
       audience,
     };
 
-    return amqp.publishAndWait(usersMetadataRoute, getRequest, { timeout: timeouts.getMetadata })
+    return amqp.publishAndWait(usersMetadataRoute, getRequest, { timeout })
       .get(audience)
       .then((metadata) => {
         if (metadata.modelPrice) {

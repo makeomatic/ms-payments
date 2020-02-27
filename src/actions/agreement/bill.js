@@ -5,12 +5,10 @@ const Promise = require('bluebird');
 const moment = require('moment');
 const getValue = require('get-value');
 
-// helpers
 const key = require('../../redis-key');
 const resetToFreePlan = require('../../utils/reset-to-free-plan');
 const { hmget } = require('../../list-utils');
 
-// constants
 const {
   AGREEMENT_DATA,
   AGREEMENT_KEYS,
@@ -46,7 +44,6 @@ async function parseAgreementData(service, agreementId) {
     // bug in paypal
     parsed.agreement.plan.id = parsed.plan;
 
-    // return data
     return parsed;
   } catch (e) {
     log.error({
@@ -87,10 +84,8 @@ async function getAgreement(ctx) {
     return freeAgreementForUser(username);
   }
 
-  // parsed correctly
   const { agreement, state } = await parseAgreementData(service, agreementId);
   verifyAgreementState(state);
-  console.log('\n___agreement___\n', agreement); // object.
 
   return agreement;
 }
@@ -227,7 +222,7 @@ const saveToRedis = async (ctx, agreement, sub) => {
 async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username } = params;
   const { config } = this;
-  const { users: { prefix, postfix, timeouts } } = config;
+  const { users: { prefix, postfix, timeouts: { updateMetadata: usersUpdateMetadataTimeout } } } = config;
   const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
@@ -245,7 +240,7 @@ async function agreementBill({ log, params }) {
 
     // pre-calculated vars
     usersUpdateMetadataRoute: `${prefix}.${postfix.updateMetadata}`,
-    usersUpdateMetadataTimeout: timeouts.updateMetadata,
+    usersUpdateMetadataTimeout,
   };
 
   try {

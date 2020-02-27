@@ -171,7 +171,7 @@ function invoke(fn) {
 function transactionSync({ params }) {
   const { config, redis, amqp, log } = this;
   const { paypal: paypalConfig } = config;
-  const { users: { prefix, postfix, audience, timeouts } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { list: usersListTimeout } } } = config;
   const usersListRoute = `${prefix}.${postfix.list}`;
   const agreementId = params.id;
 
@@ -185,7 +185,7 @@ function transactionSync({ params }) {
     // input attributes
     agreementId,
     usersListRoute,
-    usersListTimeout: timeouts.list,
+    usersListTimeout,
     audience,
     start: params.start || '',
     end: params.end || '',

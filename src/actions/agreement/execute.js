@@ -85,7 +85,7 @@ async function fetchSubscription(data) {
 }
 
 async function getCurrentAgreement(data) {
-  const { prefix, postfix, audience, timeouts } = this.users;
+  const { prefix, postfix, audience, timeouts: { getMetadata: timeout } } = this.users;
   const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
   const getRequest = {
     username: data.owner,
@@ -94,7 +94,7 @@ async function getCurrentAgreement(data) {
 
   const metadata = await this.service
     .amqp
-    .publishAndWait(usersMetadataRoute, getRequest, { timeout: timeouts.getMetadata })
+    .publishAndWait(usersMetadataRoute, getRequest, { timeout })
     .get(audience);
 
   return {
@@ -147,7 +147,7 @@ async function checkAndDeleteAgreement(input) {
 
 async function updateMetadata({ data, subscriptionInterval }) {
   const { subscription, agreement, planId, owner } = data;
-  const { prefix, postfix, audience, timeouts } = this.users;
+  const { prefix, postfix, audience, timeouts: { updateMetadata: timeout } } = this.users;
   const usersUpdateMetadataRoute = `${prefix}.${postfix.updateMetadata}`;
 
   const updateRequest = {
@@ -170,7 +170,7 @@ async function updateMetadata({ data, subscriptionInterval }) {
   };
 
   await this.service.amqp
-    .publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout: timeouts.updateMetadata });
+    .publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout });
 
   return { agreement, owner, planId, subscriptionInterval };
 }

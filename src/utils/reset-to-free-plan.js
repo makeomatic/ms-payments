@@ -2,7 +2,7 @@ const { FREE_PLAN_ID } = require('../constants');
 
 module.exports = function resetToFreePlan(owner) {
   const { config, amqp } = this;
-  const { users: { prefix, postfix, audience, timeouts } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { updateMetadata: timeout } } } = config;
 
   // delete agreement and set user to 'free' agreement
   const usersUpdateMetadataRoute = `${prefix}.${postfix.updateMetadata}`;
@@ -21,5 +21,5 @@ module.exports = function resetToFreePlan(owner) {
     },
   };
 
-  return amqp.publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout: timeouts.updateMetadata });
+  return amqp.publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout });
 };

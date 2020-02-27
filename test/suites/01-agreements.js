@@ -31,7 +31,7 @@ describe('Agreements suite', function AgreementSuite() {
   let payments;
   let dispatch;
 
-  this.timeout(duration * 16);
+  this.timeout(900000);
 
   before('startService', async () => {
     payments = new Payments();
