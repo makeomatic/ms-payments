@@ -14,20 +14,19 @@ const { routesPaypal: {
   syncAgreements,
 } } = require('../helpers/paypal');
 const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
-const Payments = require('../../src');
 const { testAgreementData, testPlanData } = require('../data/paypal');
-const {
-  agreement: {
-    cancel: billingAgreementCancel,
-  },
-  handleError,
-} = require('../../src/utils/paypal');
 const conf = require('../../src/conf');
 
 const paypalConfig = conf.get('/paypal', { env: process.env.NODE_ENV });
 
 
 describe('Agreements suite', function AgreementsSuite() {
+  const Payments = require('../../src');
+  const {
+    agreement: { cancel: billingAgreementCancel },
+    handleError,
+  } = require('../../src/utils/paypal');
+
   let dispatch;
   let planId;
   let agreementParams;
