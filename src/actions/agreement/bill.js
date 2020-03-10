@@ -64,10 +64,10 @@ const freeAgreementForUser = (username) => ({
   },
 });
 
-const bannedStates = ['cancelled', 'suspended'];
+const kBannedStates = ['cancelled', 'suspended'];
 const verifyAgreementState = (state) => {
   // verify state
-  if (!state || bannedStates.includes(state.toLowerCase())) {
+  if (!state || kBannedStates.includes(state.toLowerCase())) {
     throw new NotPermitted(`Operation not permitted on "${state}" agreements.`);
   }
 };
