@@ -85,8 +85,8 @@ async function fetchSubscription(data) {
 }
 
 async function getCurrentAgreement(data) {
-  const { prefix, postfix, audience } = this.users;
-  const path = `${prefix}.${postfix.getMetadata}`;
+  const { prefix, postfix, audience, timeouts: { getMetadata: timeout } } = this.users;
+  const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
   const getRequest = {
     username: data.owner,
     audience,
@@ -94,7 +94,7 @@ async function getCurrentAgreement(data) {
 
   const metadata = await this.service
     .amqp
-    .publishAndWait(path, getRequest, { timeout: 5000 })
+    .publishAndWait(usersMetadataRoute, getRequest, { timeout })
     .get(audience);
 
   return {
@@ -147,8 +147,8 @@ async function checkAndDeleteAgreement(input) {
 
 async function updateMetadata({ data, subscriptionInterval }) {
   const { subscription, agreement, planId, owner } = data;
-  const { prefix, postfix, audience } = this.users;
-  const path = `${prefix}.${postfix.updateMetadata}`;
+  const { prefix, postfix, audience, timeouts: { updateMetadata: timeout } } = this.users;
+  const usersUpdateMetadataRoute = `${prefix}.${postfix.updateMetadata}`;
 
   const updateRequest = {
     username: owner,
@@ -170,7 +170,7 @@ async function updateMetadata({ data, subscriptionInterval }) {
   };
 
   await this.service.amqp
-    .publishAndWait(path, updateRequest, { timeout: 5000 });
+    .publishAndWait(usersUpdateMetadataRoute, updateRequest, { timeout });
 
   return { agreement, owner, planId, subscriptionInterval };
 }

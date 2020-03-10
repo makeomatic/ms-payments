@@ -9,7 +9,7 @@ const LockManager = require('dlock');
 const conf = require('./conf');
 // internal actions
 const createPlan = require('./actions/plan/create');
-const syncSaleTransactions = require('./actions/sale/sync');
+const saleSync = require('./actions/sale/sync');
 const syncAgreements = require('./actions/agreement/sync');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
@@ -103,9 +103,9 @@ class Payments extends Microfleet {
     this.log.info('syncing possibly missed transactions');
 
     // init sales sync
-    syncSaleTransactions.call(this, {})
+    saleSync.call(this, {})
       .then(() => {
-        return this.log.info('completed sync of missing transactions');
+        return this.log.info('completed sync of missing sale transactions');
       })
       .catch((err) => {
         this.log.error({ err }, 'failed to sync sale transactions');

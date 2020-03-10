@@ -31,14 +31,14 @@ const ACTION_TO_STATE = {
  */
 async function agreementState({ params: message }) {
   const { config, redis, amqp, log } = this;
-  const { users: { prefix, postfix, audience } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: timeout } } } = config;
   const { owner, state } = message;
   const note = message.note || `Applying '${state}' operation to agreement`;
-  const getIdPath = `${prefix}.${postfix.getMetadata}`;
+  const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
   const getIdRequest = { username: owner, audience };
 
   const meta = await amqp
-    .publishAndWait(getIdPath, getIdRequest, { timeout: 5000 })
+    .publishAndWait(usersMetadataRoute, getIdRequest, { timeout })
     .get(audience);
 
   const { agreement: id, subscriptionInterval, subscriptionType } = meta;
@@ -56,7 +56,12 @@ async function agreementState({ params: message }) {
     log.info({ state, agreementId: id, note }, 'updating agreement state');
     await operations[state].call(this, id, { note }, config.paypal);
   } catch (err) {
-    throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    if (err.httpStatusCode !== 400
+      && err.response.name !== 'STATUS_INVALID'
+      && err.response.message !== 'Invalid profile status for cancel action; profile should be active or suspended'
+    ) {
+      throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    }
   }
 
   await this.dispatch('transaction.sync', {

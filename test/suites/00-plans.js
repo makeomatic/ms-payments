@@ -1,200 +1,196 @@
 const assert = require('assert');
-const Promise = require('bluebird');
 const { inspectPromise } = require('@makeomatic/deploy');
-const { duration, simpleDispatcher } = require('../utils');
+const { simpleDispatcher } = require('../utils');
+const { routesPaypal: {
+  createPlan,
+  getPlan,
+  deletePlan,
+  listPlan,
+  updatePlan,
+  statePlan,
+} } = require('../helpers/paypal');
+const Payments = require('../../src');
+const { testPlanData, freePlanData } = require('../data/paypal');
 
 describe('Plans suite', function PlansSuite() {
-  const Payments = require('../../src');
-  const { testPlanData, freePlanData } = require('../data/paypal');
+  this.timeout(10000);
+  this.retries(2);
 
-  this.timeout(duration);
+  let payments;
+  let billingPlan;
+  let dispatch;
+  let monthlyPlanId;
 
-  describe('unit tests', () => {
-    const createPlan = 'payments.plan.create';
-    const getPlan = 'payments.plan.get';
-    const deletePlan = 'payments.plan.delete';
-    const listPlan = 'payments.plan.list';
-    const updatePlan = 'payments.plan.update';
-    const statePlan = 'payments.plan.state';
+  before('startService', async () => {
+    payments = new Payments();
+    await payments.connect();
+    dispatch = simpleDispatcher(payments);
+  });
 
-    let payments;
-    let billingPlan;
-    let dispatch;
-    let monthlyPlanId;
+  it('Should create free plan', async () => {
+    const result = await dispatch(createPlan, freePlanData)
+      .reflect()
+      .then(inspectPromise());
 
-    before('delay for ms-users', () => Promise.delay(2000));
+    assert(result.plan.id);
+  });
 
-    before('startService', async () => {
-      payments = new Payments();
-      await payments.connect();
-      dispatch = simpleDispatcher(payments);
-    });
+  it('Should get free plan', async () => {
+    const result = await dispatch(getPlan, 'free')
+      .reflect()
+      .then(inspectPromise());
 
-    it('Should create free plan', async () => {
-      const result = await dispatch(createPlan, freePlanData)
-        .reflect()
-        .then(inspectPromise());
+    assert(result.alias);
+  });
 
-      assert(result.plan.id);
-    });
+  it('Should fail to create on invalid plan schema', async () => {
+    const data = {
+      something: 'useless',
+    };
 
-    it('Should get free plan', async () => {
-      const result = await dispatch(getPlan, 'free')
-        .reflect()
-        .then(inspectPromise());
+    const error = await dispatch(createPlan, data)
+      .reflect()
+      .then(inspectPromise(false));
 
-      assert(result.alias);
-    });
+    assert.equal(error.name, 'HttpStatusError');
+  });
 
-    it('Should fail to create on invalid plan schema', async () => {
-      const data = {
-        something: 'useless',
-      };
+  it('Should create a plan', async () => {
+    const opts = {
+      ...testPlanData,
+      plan: {
+        ...testPlanData.plan,
+        state: 'CREATED',
+      },
+    };
 
-      const error = await dispatch(createPlan, data)
-        .reflect()
-        .then(inspectPromise(false));
+    billingPlan = await dispatch(createPlan, opts)
+      .reflect()
+      .then(inspectPromise());
 
-      assert.equal(error.name, 'HttpStatusError');
-    });
+    assert(billingPlan.plan.id);
+    assert.equal(billingPlan.state.toLowerCase(), 'created');
+  });
 
-    it('Should create a plan', async () => {
-      const opts = {
-        ...testPlanData,
-        plan: {
-          ...testPlanData.plan,
-          state: 'CREATED',
+  it('Should fail to update on an unknown plan id', async () => {
+    const error = await dispatch(updatePlan, { id: 'P-veryrandomid', hidden: true })
+      .reflect()
+      .then(inspectPromise(false));
+
+    assert.equal(error.statusCode, 400);
+  });
+
+  it('Should fail to update on invalid plan schema', async () => {
+    const error = await dispatch(updatePlan, { id: billingPlan.plan.id, plan: { invalid: true } })
+      .reflect()
+      .then(inspectPromise(false));
+
+    assert.equal(error.name, 'HttpStatusError');
+  });
+
+  it('Should update plan info', () => {
+    const updateData = {
+      id: billingPlan.plan.id,
+      alias: 'thesupermaster',
+      subscriptions: {
+        monthly: {
+          models: 100,
         },
-      };
-
-      billingPlan = await dispatch(createPlan, opts)
-        .reflect()
-        .then(inspectPromise());
-
-      assert(billingPlan.plan.id);
-      assert.equal(billingPlan.state.toLowerCase(), 'created');
-    });
-
-    it('Should fail to update on an unknown plan id', async () => {
-      const error = await dispatch(updatePlan, { id: 'P-veryrandomid', hidden: true })
-        .reflect()
-        .then(inspectPromise(false));
-
-      assert.equal(error.statusCode, 400);
-    });
-
-    it('Should fail to update on invalid plan schema', async () => {
-      const error = await dispatch(updatePlan, { id: billingPlan.plan.id, plan: { invalid: true } })
-        .reflect()
-        .then(inspectPromise(false));
-
-      assert.equal(error.name, 'HttpStatusError');
-    });
-
-    it('Should update plan info', () => {
-      const updateData = {
-        id: billingPlan.plan.id,
-        alias: 'thesupermaster',
-        subscriptions: {
-          monthly: {
-            models: 100,
-          },
-          yearly: {
-            modelPrice: 10.5,
-          },
+        yearly: {
+          modelPrice: 10.5,
         },
-        meta: {
-          storage: {
-            description: 'file storage',
-            type: 'number',
-            value: 0.5,
-          },
-        },
-        level: 10,
-      };
-
-      return dispatch(updatePlan, updateData)
-        .reflect()
-        .then(inspectPromise());
-    });
-
-    it('get plan must return updated info', async () => {
-      const result = await dispatch(getPlan, billingPlan.plan.id);
-
-      assert.deepEqual(result.meta, {
+      },
+      meta: {
         storage: {
           description: 'file storage',
           type: 'number',
           value: 0.5,
         },
-      });
+      },
+      level: 10,
+    };
 
-      assert.equal(result.level, 10);
-      monthlyPlanId = result.month;
+    return dispatch(updatePlan, updateData)
+      .reflect()
+      .then(inspectPromise());
+  });
+
+  it('get plan must return updated info', async () => {
+    const result = await dispatch(getPlan, billingPlan.plan.id);
+
+    assert.deepEqual(result.meta, {
+      storage: {
+        description: 'file storage',
+        type: 'number',
+        value: 0.5,
+      },
     });
 
-    it('must return parent plan for a monthly plan', async () => {
-      const result = await dispatch(getPlan, { id: monthlyPlanId, fetchParent: true });
+    assert.equal(result.level, 10);
+    monthlyPlanId = result.month;
+  });
 
-      assert.equal(billingPlan.plan.id, result.plan.id);
-      assert.equal(billingPlan.month, result.month);
+  it('must return parent plan for a monthly plan', async () => {
+    const result = await dispatch(getPlan, { id: monthlyPlanId, fetchParent: true });
 
-      // ensure we don't return the same plan
-      assert.notEqual(monthlyPlanId, billingPlan.plan.id);
-    });
+    assert.equal(billingPlan.plan.id, result.plan.id);
+    assert.equal(billingPlan.month, result.month);
 
-    it('Should fail to activate on an invalid state', async () => {
-      const error = await dispatch(statePlan, { id: 'P-random', state: 'invalid' })
-        .reflect()
-        .then(inspectPromise(false));
+    // ensure we don't return the same plan
+    assert.notEqual(monthlyPlanId, billingPlan.plan.id);
+  });
 
-      assert.equal(error.name, 'HttpStatusError');
-    });
+  it('Should fail to activate on an invalid state', async () => {
+    const error = await dispatch(statePlan, { id: 'P-random', state: 'invalid' })
+      .reflect()
+      .then(inspectPromise(false));
 
-    it('Should fail to activate on an unknown plan id', async () => {
-      const error = await dispatch(statePlan, { id: 'P-random', state: 'active' })
-        .reflect()
-        .then(inspectPromise(false));
+    assert.equal(error.name, 'HttpStatusError');
+  });
 
-      assert([400, 500].includes(error.inner_error.httpStatusCode));
-    });
+  it('Should fail to activate on an unknown plan id', async () => {
+    const error = await dispatch(statePlan, { id: 'P-random', state: 'active' })
+      .reflect()
+      .then(inspectPromise(false));
 
-    it('Should activate the plan', () => {
-      return dispatch(statePlan, { id: billingPlan.plan.id, state: 'active' })
-        .reflect()
-        .then(inspectPromise());
-    });
+    assert([400, 500].includes(error.inner_error.httpStatusCode));
+  });
 
-    it('Should fail to list on invalid query schema', async () => {
-      const error = await dispatch(listPlan, { status: 'invalid' })
-        .reflect()
-        .then(inspectPromise(false));
+  it('Should activate the plan', () => {
+    return dispatch(statePlan, { id: billingPlan.plan.id, state: 'active' })
+      .reflect()
+      .then(inspectPromise());
+  });
 
-      assert.equal(error.name, 'HttpStatusError');
-    });
+  it('Should fail to list on invalid query schema', async () => {
+    const error = await dispatch(listPlan, { status: 'invalid' })
+      .reflect()
+      .then(inspectPromise(false));
 
-    it('Should list all plans', () => {
-      return dispatch(listPlan, {})
-        .reflect()
-        .then(inspectPromise());
-    });
+    assert.equal(error.name, 'HttpStatusError');
+  });
 
-    it('Should fail to delete on an unknown plan id', () => {
-      return dispatch(deletePlan, 'P-random')
-        .reflect()
-        .then(inspectPromise(false));
-    });
+  it('Should list all plans', () => {
+    return dispatch(listPlan, {})
+      .reflect()
+      .then(inspectPromise());
+  });
 
-    it('Should delete plan', () => {
-      return dispatch(deletePlan, billingPlan.plan.id)
-        .reflect()
-        .then(inspectPromise());
-    });
+  it('Should fail to delete on an unknown plan id', () => {
+    return dispatch(deletePlan, 'P-random')
+      .reflect()
+      .then(inspectPromise(false));
+  });
 
-    it('Should fail to delete free plan', () => {
-      return dispatch(deletePlan, 'free')
-        .reflect()
-        .then(inspectPromise(false));
-    });
+  it('Should delete plan', () => {
+    return dispatch(deletePlan, billingPlan.plan.id)
+      .reflect()
+      .then(inspectPromise());
+  });
+
+  it('Should fail to delete free plan', () => {
+    return dispatch(deletePlan, 'free')
+      .reflect()
+      .then(inspectPromise(false));
   });
 });

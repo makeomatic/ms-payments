@@ -3,6 +3,8 @@ const request = require('request-promise');
 
 const randomOwner = require('../helpers/random-owner');
 const { getToken, makeHeader } = require('../helpers/auth');
+const { routesPaypal: { decrementBalance } } = require('../helpers/paypal');
+
 
 describe('balance actions', function suite() {
   const Payments = require('../../src');
@@ -92,7 +94,7 @@ describe('balance actions', function suite() {
 
     await service.balance.increment(owner, 99, 'icr#1', 'goal1');
 
-    const response = await service.amqp.publishAndWait('payments.balance.decrement', {
+    const response = await service.amqp.publishAndWait(decrementBalance, {
       ownerId: owner,
       amount: 99,
       idempotency: 'decr#1',

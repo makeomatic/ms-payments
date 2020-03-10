@@ -8,10 +8,13 @@ module.exports = {
       list: 'list',
       updateMetadata: 'updateMetadata',
     },
-    // @todo to do something with it (this keys used for ms-users auth middleware)
+    // @todo to do something with verify, timeouts.verify (this keys used for ms-users auth middleware)
     verify: 'users.verify',
     timeouts: {
       verify: 5000,
+      getMetadata: 10000,
+      list: 5000,
+      updateMetadata: 15000,
     },
   },
 };

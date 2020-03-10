@@ -6,8 +6,8 @@ const fs = require('fs').promises;
 // selector constants
 const EMAIL_INPUT = '#email';
 const PWD_INPUT = '#password';
-const CONFIRM_PAYMENT_METHOD = '#payment-submit-btn';
-const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton, #btnNext, #btnLogin';
+const CONFIRM_PAYMENT_METHOD = '.confirmButton, #payment-submit-btn';
+const CONFIRM_BUTTON = '#confirmButtonTop, .confirmButton, #payment-submit-btn, #btnNext, #btnLogin';
 const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
 const LOGIN_BUTTON = '#btnLogin';
@@ -99,7 +99,7 @@ const confirmRetry = (retrySelectror, confirmSelector, breaker) => {
 
       await Promise.all([
         jsHandle.asElement().click({ delay: 100 }),
-        Promise.some([idle('0', { timeout: 20000 }), Promise.delay(15000)], 1),
+        Promise.some([idle('0', { timeout: 30000 }), Promise.delay(15000)], 1),
       ]);
     } catch (e) {
       if (isIgnorableError(e)) {

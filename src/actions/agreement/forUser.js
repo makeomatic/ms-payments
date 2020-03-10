@@ -7,18 +7,18 @@ const { deserialize } = require('../../utils/redis');
 
 function forUser({ params: message }) {
   const { config, redis, amqp } = this;
-  const { users: { prefix, postfix, audience } } = config;
+  const { users: { prefix, postfix, audience, timeouts: { getMetadata: timeout } } } = config;
   const { user } = message;
 
   function getId() {
-    const path = `${prefix}.${postfix.getMetadata}`;
+    const usersMetadataRoute = `${prefix}.${postfix.getMetadata}`;
     const getRequest = {
       username: user,
       audience,
     };
 
     return amqp
-      .publishAndWait(path, getRequest, { timeout: 5000 })
+      .publishAndWait(usersMetadataRoute, getRequest, { timeout })
       .then((metadata) => metadata[audience].agreement);
   }
 
