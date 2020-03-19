@@ -124,7 +124,7 @@ function saveToRedis(owner, paypalData, oldAgreement) {
   pipeline.hmset(agreementKey, serialize({
     agreement: {
       ...agreement,
-      plan: mergeWithNotNull(get(oldAgreement, 'agreement.plan'), agreement.plan),
+      plan: mergeWithNotNull(get(oldAgreement, ['agreement', 'plan']), agreement.plan),
     },
     state: agreement.state,
   }));

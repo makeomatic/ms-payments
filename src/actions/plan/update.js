@@ -31,15 +31,15 @@ function joinPlans(plans) {
 }
 
 function prepareUpdate(subscription, plans, period) {
-  const index = findIndex(plans, (it) => get(it, 'plan.payment_definitions[0].frequency', '').toLowerCase() === period);
+  const index = findIndex(plans, (it) => get(it, ['plan', 'payment_definitions', '0', 'frequency'], '').toLowerCase() === period);
   const planData = plans[index];
 
   if (subscription.models) {
-    set(planData, 'subs[0].models', subscription.models);
+    set(planData, ['subs', 0, 'models'], subscription.models);
   }
 
   if (subscription.modelPrice) {
-    set(planData, 'subs[0].price', subscription.modelPrice);
+    set(planData, ['subs', 0, 'price'], subscription.modelPrice);
   }
 }
 
