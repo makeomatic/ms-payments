@@ -1,3 +1,10 @@
+## [8.0.1](https://github.com/makeomatic/ms-payments/compare/v8.0.0...v8.0.1) (2020-03-19)
+
+
+### Bug Fixes
+
+* get-value path for arrays ([#110](https://github.com/makeomatic/ms-payments/issues/110)) ([d38f1a3](https://github.com/makeomatic/ms-payments/commit/d38f1a3883ce84f18434e7ca8642cd0931247118))
+
 # [8.0.0](https://github.com/makeomatic/ms-payments/compare/v7.0.4...v8.0.0) (2020-01-26)
 
 
