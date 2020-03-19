@@ -194,7 +194,7 @@ const saveToRedis = async (ctx, agreement, subs) => {
     return 'OK';
   }
 
-  const planFreq = get(agreement, 'plan.payment_definitions[0].frequency', 'month').toLowerCase();
+  const planFreq = get(agreement, ['plan', 'payment_definitions', 0, 'frequency'], 'month').toLowerCase();
   const sub = subs.find((x) => x.name === planFreq);
 
   if (!sub) {
