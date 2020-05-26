@@ -123,7 +123,7 @@ function parseAgreementTransaction(transaction, owner, agreementId) {
 }
 
 function getOwner(sale) {
-  const description = getPath(sale, 'transactions[0].item_list.items[0].name', false);
+  const description = getPath(sale, ['transactions', 0, 'item_list', 'items', 0, 'name'], false);
   const match = description && FIND_OWNER_REGEXP.exec(description);
   const result = match && match[1];
   return result || (sale.payer_info && sale.payer_info.email) || null;
