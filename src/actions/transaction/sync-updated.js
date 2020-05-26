@@ -9,11 +9,13 @@ const concurrentRequests = new HttpStatusError(429, 'multiple concurrent request
 const TRANSACTION_UPDATED_STATUS = JSON.stringify('Updated');
 async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), txIds = new Set()) {
   const { page, pages, cursor, items } = await ctx.dispatch('transaction.common', {
-    offset,
-    limit: 100,
-    type: 'subscription',
-    filter: {
-      status: { some: [TRANSACTION_UPDATED_STATUS] },
+    params: {
+      offset,
+      limit: 100,
+      type: 'subscription',
+      filter: {
+        status: { some: [TRANSACTION_UPDATED_STATUS] },
+      },
     },
   });
 
