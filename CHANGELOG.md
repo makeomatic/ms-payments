@@ -1,3 +1,18 @@
+# [8.1.0](https://github.com/makeomatic/ms-payments/compare/v8.0.1...v8.1.0) (2020-05-26)
+
+
+### Bug Fixes
+
+* ensure we only work with subscription txs ([bac1d79](https://github.com/makeomatic/ms-payments/commit/bac1d79baaa16694e53c87a1b0fd91a641b0896d))
+* get-value path ([33859f1](https://github.com/makeomatic/ms-payments/commit/33859f132d9f1b8beff26ee779c571f3580f9211))
+* missing params in the query ([953bced](https://github.com/makeomatic/ms-payments/commit/953bcedc8d2c747420dec1ca78cae14f82dc17e4))
+* update deps ([0a01573](https://github.com/makeomatic/ms-payments/commit/0a01573718dd3ba1957dbca32281716431cf8266))
+
+
+### Features
+
+* endpoint to sync Updated txs ([a7c4701](https://github.com/makeomatic/ms-payments/commit/a7c4701776da8fbc2159230e3800d4c7d52fd162))
+
 ## [8.0.1](https://github.com/makeomatic/ms-payments/compare/v8.0.0...v8.0.1) (2020-03-19)
 
 
