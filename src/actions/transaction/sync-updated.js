@@ -11,10 +11,13 @@ async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), t
   const { page, pages, cursor, items } = await ctx.dispatch('transaction.common', {
     offset,
     limit: 100,
+    type: 'subscription',
     filter: {
-      status: { eq: TRANSACTION_UPDATED_STATUS },
+      status: { some: [TRANSACTION_UPDATED_STATUS] },
     },
   });
+
+  ctx.log.info({ items }, 'fetched items with %s status', TRANSACTION_UPDATED_STATUS);
 
   for (const item of items.values()) {
     ctx.log.info({ item }, 'processing item');
