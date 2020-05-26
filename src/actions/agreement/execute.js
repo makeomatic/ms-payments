@@ -29,6 +29,9 @@ async function fetchUpdatedAgreement(id, attempt = 0) {
   this.log.debug('fetched agreement %j', agreement);
   const state = String(agreement.state).toLowerCase();
 
+  /* pass on through the context */
+  this.state = state;
+
   if (state === 'active') {
     return agreement;
   }
@@ -39,10 +42,9 @@ async function fetchUpdatedAgreement(id, attempt = 0) {
       return agreement;
     }
 
-    return Promise
-      .bind(this, [id, attempt + 1])
-      .delay(250)
-      .spread(fetchUpdatedAgreement);
+    await Promise.delay(250);
+
+    return fetchUpdatedAgreement.call(this, id, attempt + 1);
   }
 
   this.log.error({ agreement }, 'Client tried to execute failed agreement: %j');
@@ -105,8 +107,9 @@ async function getCurrentAgreement(data) {
   };
 }
 
-async function syncTransactions({ agreement, owner, subscriptionInterval }) {
-  await this.service.dispatch('transaction.sync', {
+async function syncTransactions(data, attempt = 0) {
+  const { agreement, owner, subscriptionInterval } = data;
+  const { transactions } = await this.service.dispatch('transaction.sync', {
     params: {
       id: agreement.id,
       owner,
@@ -114,6 +117,17 @@ async function syncTransactions({ agreement, owner, subscriptionInterval }) {
       end: moment().add(1, 'day').format('YYYY-MM-DD'),
     },
   });
+
+  if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
+    if (attempt > 40) {
+      this.log.error({ attempt, agreement }, 'no transactions after 20 attempts');
+      return agreement;
+    }
+
+    await Promise.delay(500);
+    this.log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
+    return syncTransactions.call(this, data, attempt + 1);
+  }
 
   return agreement;
 }

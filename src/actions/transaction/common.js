@@ -38,6 +38,6 @@ function listCommonTransactions({ params: opts }) {
     .spread(mapResult(offset, limit));
 }
 
-listCommonTransactions.transports = [ActionTransport.amqp];
+listCommonTransactions.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = listCommonTransactions;

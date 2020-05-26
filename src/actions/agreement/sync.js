@@ -88,6 +88,7 @@ async function getPendingAgreements(opts = {}) {
   }, { concurrency: 10 });
 }
 
+
 // 3. bill users
 async function billUser(user) {
   const meta = user.metadata[this.audience];

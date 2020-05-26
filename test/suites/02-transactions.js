@@ -18,6 +18,7 @@ describe('Transactions suite', function TransactionsSuite() {
   const executeAgreement = 'payments.agreement.execute';
   const transactionsAggregate = 'payments.transaction.aggregate';
   const listCommonTransactions = 'payments.transaction.common';
+  const syncUpdatedTx = 'payments.transaction.sync-updated';
 
   this.timeout(duration * 30);
 
@@ -99,15 +100,46 @@ describe('Transactions suite', function TransactionsSuite() {
       /* eslint-enable no-await-in-loop */
     });
 
-    it('Should list all transactions', () => (
-      dispatch(listTransaction, {})
-    ));
+    it('Should list all transactions', async () => {
+      const transactions = await dispatch(listTransaction, {});
+
+      // common props
+      // could be 1 -- updating or 2 - completed + created
+      assert(transactions.items.length > 0 && transactions.items.length <= 2);
+      assert.equal(transactions.page, 1);
+      assert.equal(transactions.pages, 1);
+      assert.equal(transactions.cursor, 10);
+
+      // transaction data
+      const [tx] = transactions.items;
+
+      assert.equal(tx.owner, userId);
+      assert.equal(tx.transaction_type, 'Recurring Payment');
+      assert.equal(tx.agreement, agreement.id);
+
+      // we are done in this case
+      if (tx.status === 'Completed') {
+        return;
+      }
+
+      let syncedTx = 0;
+      while (syncedTx === 0) {
+        // eslint-disable-next-line no-await-in-loop
+        syncedTx = await dispatch(syncUpdatedTx, '');
+        if (syncedTx === 0) {
+          // eslint-disable-next-line no-await-in-loop
+          await Promise.delay(500);
+        }
+      }
+    });
 
     it('Should list common transactions', () => (
       dispatch(listCommonTransactions, {
         owner: userId,
         filter: {
-          status: 'Completed',
+          status: {
+            any: ['Completed'],
+          },
         },
       })
     ));
@@ -116,7 +148,9 @@ describe('Transactions suite', function TransactionsSuite() {
       const opts = {
         owners: [userId],
         filter: {
-          status: 'Completed',
+          status: {
+            any: ['Completed'],
+          },
         },
         aggregate: {
           amount: 'sum',
