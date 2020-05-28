@@ -1,4 +1,4 @@
-exports.duration = 20 * 1000;
+exports.duration = 50 * 1000;
 
 exports.simpleDispatcher = function simpleDispatcher(service) {
   return function dispatch(route, params) {

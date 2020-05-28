@@ -119,7 +119,7 @@ async function syncTransactions(data, attempt = 0) {
   });
 
   if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
-    if (attempt > 75) {
+    if (attempt > 150) {
       this.log.error({ attempt, agreement }, 'no transactions after %d attempts', attempt);
       return agreement;
     }
