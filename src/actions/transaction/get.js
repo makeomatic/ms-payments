@@ -7,25 +7,23 @@ const key = require('../../redis-key');
 const { deserialize } = require('../../utils/redis');
 const { TRANSACTIONS_COMMON_DATA } = require('../../constants');
 
-function saleGet({ params: opts }) {
+async function saleGet({ params: opts }) {
   const { redis } = this;
   const { owner, id } = opts;
   const transactionData = key(TRANSACTIONS_COMMON_DATA, id);
 
-  return redis
-    .hgetall(transactionData)
-    .then((data) => {
-      if (is.empty(data)) {
-        throw new Errors.HttpStatusError(404, `transaction id ${id} missing`);
-      }
+  const data = await redis.hgetall(transactionData);
 
-      const output = deserialize(data);
-      if (owner && owner !== output.owner) {
-        throw new Errors.HttpStatusError(403, `no access to transaction ${id}`);
-      }
+  if (is.empty(data)) {
+    throw new Errors.HttpStatusError(404, `transaction id ${id} missing`);
+  }
 
-      return output;
-    });
+  const output = deserialize(data);
+  if (owner && owner !== output.owner) {
+    throw new Errors.HttpStatusError(403, `no access to transaction ${id}`);
+  }
+
+  return output;
 }
 
 saleGet.transports = [ActionTransport.amqp];

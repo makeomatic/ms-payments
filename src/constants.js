@@ -9,6 +9,7 @@ module.exports = {
   AGREEMENT_INDEX: 'agreements-index',
   AGREEMENT_DATA: 'agreements-data',
   AGREEMENT_TRANSACTIONS_INDEX: 'transactions',
+  PER_AGREEMENT_TX_IDX: 'agr:tx-idx',
   AGREEMENT_TRANSACTIONS_DATA: 'transactions:meta',
   TRANSACTION_TYPE_RECURRING: 0,
   TRANSACTION_TYPE_SALE: 1,
@@ -20,4 +21,6 @@ module.exports = {
 
   // field constant
   PLAN_ALIAS_FIELD: 'alias',
+  AGR_TX_FIELD: 't',
+  ARG_AGR_ID_FIELD: 'agreement',
 };

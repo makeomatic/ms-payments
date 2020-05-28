@@ -1,0 +1,16 @@
+const {
+  AGREEMENT_TRANSACTIONS_INDEX,
+  AGREEMENT_TRANSACTIONS_DATA,
+  PER_AGREEMENT_TX_IDX,
+  AGREEMENT_DATA,
+  AGR_TX_FIELD,
+  ARG_AGR_ID_FIELD,
+} = require('../../constants');
+
+module.exports = {
+  script: `${__dirname}/migrate.lua`,
+  keys: [AGREEMENT_DATA, PER_AGREEMENT_TX_IDX, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA],
+  args: [AGR_TX_FIELD, ARG_AGR_ID_FIELD],
+  min: 1,
+  final: 2,
+};

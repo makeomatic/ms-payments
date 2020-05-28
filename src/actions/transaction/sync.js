@@ -1,14 +1,20 @@
 const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
-const forEach = require('lodash/forEach');
 const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { parseAgreementTransaction, saveCommon } = require('../../utils/transactions');
-const { AGREEMENT_DATA, AGREEMENT_TRANSACTIONS_INDEX, AGREEMENT_TRANSACTIONS_DATA } = require('../../constants');
+const {
+  AGREEMENT_DATA,
+  AGR_TX_FIELD,
+  PER_AGREEMENT_TX_IDX,
+  AGREEMENT_TRANSACTIONS_INDEX,
+  AGREEMENT_TRANSACTIONS_DATA,
+  ARG_AGR_ID_FIELD,
+} = require('../../constants');
 const { agreement: { get: getAgreement, searchTransactions }, handleError } = require('../../utils/paypal');
 const { mergeWithNotNull } = require('../../utils/plans');
 
@@ -20,10 +26,8 @@ const { mergeWithNotNull } = require('../../utils/plans');
  * Gets transactions for the passed agreementId
  * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
  */
-async function sendRequest() {
-  const {
-    agreementId, paypalConfig, start, end,
-  } = this;
+async function sendRequest(ctx) {
+  const { agreementId, paypalConfig, start, end } = ctx;
 
   // we request agreement & transactions sequentially so that
   // if transactions request goes through first and contains non-finished transactions
@@ -40,34 +44,34 @@ async function sendRequest() {
  * Fetch owner of transactions from ms-users
  * @return {Promise<String>}
  */
-async function findOwner() {
+async function findOwner(ctx) {
   // verify if we already have passed owner
-  const { owner } = this;
+  const { owner } = ctx;
   if (owner) {
     return owner;
   }
 
   const getRequest = {
-    audience: this.audience,
+    audience: ctx.audience,
     offset: 0,
     limit: 1,
     filter: {
       agreement: {
-        eq: JSON.stringify(this.agreementId),
+        eq: JSON.stringify(ctx.agreementId),
       },
     },
   };
 
-  const users = await this.amqp
-    .publishAndWait(this.path, getRequest, { timeout: 5000 })
+  const users = await ctx.amqp
+    .publishAndWait(ctx.path, getRequest, { timeout: 5000 })
     .get('users');
 
   if (users.length === 0) {
-    throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${this.agreementId}`);
+    throw new Errors.HttpStatusError(404, `Couldn't find user for agreement ${ctx.agreementId}`);
   }
 
   if (users.length !== 1) {
-    throw new Errors.HttpStatusError(409, `Multipel users for agreement ${this.agreementId}`);
+    throw new Errors.HttpStatusError(409, `Multipel users for agreement ${ctx.agreementId}`);
   }
 
   return users[0].id;
@@ -77,9 +81,9 @@ async function findOwner() {
  * Fetch old agreement from redis
  * @return {Promise<{ agreement: Agreement }>}
  */
-async function getOldAgreement() {
-  const agreementKey = key(AGREEMENT_DATA, this.agreementId);
-  const data = await this.redis.hgetall(agreementKey);
+async function getOldAgreement(ctx) {
+  const agreementKey = key(AGREEMENT_DATA, ctx.agreementId);
+  const data = await ctx.redis.hgetall(agreementKey);
 
   return data
     ? deserialize(data)
@@ -92,11 +96,11 @@ async function getOldAgreement() {
  * @param  {String} owner
  * @return {Promise<Transaction>}
  */
-function updateCommon(transaction, owner) {
-  const { agreementId, log } = this;
+function updateCommon(ctx, transaction, owner) {
+  const { agreementId, log } = ctx;
 
   return Promise
-    .bind(this, parseAgreementTransaction(transaction, owner, agreementId))
+    .bind(ctx, parseAgreementTransaction(transaction, owner, agreementId))
     .then(saveCommon)
     .catch((err) => {
       log.error('failed to insert common transaction data', err);
@@ -110,8 +114,8 @@ function updateCommon(transaction, owner) {
  * @param  {Object<{ agreement, transactions }>}  paypalData
  * @return {Promise<{ agreement, transactions }>}
  */
-function saveToRedis(owner, paypalData, oldAgreement) {
-  const { redis, agreementId, log } = this;
+async function saveToRedis(ctx, owner, paypalData, oldAgreement) {
+  const { redis, agreementId, log } = ctx;
   const { agreement, transactions } = paypalData;
 
   const pipeline = redis.pipeline();
@@ -129,13 +133,13 @@ function saveToRedis(owner, paypalData, oldAgreement) {
     state: agreement.state,
   }));
 
-  // gather updates
-  forEach(transactions, (transaction) => {
+  for (const transaction of transactions.values()) {
     const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
+    const agreementTxListKey = key(PER_AGREEMENT_TX_IDX, agreementId);
     const data = {
       transaction,
       owner,
-      agreement: agreementId,
+      [ARG_AGR_ID_FIELD]: agreementId,
       status: transaction.status,
       transaction_type: transaction.transaction_type,
       payer_email: transaction.payer_email || undefined,
@@ -144,23 +148,17 @@ function saveToRedis(owner, paypalData, oldAgreement) {
 
     pipeline.hmset(transactionKey, serialize(data));
     pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
+    pipeline.storeTx(agreementKey, agreementTxListKey, transaction.transaction_id, AGR_TX_FIELD);
 
-    updates.push(updateCommon.call(this, transaction, owner));
-  });
+    updates.push(updateCommon(ctx, transaction, owner));
+  }
 
   // gather pipeline transaction
   updates.push(pipeline.exec().then(handlePipeline));
 
-  return Promise.all(updates).return({ agreement, transactions });
-}
+  await Promise.all(updates);
 
-/**
- * Invokes function
- * @param  {Function} fn
- * @return {Promise}
- */
-function invoke(fn) {
-  return fn.call(this);
+  return { agreement, transactions };
 }
 
 /**
@@ -168,7 +166,7 @@ function invoke(fn) {
  * @param  {Object} params
  * @return {Promise}
  */
-function transactionSync({ params }) {
+async function transactionSync({ params }) {
   const { config, redis, amqp, log } = this;
   const { paypal: paypalConfig } = config;
   const { users: { prefix, postfix, audience } } = config;
@@ -190,10 +188,13 @@ function transactionSync({ params }) {
     end: params.end || '',
   };
 
-  return Promise
-    .bind(ctx, [findOwner, sendRequest, getOldAgreement])
-    .map(invoke)
-    .spread(saveToRedis);
+  const args = await Promise.all([
+    findOwner(ctx),
+    sendRequest(ctx),
+    getOldAgreement(ctx),
+  ]);
+
+  return saveToRedis(ctx, ...args);
 }
 
 transactionSync.transports = [ActionTransport.amqp, ActionTransport.internal];
