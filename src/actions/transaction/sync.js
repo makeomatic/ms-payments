@@ -148,8 +148,8 @@ async function saveToRedis(ctx, owner, paypalData, oldAgreement) {
 
     pipeline.hmset(transactionKey, serialize(data));
     pipeline.sadd(AGREEMENT_TRANSACTIONS_INDEX, transaction.transaction_id);
-    pipeline.storeTx(agreementKey, agreementTxListKey, transaction.transaction_id, AGR_TX_FIELD);
 
+    updates.push(redis.storeTx(2, agreementKey, agreementTxListKey, transaction.transaction_id, AGR_TX_FIELD));
     updates.push(updateCommon(ctx, transaction, owner));
   }
 
