@@ -120,11 +120,11 @@ async function syncTransactions(data, attempt = 0) {
 
   if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
     if (attempt > 40) {
-      this.log.error({ attempt, agreement }, 'no transactions after 20 attempts');
+      this.log.error({ attempt, agreement }, 'no transactions after %d attempts', attempt);
       return agreement;
     }
 
-    await Promise.delay(500);
+    await Promise.delay(2000);
     this.log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
     return syncTransactions.call(this, data, attempt + 1);
   }
