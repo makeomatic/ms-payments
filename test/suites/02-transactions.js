@@ -92,7 +92,7 @@ describe('Transactions suite', function TransactionsSuite() {
       let state = 'Pending';
       /* eslint-disable no-await-in-loop */
       while (state === 'Pending') {
-        const { aggreement: aggr, transactions } = await dispatch(syncTransaction, { id: agreement.id, start, end });
+        const { agreement: aggr, transactions } = await dispatch(syncTransaction, { id: agreement.id, start, end });
         state = aggr.state;
         if (state === 'Pending' || transactions.length === 0) {
           state = 'Pending';
