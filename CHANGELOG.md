@@ -1,3 +1,10 @@
+## [8.2.1](https://github.com/makeomatic/ms-payments/compare/v8.2.0...v8.2.1) (2020-05-29)
+
+
+### Bug Fixes
+
+* migration key & goto statement ([e9760b1](https://github.com/makeomatic/ms-payments/commit/e9760b1688a237329ab0b992c7d8b506facf44a6))
+
 # [8.2.0](https://github.com/makeomatic/ms-payments/compare/v8.1.0...v8.2.0) (2020-05-29)
 
 
