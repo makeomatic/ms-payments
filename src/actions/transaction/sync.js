@@ -184,8 +184,8 @@ async function transactionSync({ params }) {
     agreementId,
     path,
     audience,
-    start: params.start || '',
-    end: params.end || '',
+    start: params.start,
+    end: params.end,
   };
 
   const args = await Promise.all([

@@ -124,7 +124,7 @@ async function syncTransactions(data, attempt = 0) {
       return agreement;
     }
 
-    await Promise.delay(2000);
+    await Promise.delay(15000);
     this.log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
     return syncTransactions.call(this, data, attempt + 1);
   }

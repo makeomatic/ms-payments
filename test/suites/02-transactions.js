@@ -86,8 +86,8 @@ describe('Transactions suite', function TransactionsSuite() {
     });
 
     it('Should sync transactions', async () => {
-      const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
-      const end = moment().endOf('year').format('YYYY-MM-DD');
+      const start = moment().startOf('day').subtract(1, 'day').format('YYYY-MM-DD');
+      const end = moment().endOf('month').add(1, 'day').format('YYYY-MM-DD');
 
       let state = 'Pending';
       /* eslint-disable no-await-in-loop */
