@@ -1,3 +1,10 @@
+# [8.2.0](https://github.com/makeomatic/ms-payments/compare/v8.1.0...v8.2.0) (2020-05-29)
+
+
+### Features
+
+* track transactions per agreement ([#111](https://github.com/makeomatic/ms-payments/issues/111)) ([3aa5226](https://github.com/makeomatic/ms-payments/commit/3aa52260eafe3f97a8f3778f64342d1143396e5e))
+
 # [8.1.0](https://github.com/makeomatic/ms-payments/compare/v8.0.1...v8.1.0) (2020-05-26)
 
 
