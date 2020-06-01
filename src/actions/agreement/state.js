@@ -17,6 +17,12 @@ const ACTION_TO_STATE = {
   cancel: 'cancelled',
 };
 
+const isErrorToBeIgnored = (err) => {
+  return  err.httpStatusCode === 400
+      && err.response.name === 'STATUS_INVALID'
+      && err.response.message === 'Invalid profile status for cancel action; profile should be active or suspended';
+};
+
 /**
  * @api {amqp} <prefix>.agreement.state Changes agreement state
  * @apiVersion 1.0.0
@@ -56,7 +62,11 @@ async function agreementState({ params: message }) {
     log.info({ state, agreementId: id, note }, 'updating agreement state');
     await operations[state].call(this, id, { note }, config.paypal);
   } catch (err) {
-    throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    if (!isErrorToBeIgnored(err)) {
+      throw new Errors.HttpStatusError(err.httpStatusCode, `[${state}] ${id}: ${err.response.message}`, err.response.name);
+    } else {
+      log.warn({ err, state, agreementId: id, note }, 'failed to update agreement state, but can be ignored');
+    }
   }
 
   await this.dispatch('transaction.sync', {
