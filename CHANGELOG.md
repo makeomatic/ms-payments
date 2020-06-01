@@ -1,3 +1,10 @@
+## [8.2.2](https://github.com/makeomatic/ms-payments/compare/v8.2.1...v8.2.2) (2020-06-01)
+
+
+### Bug Fixes
+
+* ignore out of sync cancelled status when we want to cancel ([#112](https://github.com/makeomatic/ms-payments/issues/112)) ([6ccd6ec](https://github.com/makeomatic/ms-payments/commit/6ccd6ec582fbceaa0d3b50628efce01e680c1db0))
+
 ## [8.2.1](https://github.com/makeomatic/ms-payments/compare/v8.2.0...v8.2.1) (2020-05-29)
 
 
