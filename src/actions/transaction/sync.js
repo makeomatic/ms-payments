@@ -2,6 +2,7 @@ const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
 const get = require('get-value');
+const moment = require('moment');
 
 // helpers
 const key = require('../../redis-key');
@@ -186,8 +187,8 @@ async function transactionSync({ params }) {
     audience,
 
     owner: params.owner,
-    start: params.start,
-    end: params.end,
+    start: params.start || moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD'),
+    end: params.end || moment().endOf('year').format('YYYY-MM-DD'),
   };
 
   const args = await Promise.all([
