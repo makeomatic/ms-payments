@@ -1,5 +1,5 @@
 {
-  "node": "12.16",
+  "node": "12.18",
   "sleep": 10,
   "auto_compose": true,
   "with_local_compose": true,
