@@ -1,3 +1,10 @@
+# [8.3.0](https://github.com/makeomatic/ms-payments/compare/v8.2.2...v8.3.0) (2020-06-10)
+
+
+### Features
+
+* resync pending agreements ([#113](https://github.com/makeomatic/ms-payments/issues/113)) ([ed1bdcc](https://github.com/makeomatic/ms-payments/commit/ed1bdccbe3d5398353e755861a48bfe70710f75b))
+
 ## [8.2.2](https://github.com/makeomatic/ms-payments/compare/v8.2.1...v8.2.2) (2020-06-01)
 
 
