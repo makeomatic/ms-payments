@@ -51,7 +51,7 @@ async function getUsers(ctx, opts = {}) {
 
 // fetch pending agreements
 async function getPendingAgreements(ctx, query, opts = {}) {
-  const { service, pulledUsers, missingUsers } = ctx;
+  const { service, pulledUsers, missingUsers, pendingAgreements, agreementOwners } = ctx;
   const offset = opts.cursor || 0;
 
   const response = await service.dispatch('agreement.list', {
@@ -69,7 +69,10 @@ async function getPendingAgreements(ctx, query, opts = {}) {
       missingUsers.add(owner);
     }
 
-    ctx.pendingAgreements.add(agreement.id);
+    if (!pendingAgreements.has(agreement.id)) {
+      pendingAgreements.add(agreement.id);
+      agreementOwners.set(agreement.id, owner);
+    }
   }
 
   if (page < pages) {
@@ -106,9 +109,11 @@ async function agreementSync({ params = {} }) {
     audience,
     usersList: `${prefix}.${postfix.list}`,
     getMetadata: `${prefix}.${postfix.getMetadata}`,
+
     pulledUsers: new Set(),
     missingUsers: new Set(),
     pendingAgreements: new Set(),
+    agreementOwners: new Map(),
     pool: new Map(),
   };
 
@@ -143,6 +148,13 @@ async function agreementSync({ params = {} }) {
       const request = { username, audience };
       const metadata = await amqp.publishAndWait(ctx.getMetadata, request, { timeout: 10000 });
       ctx.pool.set(username, { id: username, metadata });
+    }, { concurrency: 10 });
+  }
+
+  if (ctx.pendingAgreements.size > 0) {
+    await Promise.map(ctx.pendingAgreements.values(), async (agreementId) => {
+      const owner = ctx.agreementOwners.get(agreementId);
+      await this.dispatch('transaction.sync', { params: { id: agreementId, owner } });
     }, { concurrency: 10 });
   }
 

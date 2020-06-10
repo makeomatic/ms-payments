@@ -184,6 +184,8 @@ async function transactionSync({ params }) {
     agreementId,
     path,
     audience,
+
+    owner: params.owner,
     start: params.start,
     end: params.end,
   };
