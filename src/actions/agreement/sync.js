@@ -51,7 +51,7 @@ async function getUsers(ctx, opts = {}) {
 
 // fetch pending agreements
 async function getPendingAgreements(ctx, query, opts = {}) {
-  const { service, pulledUsers, missingUsers, pendingAgreements, agreementsData } = ctx;
+  const { service, pulledUsers, missingUsers, pendingAgreements, agreementOwners } = ctx;
   const offset = opts.cursor || 0;
 
   const response = await service.dispatch('agreement.list', {
