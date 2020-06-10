@@ -1,3 +1,10 @@
+## [8.3.1](https://github.com/makeomatic/ms-payments/compare/v8.3.0...v8.3.1) (2020-06-10)
+
+
+### Bug Fixes
+
+* default start/end params for tx sync ([379541e](https://github.com/makeomatic/ms-payments/commit/379541ec3c7372fdf6a6e4cb8aea3d782c417323))
+
 # [8.3.0](https://github.com/makeomatic/ms-payments/compare/v8.2.2...v8.3.0) (2020-06-10)
 
 
