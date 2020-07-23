@@ -1,0 +1,98 @@
+{
+  "level": 20,
+  "time": 1595493831462,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "0515480c-a65f-4579-b627-da648aa312bb",
+      "type": "charge",
+      "attributes": {
+        "amount": 1005,
+        "description": "Feed the cat",
+        "status": 0,
+        "createAt": "2020-07-23T08:43:48+00:00",
+        "owner": "user0",
+        "failReason": ""
+      }
+    },
+    "meta": {
+      "paypal": {
+        "approvalUrl": {
+          "href": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-1DV39493F6430315B",
+          "rel": "approval_url",
+          "method": "REDIRECT"
+        },
+        "paymentId": "PAYID-L4MU3RY5W264252F66666618"
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.create"
+}
+
+{
+  "level": 20,
+  "time": 1595493833083,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "b94a8378-22ac-440b-8484-62941b297a6b",
+      "type": "charge",
+      "attributes": {
+        "amount": 1005,
+        "description": "Feed the cat",
+        "status": 0,
+        "createAt": "2020-07-23T08:43:51+00:00",
+        "owner": "user0",
+        "failReason": ""
+      }
+    },
+    "meta": {
+      "paypal": {
+        "approvalUrl": {
+          "href": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-3F0494781M518331J",
+          "rel": "approval_url",
+          "method": "REDIRECT"
+        },
+        "paymentId": "PAYID-L4MU3SA7E9197085L258401W"
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.create"
+}
+
+{
+  "level": 20,
+  "time": 1595493881332,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "d73df312-7706-43c4-8d5c-d90e0ccdc1d0",
+      "type": "charge",
+      "attributes": {
+        "amount": 1005,
+        "description": "Feed the cat",
+        "status": 0,
+        "createAt": "2020-07-23T08:44:39+00:00",
+        "owner": "user0",
+        "failReason": ""
+      }
+    },
+    "meta": {
+      "paypal": {
+        "approvalUrl": {
+          "href": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-3U947844PT658583M",
+          "rel": "approval_url",
+          "method": "REDIRECT"
+        },
+        "paymentId": "PAYID-L4MU36I3B586853PU1429007"
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.create"
+}

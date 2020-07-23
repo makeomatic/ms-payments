@@ -1,0 +1,64 @@
+{
+  "level": 20,
+  "time": 1594731163149,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [
+    "OK",
+    "OK",
+    "OK",
+    "OK"
+  ],
+  "msg": "[doc]plan.state"
+}
+
+{
+  "level": 20,
+  "time": 1594731164864,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [
+    "OK",
+    "OK"
+  ],
+  "msg": "[doc]plan.state"
+}
+
+{
+  "level": 20,
+  "time": 1594731164882,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [
+    "OK",
+    "OK"
+  ],
+  "msg": "[doc]plan.state"
+}
+
+{
+  "level": 20,
+  "time": 1594731968534,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [
+    "OK"
+  ],
+  "msg": "[doc]plan.state"
+}
+
+{
+  "level": 20,
+  "time": 1594731968544,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [
+    "OK"
+  ],
+  "msg": "[doc]plan.state"
+}

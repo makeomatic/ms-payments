@@ -1,0 +1,10 @@
+{
+  "level": 20,
+  "time": 1594729151680,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "state": "cancel",
+  "msg": "[DOC]agreement.state: response"
+}
+

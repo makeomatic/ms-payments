@@ -1,0 +1,32 @@
+{
+  "level": 20,
+  "time": 1594731970336,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "reqId": "6caa7c54-8719-4111-88bc-9b31d918febd",
+  "owner": "6688790612260421632",
+  "token": "EC-4K054326935819611",
+  "url": {},
+  "agreement": {
+    "name": "Fast Speed Agreement",
+    "description": "Agreement for Fast Speed Plan",
+    "start_date": "2020-08-14T13:05:59Z",
+    "plan": {
+      "id": "P-0L653759M6704033WJVXLHBI"
+    },
+    "payer": {
+      "payment_method": "paypal"
+    },
+    "shipping_address": {
+      "line1": "StayBr111idge Suites",
+      "line2": "Cro12ok Street",
+      "city": "San Jose",
+      "state": "CA",
+      "postal_code": "95112",
+      "country_code": "US"
+    }
+  },
+  "msg": "[DOC]agreement.create: response"
+}
+

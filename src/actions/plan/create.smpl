@@ -1,0 +1,330 @@
+{
+  "level": 20,
+  "time": 1594731965259,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": "null sometimes",
+  "msg": "[doc]plan.create"
+}
+
+{
+  "level": 20,
+  "time": 1594731157781,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "plan": {
+      "name": "free",
+      "description": "Default free plan",
+      "type": "infinite",
+      "state": "active",
+      "payment_definitions": [
+        {
+          "name": "free",
+          "type": "regular",
+          "frequency": "month",
+          "frequency_interval": "1",
+          "cycles": "0",
+          "amount": {
+            "currency": "USD",
+            "value": "0"
+          }
+        }
+      ],
+      "id": "free",
+      "hidden": false
+    },
+    "id": "free",
+    "subs": [
+      {
+        "name": "month",
+        "models": 100,
+        "price": 0.5,
+        "definition": {
+          "name": "free",
+          "type": "regular",
+          "frequency": "month",
+          "frequency_interval": "1",
+          "cycles": "0",
+          "amount": {
+            "currency": "USD",
+            "value": "0"
+          }
+        }
+      }
+    ],
+    "type": "infinite",
+    "state": "active",
+    "name": "free",
+    "hidden": false,
+    "meta": {
+      "storage": {
+        "description": "file storage limits",
+        "type": "number",
+        "value": 0.5
+      }
+    },
+    "level": 0,
+    "alias": "free"
+  },
+  "msg": "[doc]plan.create"
+}
+
+
+{
+  "level": 20,
+  "time": 1594731157812,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": "null sometimes",
+  "msg": "[doc]plan.create"
+}
+
+{
+  "level": 20,
+  "time": 1594731161276,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "plan": {
+      "id": "P-4J938285GW116034EJVRGL7Y|P-7LJ96039CM0150548JVRGJRQ",
+      "state": "CREATED",
+      "name": "basic",
+      "description": "Basic plan",
+      "type": "INFINITE",
+      "payment_definitions": [
+        {
+          "id": "PD-17624370MY6772032JVRGL7Y",
+          "name": "month",
+          "type": "REGULAR",
+          "frequency": "Month",
+          "amount": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        },
+        {
+          "id": "PD-6SY7839810731612UJVRGJRQ",
+          "name": "year",
+          "type": "REGULAR",
+          "frequency": "Year",
+          "amount": {
+            "currency": "USD",
+            "value": "499.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      ],
+      "merchant_preferences": {
+        "setup_fee": {
+          "currency": "USD",
+          "value": "0"
+        },
+        "max_fail_attempts": "0",
+        "return_url": "http://api-sandbox.cappasity.matic.ninja/paypal-subscription-return",
+        "cancel_url": "http://api-sandbox.cappasity.matic.ninja/paypal-subscription-cancel",
+        "auto_bill_amount": "YES",
+        "initial_fail_amount_action": "CANCEL"
+      },
+      "create_time": "2020-07-14T12:52:40.774Z",
+      "update_time": "2020-07-14T12:52:40.774Z",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-plans/P-4J938285GW116034EJVRGL7Y",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-plans/P-7LJ96039CM0150548JVRGJRQ",
+          "rel": "self",
+          "method": "GET"
+        }
+      ],
+      "httpStatusCode": 201,
+      "hidden": false
+    },
+    "id": "P-4J938285GW116034EJVRGL7Y|P-7LJ96039CM0150548JVRGJRQ",
+    "subs": [
+      {
+        "name": "month",
+        "models": 20,
+        "price": 5,
+        "definition": {
+          "id": "PD-17624370MY6772032JVRGL7Y",
+          "name": "month",
+          "type": "REGULAR",
+          "frequency": "Month",
+          "amount": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      },
+      {
+        "name": "year",
+        "models": 240,
+        "price": 5,
+        "definition": {
+          "id": "PD-6SY7839810731612UJVRGJRQ",
+          "name": "year",
+          "type": "REGULAR",
+          "frequency": "Year",
+          "amount": {
+            "currency": "USD",
+            "value": "499.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      }
+    ],
+    "type": "INFINITE",
+    "state": "CREATED",
+    "name": "basic",
+    "hidden": false,
+    "month": "P-4J938285GW116034EJVRGL7Y",
+    "year": "P-7LJ96039CM0150548JVRGJRQ",
+    "meta": {
+      "storage": {
+        "description": "file storage limits",
+        "type": "number",
+        "value": 10
+      }
+    },
+    "alias": "basic"
+  },
+  "msg": "[doc]plan.create"
+}
+
+
+{
+  "level": 20,
+  "time": 1594731968551,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "plan": {
+      "id": "P-0L653759M6704033WJVXLHBI|P-3CF397891H241683CJVXLHUI",
+      "state": "active",
+      "name": "basic",
+      "description": "Basic plan",
+      "type": "INFINITE",
+      "payment_definitions": [
+        {
+          "id": "PD-01N91398GS7881052JVXLHBI",
+          "name": "month",
+          "type": "REGULAR",
+          "frequency": "Month",
+          "amount": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        },
+        {
+          "id": "PD-2YJ86465FM954912RJVXLHUI",
+          "name": "year",
+          "type": "REGULAR",
+          "frequency": "Year",
+          "amount": {
+            "currency": "USD",
+            "value": "499.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      ],
+      "merchant_preferences": {
+        "setup_fee": {
+          "currency": "USD",
+          "value": "0"
+        },
+        "max_fail_attempts": "0",
+        "return_url": "http://api-sandbox.cappasity.matic.ninja/paypal-subscription-return",
+        "cancel_url": "http://api-sandbox.cappasity.matic.ninja/paypal-subscription-cancel",
+        "auto_bill_amount": "YES",
+        "initial_fail_amount_action": "CANCEL"
+      },
+      "create_time": "2020-07-14T13:06:07.441Z",
+      "update_time": "2020-07-14T13:06:07.441Z",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-plans/P-0L653759M6704033WJVXLHBI",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-plans/P-3CF397891H241683CJVXLHUI",
+          "rel": "self",
+          "method": "GET"
+        }
+      ],
+      "httpStatusCode": 201,
+      "hidden": false
+    },
+    "id": "P-0L653759M6704033WJVXLHBI|P-3CF397891H241683CJVXLHUI",
+    "subs": [
+      {
+        "name": "month",
+        "models": 20,
+        "price": 5,
+        "definition": {
+          "id": "PD-01N91398GS7881052JVXLHBI",
+          "name": "month",
+          "type": "REGULAR",
+          "frequency": "Month",
+          "amount": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      },
+      {
+        "name": "year",
+        "models": 240,
+        "price": 5,
+        "definition": {
+          "id": "PD-2YJ86465FM954912RJVXLHUI",
+          "name": "year",
+          "type": "REGULAR",
+          "frequency": "Year",
+          "amount": {
+            "currency": "USD",
+            "value": "499.99"
+          },
+          "cycles": "0",
+          "frequency_interval": "1"
+        }
+      }
+    ],
+    "type": "INFINITE",
+    "state": "active",
+    "name": "basic",
+    "hidden": false,
+    "month": "P-0L653759M6704033WJVXLHBI",
+    "year": "P-3CF397891H241683CJVXLHUI",
+    "meta": {
+      "storage": {
+        "description": "file storage limits",
+        "type": "number",
+        "value": 10
+      }
+    },
+    "alias": "basic"
+  },
+  "msg": "[doc]plan.create"
+}
+

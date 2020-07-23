@@ -1,0 +1,9 @@
+{
+  "level": 20,
+  "time": 1594729191720,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": [],
+  "msg": "[DOC]agreement.sync: response"
+}

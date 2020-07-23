@@ -1,0 +1,59 @@
+{
+  "level": 20,
+  "time": 1595491717721,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "token": "EC-440510952F5266527",
+    "url": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-440510952F5266527",
+    "sale": {
+      "id": "PAYID-L4MULBI6JJ71794D5560451R",
+      "intent": "sale",
+      "state": "created",
+      "payer": {
+        "payment_method": "paypal"
+      },
+      "transactions": [
+        {
+          "amount": {
+            "total": "10.00",
+            "currency": "USD"
+          },
+          "item_list": {
+            "items": [
+              {
+                "name": "Client [test@test.ru]. 3d printing service",
+                "price": "10.00",
+                "currency": "USD",
+                "quantity": 1
+              }
+            ]
+          },
+          "related_resources": [],
+          "notify_url": "http://api-sandbox.cappasity.matic.ninja/paypal-sale-notify"
+        }
+      ],
+      "create_time": "2020-07-23T08:08:37Z",
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/payment/PAYID-L4MULBI6JJ71794D5560451R",
+          "rel": "self",
+          "method": "GET"
+        },
+        {
+          "href": "https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_express-checkout&token=EC-440510952F5266527",
+          "rel": "approval_url",
+          "method": "REDIRECT"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/payment/PAYID-L4MULBI6JJ71794D5560451R/execute",
+          "rel": "execute",
+          "method": "POST"
+        }
+      ],
+      "httpStatusCode": 201
+    }
+  },
+  "msg": "[doc]sale.createDynamic"
+}

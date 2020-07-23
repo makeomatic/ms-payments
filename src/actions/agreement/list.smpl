@@ -1,0 +1,28 @@
+{
+  "level": 20,
+  "time": 1594729191718,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "res": {
+    "items": [],
+    "cursor": 20,
+    "page": 1,
+    "pages": 0
+  },
+  "msg": "[DOC]agreement.list: response"
+}
+{
+  "level": 20,
+  "time": 1594729191719,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "res": {
+    "items": [],
+    "cursor": 20,
+    "page": 1,
+    "pages": 0
+  },
+  "msg": "[DOC]agreement.list: response"
+}

@@ -1,0 +1,1251 @@
+{
+  "level": 20,
+  "time": 1594732066154,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": []
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732083480,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": []
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732101056,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732103604,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732106121,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732109140,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732112216,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732116693,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}
+
+{
+  "level": 20,
+  "time": 1594732119874,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "agreement": {
+      "id": "I-JJ4H828ABUCX",
+      "state": "Active",
+      "description": "Agreement for Fast Speed Plan",
+      "start_date": "2020-08-14T07:00:00Z",
+      "payer": {
+        "payment_method": "paypal",
+        "status": "verified",
+        "payer_info": {
+          "email": "test@cappasity.com",
+          "first_name": "Test",
+          "last_name": "Cappasity",
+          "payer_id": "DUDZ6ZC9KBFM2",
+          "shipping_address": {
+            "recipient_name": "",
+            "line1": "StayBr111idge Suites",
+            "line2": "Cro12ok Street",
+            "city": "San Jose",
+            "state": "CA",
+            "postal_code": "95112",
+            "country_code": "US"
+          }
+        }
+      },
+      "shipping_address": {
+        "recipient_name": "",
+        "line1": "StayBr111idge Suites",
+        "line2": "Cro12ok Street",
+        "city": "San Jose",
+        "state": "CA",
+        "postal_code": "95112",
+        "country_code": "US"
+      },
+      "plan": {
+        "payment_definitions": [
+          {
+            "type": "REGULAR",
+            "frequency": "MONTH",
+            "amount": {
+              "currency": "USD",
+              "value": "49.99"
+            },
+            "cycles": "0",
+            "charge_models": [
+              {
+                "type": "TAX",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              },
+              {
+                "type": "SHIPPING",
+                "amount": {
+                  "currency": "USD",
+                  "value": "0.00"
+                }
+              }
+            ],
+            "frequency_interval": "1"
+          }
+        ],
+        "merchant_preferences": {
+          "setup_fee": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "max_fail_attempts": "3",
+          "auto_bill_amount": "YES"
+        }
+      },
+      "links": [
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/suspend",
+          "rel": "suspend",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/re-activate",
+          "rel": "re_activate",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/cancel",
+          "rel": "cancel",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/bill-balance",
+          "rel": "self",
+          "method": "POST"
+        },
+        {
+          "href": "https://api.sandbox.paypal.com/v1/payments/billing-agreements/I-JJ4H828ABUCX/set-balance",
+          "rel": "self",
+          "method": "POST"
+        }
+      ],
+      "agreement_details": {
+        "outstanding_balance": {
+          "currency": "USD",
+          "value": "0.00"
+        },
+        "cycles_remaining": "0",
+        "cycles_completed": "0",
+        "next_billing_date": "2020-08-14T10:00:00Z",
+        "failed_payment_count": "0"
+      },
+      "httpStatusCode": 200
+    },
+    "transactions": [
+      {
+        "transaction_id": "5N612592044214828",
+        "status": "Updated",
+        "transaction_type": "Recurring Payment",
+        "amount": {
+          "currency": "USD",
+          "value": "49.99"
+        },
+        "fee_amount": {
+          "currency": "USD",
+          "value": "-1.75"
+        },
+        "net_amount": {
+          "currency": "USD",
+          "value": "48.24"
+        },
+        "payer_email": "test@cappasity.com",
+        "payer_name": "Test Cappasity",
+        "time_stamp": "2020-07-14T13:07:40Z",
+        "time_zone": "GMT"
+      }
+    ]
+  },
+  "msg": "[doc]transaction.sync"
+}

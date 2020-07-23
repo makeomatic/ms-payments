@@ -1,0 +1,44 @@
+{
+  "level": 20,
+  "time": 1594732103615,
+  "pid": 29,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "items": [
+      {
+        "payer_email": "test@cappasity.com",
+        "status": "Updated",
+        "owner": "6688790612260421632",
+        "time_stamp": 1594732060000,
+        "transaction_type": "Recurring Payment",
+        "transaction": {
+          "transaction_id": "5N612592044214828",
+          "status": "Updated",
+          "transaction_type": "Recurring Payment",
+          "amount": {
+            "currency": "USD",
+            "value": "49.99"
+          },
+          "fee_amount": {
+            "currency": "USD",
+            "value": "-1.75"
+          },
+          "net_amount": {
+            "currency": "USD",
+            "value": "48.24"
+          },
+          "payer_email": "test@cappasity.com",
+          "payer_name": "Test Cappasity",
+          "time_stamp": "2020-07-14T13:07:40Z",
+          "time_zone": "GMT"
+        },
+        "agreement": "I-JJ4H828ABUCX"
+      }
+    ],
+    "cursor": 10,
+    "page": 1,
+    "pages": 1
+  },
+  "msg": "[doc]transaction.list"
+}

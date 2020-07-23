@@ -1,0 +1,22 @@
+{
+  "level": 20,
+  "time": 1595493879574,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "b94a8378-22ac-440b-8484-62941b297a6b",
+      "type": "charge",
+      "attributes": {
+        "amount": "1005",
+        "description": "Feed the cat",
+        "status": 3,
+        "createAt": "2020-07-23T08:43:51+00:00",
+        "owner": "6691986093224493056",
+        "failReason": ""
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.capture"
+}

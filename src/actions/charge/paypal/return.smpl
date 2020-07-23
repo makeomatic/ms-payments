@@ -1,0 +1,91 @@
+{
+  "level": 20,
+  "time": 1595493915585,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "d73df312-7706-43c4-8d5c-d90e0ccdc1d0",
+      "type": "charge",
+      "attributes": {
+        "amount": "1005",
+        "description": "Feed the cat",
+        "status": 4,
+        "createAt": "2020-07-23T08:44:39+00:00",
+        "owner": "6691986093224493056",
+        "failReason": ""
+      }
+    },
+    "meta": {
+      "paypal": {
+        "payer": {
+          "payment_method": "paypal",
+          "status": "VERIFIED",
+          "payer_info": {
+            "email": "test@cappasity.com",
+            "first_name": "Test",
+            "last_name": "Cappasity",
+            "payer_id": "DUDZ6ZC9KBFM2",
+            "shipping_address": {
+              "recipient_name": "Test Cappasity",
+              "line1": "1 Main St",
+              "city": "San Jose",
+              "state": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            },
+            "country_code": "US"
+          }
+        }
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.return"
+}
+
+{
+  "level": 20,
+  "time": 1595493875133,
+  "pid": 30,
+  "hostname": "tester",
+  "name": "ms-payments",
+  "result": {
+    "data": {
+      "id": "b94a8378-22ac-440b-8484-62941b297a6b",
+      "type": "charge",
+      "attributes": {
+        "amount": "1005",
+        "description": "Feed the cat",
+        "status": 4,
+        "createAt": "2020-07-23T08:43:51+00:00",
+        "owner": "6691986093224493056",
+        "failReason": ""
+      }
+    },
+    "meta": {
+      "paypal": {
+        "payer": {
+          "payment_method": "paypal",
+          "status": "VERIFIED",
+          "payer_info": {
+            "email": "test@cappasity.com",
+            "first_name": "Test",
+            "last_name": "Cappasity",
+            "payer_id": "DUDZ6ZC9KBFM2",
+            "shipping_address": {
+              "recipient_name": "Test Cappasity",
+              "line1": "1 Main St",
+              "city": "San Jose",
+              "state": "CA",
+              "postal_code": "95131",
+              "country_code": "US"
+            },
+            "country_code": "US"
+          }
+        }
+      }
+    }
+  },
+  "msg": "[doc]charge.paypal.return"
+}
