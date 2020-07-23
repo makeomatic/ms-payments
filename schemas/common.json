@@ -606,6 +606,12 @@
         }
       ]
     },
+    "paymentId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "@TODO",
+      "pattern": "^PAYID-.+(\\|PAYID-.+)?"
+    },
     "filter": {
       "type": "object",
       "properties": {
