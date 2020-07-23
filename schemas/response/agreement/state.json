@@ -1,0 +1,8 @@
+{
+  "type": "string",
+  "enum": [
+    "suspend",
+    "reactivate",
+    "cancel"
+  ]
+}

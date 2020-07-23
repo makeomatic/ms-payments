@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "type":"object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "balance"
+        },
+        "id": {
+          "$ref": "common#/definitions/owner"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

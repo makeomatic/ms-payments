@@ -1,0 +1,58 @@
+{
+  "type": "object",
+  "additionalProperties": "false",
+  "properties": {
+    "data": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "#TODO"
+        },
+        "type": {
+          "type": "string",
+          "const": "charge",
+          "description": "#TODO"
+        },
+        "attributes": {
+          "type": "object",
+          "properties": {
+            "amount": {
+              "type": "number"
+            },
+            "description": {
+              "type": "string"
+            },
+            "status": {
+              "type": "number"
+            },
+            "createAt": {
+              "type": "string",
+              "format": "date"
+            },
+            "owner": {
+              "$ref": "../../../common.json#/definitions/owner"
+            },
+            "failReason": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "paypal": {
+          "type":"object",
+          "properties": {
+            "payer": {
+              "$ref": "common#/definitions/payer"
+            }
+          }
+        }
+      }
+    }
+  }
+}

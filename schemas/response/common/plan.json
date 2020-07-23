@@ -1,0 +1,24 @@
+{
+  "definitions": {
+    "plan": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "payment_definitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#TODO/payment_definition"
+          }
+        },
+        "merchant_preferences": {
+          "type": "object",
+          "description": "#TODO def"
+        }
+      }
+    }
+  }
+}

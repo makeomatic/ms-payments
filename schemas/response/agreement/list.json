@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "required": [
+    "items",
+    "cursor",
+    "page",
+    "pages"
+  ],
+  "items": {
+    "type": "array",
+    "items": {
+      "$ref": "agreement"
+    }
+  },
+  "cursor": {
+    "type": "number"
+  },
+  "page": {
+    "type": "number"
+  },
+  "pages": {
+    "type": "number"
+  }
+}
