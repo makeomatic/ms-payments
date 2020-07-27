@@ -1,5 +1,6 @@
 {
   "$id": "transaction.list",
+  "title": "transaction.list",
   "type": "object",
   "additionalProperties": false,
   "properties": {

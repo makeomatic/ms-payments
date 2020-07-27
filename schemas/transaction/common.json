@@ -1,5 +1,6 @@
 {
   "$id": "transaction.common",
+  "title": "transaction.common",
   "type": "object",
   "properties": {
     "offset": {

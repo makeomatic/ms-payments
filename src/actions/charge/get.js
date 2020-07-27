@@ -14,6 +14,17 @@ function assertEnouthRights(charge, user) {
   }
 }
 
+/**
+ * @api {http-get} <prefix>.charge.get Get charge
+ * @apiVersion 1.0.0
+ * @apiName chargeGet
+ * @apiGroup Charge
+ *
+ * @apiDescription Get the charge information
+ *
+ * @apiSchema {jsonschema=charge/get.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/get.json} apiResponse
+ */
 async function getChargeAction({ auth, query }) {
   const { users: { audience } } = this.config;
   const user = auth.credentials.metadata[audience];

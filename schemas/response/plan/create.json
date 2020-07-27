@@ -1,0 +1,5 @@
+{
+  "$id": "response.plan.create",
+  "title": "Created plan",
+  "$ref": "response.plan.get#"
+}

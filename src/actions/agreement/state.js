@@ -25,16 +25,15 @@ const isErrorToBeIgnored = (err) => {
 };
 
 /**
- * @api {amqp} <prefix>.agreement.state Changes agreement state
+ * @api {amqp} <prefix>.agreement.state Change agreement state
  * @apiVersion 1.0.0
  * @apiName agreementState
  * @apiGroup Agreement
  *
  * @apiDescription Change currently used agreement for {owner} to {state}
  *
- * @apiParam (Params) {Object} params - request container
- * @apiParam (Params) {String} params.owner - user to change agreement state for
- * @apiParam (Params) {String="suspend","reactivate","cancel"} params.state - new state
+ * @apiSchema {jsonschema=agreement/state.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/state.json} apiResponse
  */
 async function agreementState({ params: message }) {
   const { config, redis, amqp, log } = this;

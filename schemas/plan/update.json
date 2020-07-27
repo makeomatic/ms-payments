@@ -50,6 +50,7 @@
   },
   "definitions": {
     "subscription": {
+      "title": "Subscription",
       "additionalProperties": false,
       "type": "object",
       "minProperties": 1,

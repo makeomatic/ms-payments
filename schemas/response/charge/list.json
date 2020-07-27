@@ -1,8 +1,10 @@
 {
+  "$id": "response.charge.list",
+  "title": "List of charges",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Charges list",
       "type": "array",
       "items": {
         "type": "object",
@@ -21,7 +23,7 @@
             "format": "date"
           },
           "owner": {
-            "$ref": "../../../common.json#/definitions/owner"
+            "$ref": "common#/definitions/owner"
           },
           "failReason": {
             "type": "string"

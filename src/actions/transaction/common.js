@@ -7,7 +7,17 @@ const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constant
 const key = require('../../redis-key');
 
 /**
- * List files
+ * @api {amqp} <prefix>.transaction.common Common transaction data
+ * @apiVersion 1.0.0
+ * @apiName transactionCommon
+ * @apiGroup Transaction
+ *
+ * @apiDescription Retrieves common transaction information for filtered transactions
+ *
+ * @apiSchema {jsonschema=transaction/common.json} apiRequest
+ * @apiSchema {jsonschema=response/transaction/common.json} apiResponse
+ */
+/**
  * @return {Promise}
  */
 function listCommonTransactions({ params: opts }) {

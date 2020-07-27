@@ -1,23 +1,6 @@
 {
+  "$id": "response.agreement.forUser",
   "type": "object",
-  "id": {
-    "type": "string",
-    "minLength": "10"
-  },
-  "owner": {
-    "$ref": "../../common.json#/definitions/owner"
-  },
-  "state": {
-    "$ref": "#TODO"
-  },
-  "token": {
-    "type": "string",
-    "minLength": "10"
-  },
-  "plan": {
-    "$ref": "../../common.json#/definitions/planId"
-  },
-  "agreement": {
-    "$ref": "agreement"
-  }
+  "title": "agreement.forUser response",
+  "$ref": "response.agreement.get#"
 }

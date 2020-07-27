@@ -1,5 +1,6 @@
 {
   "$id": "transaction.aggregate",
+  "title": "transaction.aggregate",
   "type": "object",
   "required": ["owners", "aggregate"],
   "properties": {

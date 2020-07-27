@@ -1,0 +1,146 @@
+{
+  "$id":"response.common.sale",
+  "title": "[response.common] Sale object",
+  "type":"object",
+  "additionalProperties": false,
+  "properties":{
+    "httpStatusCode": {
+      "description": "payment system response code",
+      "type": "number"
+    },
+    "id":{
+      "description": "Sale id",
+      "type":"string"
+    },
+    "intent":{
+      "description": "Payment intent",
+      "type":"string",
+      "enum":[
+        "sale",
+        "authorize",
+        "order"
+      ]
+    },
+    "state": {
+      "type": "string",
+      "description": "The state of the sale"
+    },
+    "payer":{
+      "description": "Payer information",
+      "$ref":"common#/definitions/payer"
+    },
+    "cart": {
+      "type": "string"
+    },
+    "create_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "update_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "transactions":{
+      "type":"array",
+      "items":{
+        "$ref": "#/definitions/transaction"
+      }
+    },
+    "failed_transactions":{
+      "type":"array",
+      "items":{
+        "$ref": "#/definitions/transaction"
+      }
+    },
+    "billing_agreement_tokens":{
+      "type":"array",
+      "items":{
+        "type":"string"
+      }
+    },
+    "experience_profile_id":{
+      "type":"string"
+    },
+    "links": { "type": "array", "items": { "$ref": "common#/definitions/links" } }
+  },
+  "definitions": {
+    "transaction": {
+      "type":"object",
+      "additionalProperties": false,
+      "properties":{
+        "reference_id":{
+          "type":"string"
+        },
+        "amount": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "currency": {
+              "type": "string"
+            },
+            "total": {
+              "type": ["number", "string"]
+            },
+            "details": {
+              "type": "object",
+              "properties": {
+                "subtotal": { "type": "string" },
+                "shipping": { "type": "string" },
+                "insurance": { "type": "string" },
+                "handling_fee": { "type": "string" },
+                "shipping_discount": { "type": "string" }
+              }
+            }
+          }
+        },
+        "payee": {
+          "type": "object",
+          "properties": {
+            "merchant_id": { "type": "string" },
+            "email": { "type": "string", "format": "email" }
+          }
+        },
+        "description":{
+          "type":"string"
+        },
+        "note_to_payee":{
+          "type":"string"
+        },
+        "custom":{
+          "type":"string"
+        },
+        "invoice_number":{
+          "type":"string"
+        },
+        "notify_url":{
+          "type":"string"
+        },
+        "order_url":{
+          "type":"string"
+        },
+        "item_list":{
+          "type":"object",
+          "required":[
+            "items"
+          ],
+          "properties":{
+            "additionalProperties": false,
+            "items":{
+              "type":"array",
+              "items":{
+                "$ref":"response.common#/definitions/transaction_item"
+              }
+            }
+          }
+        },
+        "related_resources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "See [Paypal API](https://developer.paypal.com/docs/api/payments/v1/#definition-related_resources)"
+          }
+        }
+      }
+    }
+  }
+}

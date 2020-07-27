@@ -1,0 +1,5 @@
+{
+  "$id": "response.plan.delete",
+  "title": "Deleted plan",
+  "type": "number"
+}

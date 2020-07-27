@@ -1,0 +1,29 @@
+{
+  "$id": "response.plan.list",
+  "title": "Plans list response",
+  "type": "object",
+  "required": [
+    "items",
+    "cursor",
+    "page",
+    "pages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "response.plan.get#"
+      }
+    },
+    "cursor": {
+      "type": "number"
+    },
+    "page": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "number"
+    }
+  }
+}

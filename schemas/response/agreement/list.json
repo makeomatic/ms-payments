@@ -1,24 +1,28 @@
 {
+  "$id": "response.agreement.list",
   "type": "object",
+  "title": "agreement.list response",
   "required": [
     "items",
     "cursor",
     "page",
     "pages"
   ],
-  "items": {
-    "type": "array",
+  "properties": {
     "items": {
-      "$ref": "agreement"
+      "type": "array",
+      "items": {
+        "$ref": "response.agreement.get#"
+      }
+    },
+    "cursor": {
+      "type": "number"
+    },
+    "page": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "number"
     }
-  },
-  "cursor": {
-    "type": "number"
-  },
-  "page": {
-    "type": "number"
-  },
-  "pages": {
-    "type": "number"
   }
 }

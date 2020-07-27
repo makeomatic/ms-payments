@@ -12,6 +12,17 @@ const { payment: { list: listTransactions } } = require('../../utils/paypal');
 
 const TRANSACTIONS_LIMIT = 20;
 
+/**
+ * @api {amqp} <prefix>.sale.sync Sync sale
+ * @apiVersion 1.0.0
+ * @apiName saleSync
+ * @apiGroup Sale
+ *
+ * @apiDescription Performs synchronizations of sales
+ * **TODO**: Find response schema
+ * @apiSchema {jsonschema=sale/sync.json} apiRequest
+
+ */
 function transactionSync({ params: message = {} }) {
   const { config, redis } = this;
   const { paypal: paypalConfig } = config;

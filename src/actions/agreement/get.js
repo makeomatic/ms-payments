@@ -6,7 +6,17 @@ const { ActionTransport } = require('@microfleet/core');
 const key = require('../../redis-key');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 const { deserialize } = require('../../utils/redis');
-
+/**
+ * @api {amqp} <prefix>.agreement.get Get Agreement
+ * @apiVersion 1.0.0
+ * @apiName get
+ * @apiGroup Agreement
+ *
+ * @apiDescription Returns agreement information
+  *
+ * @apiSchema {jsonschema=agreement/get.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/get.json} apiResponse
+ */
 async function getAgreement({ params: message }) {
   const { redis } = this;
   const { id, owner } = message;

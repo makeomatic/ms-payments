@@ -1,18 +1,22 @@
 {
   "$id": "common",
+  "title": "[common] Definitions",
   "definitions": {
     "owner": {
       "type": "string",
       "minLength": 1,
+      "title": "Payment owner",
       "description": "Identification of owner"
     },
     "chargeId": {
       "type": "string",
       "format": "uuid",
+      "title": "Charge id",
       "description": "Identification of charge"
     },
     "currency": {
       "type": "object",
+      "description": "Generic currency object",
       "required": [
         "currency",
         "value"
@@ -30,6 +34,7 @@
       }
     },
     "links": {
+      "title": "Payment system provided links",
       "type": "object",
       "properties": {
         "href": {
@@ -47,6 +52,7 @@
       }
     },
     "term": {
+      "title": "Term",
       "type": "object",
       "required": [
         "type",
@@ -81,6 +87,7 @@
       }
     },
     "payment_definition": {
+      "title": "Payment definition",
       "type": "object",
       "required": [
         "name",
@@ -104,7 +111,9 @@
           "minLength": 1,
           "enum": [
             "trial",
-            "regular"
+            "regular",
+            "TRIAL",
+            "REGULAR"
           ]
         },
         "frequency_interval": {
@@ -123,8 +132,10 @@
           "$ref": "common#/definitions/currency"
         },
         "charge_models": {
+          "title": "Charge models",
           "type": "array",
           "items": {
+            "title": "Charge model",
             "type": "object",
             "required": [
               "type",
@@ -148,6 +159,7 @@
       }
     },
     "merchant_preferences": {
+      "title": "Merchant preferences",
       "type": "object",
       "required": [
         "cancel_url",
@@ -196,6 +208,7 @@
       }
     },
     "agreement_details": {
+      "title": "Agreement details",
       "type": "object",
       "properties": {
         "outstanding_balance": {
@@ -231,6 +244,7 @@
       }
     },
     "payer": {
+      "title": "Payer information",
       "type": "object",
       "required": [
         "payment_method"
@@ -260,6 +274,7 @@
           "type": "string"
         },
         "funding_instruments": {
+          "title": "Funding instruments",
           "type": "array",
           "items": {
             "$ref": "common#/definitions/funding_instrument"
@@ -274,6 +289,7 @@
       }
     },
     "funding_instrument": {
+      "title": "Funding instruments",
       "type": "object",
       "properties": {
         "credit_card": {
@@ -285,6 +301,7 @@
       }
     },
     "credit_card": {
+      "title": "Credit card information",
       "type": "object",
       "required": [
         "number",
@@ -362,6 +379,7 @@
       }
     },
     "credit_card_token": {
+      "title": "Credit card token",
       "type": "object",
       "required": [
         "credit_card_id"
@@ -393,6 +411,7 @@
       }
     },
     "payer_info": {
+      "title": "Payer information",
       "type": "object",
       "properties": {
         "email": {
@@ -446,6 +465,7 @@
       }
     },
     "address": {
+      "title": "Address",
       "type": "object",
       "required": [
         "line1",
@@ -491,6 +511,7 @@
       }
     },
     "shipping_address": {
+      "title": "Shipping address",
       "allOf": [
         {
           "$ref": "common#/definitions/address"
@@ -499,7 +520,7 @@
           "properties": {
             "recipient_name": {
               "type": "string",
-              "minLength": 1
+              "minLength": 0
             },
             "type": {
               "type": "string",
@@ -510,6 +531,7 @@
       ]
     },
     "override_charge_model": {
+      "title": "Override charge model",
       "type": "object",
       "required": [
         "charge_id",
@@ -526,6 +548,7 @@
       }
     },
     "item": {
+      "title": "Purchase item",
       "type": "object",
       "required": [
         "quantity",
@@ -566,12 +589,14 @@
           ]
         },
         "supplementary_data": {
+          "title": "Supplemetary data",
           "type": "array",
           "items": {
             "$ref": "common#/definitions/kv"
           }
         },
         "postback_data": {
+          "title": "Postback data",
           "type": "array",
           "items": {
             "$ref": "common#/definitions/kv"
@@ -580,6 +605,7 @@
       }
     },
     "kv": {
+      "title": "KeyValue object",
       "type": "object",
       "required": [
         "name",
@@ -595,6 +621,7 @@
       }
     },
     "planId": {
+      "title": "Payment plan id",
       "type": "string",
       "minLength": 1,
       "oneOf": [
@@ -607,15 +634,18 @@
       ]
     },
     "paymentId": {
+      "title": "Payment id",
       "type": "string",
       "minLength": 1,
-      "description": "@TODO",
       "pattern": "^PAYID-.+(\\|PAYID-.+)?"
     },
     "filter": {
+      "description": "Search filter",
       "type": "object",
       "properties": {
         "#multi": {
+          "title": "`#multi` query",
+          "description": "See `redis-filtered-sort`",
           "type": "object",
           "required": [
             "fields",
@@ -623,6 +653,7 @@
           ],
           "properties": {
             "fields": {
+              "description": "Fields list used in search",
               "type": "array",
               "minItems": 1,
               "items": {
@@ -632,6 +663,7 @@
             },
             "match": {
               "type": "string",
+              "description": "Match used in search",
               "minLength": 1
             }
           }
@@ -644,6 +676,7 @@
             "minLength": 1
           },
           {
+            "title": "Query",
             "type": "object",
             "minProperties": 1,
             "maxProperties": 2,
@@ -656,6 +689,7 @@
                 "type": "number"
               },
               "^(some)$": {
+                "title": "Some filter",
                 "type": "array",
                 "uniqueItems": true,
                 "items": {
@@ -666,6 +700,48 @@
             }
           }
         ]
+      }
+    },
+    "cart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "shipping_type",
+        "shipping_price",
+        "printing_price",
+        "service_price",
+        "user_price"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shipping_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "shipping_price": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "printing_price": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "service_price": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 999999
+        },
+        "user_price": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 999999
+        }
       }
     }
   }

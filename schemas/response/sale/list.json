@@ -1,0 +1,38 @@
+{
+  "$id": "response.sale.list",
+  "title": "Sales list",
+  "type": "object",
+  "required": [
+    "items",
+    "cursor",
+    "page",
+    "pages"
+  ],
+  "properties": {
+    "items": {
+      "description": "List of the existing Sales",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "sale": { "$ref": "response.common.sale#" },
+          "owner": { "type": "string" },
+          "payer": { "type": "string" },
+          "create_time": { "type": "number" },
+          "update_time": { "type": "number" },
+          "cart": { "$ref": "common#/definitions/cart" }
+        }
+      }
+    },
+    "cursor": {
+      "type": "number"
+    },
+    "page": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "number"
+    }
+  }
+}

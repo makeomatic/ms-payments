@@ -11,6 +11,17 @@ const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const { payment: { create: createPayment } } = require('../../utils/paypal');
 
+/**
+ * @api {amqp} <prefix>.sale.createDynamic Create sale
+ * @apiVersion 1.0.0
+ * @apiName saleCreateDynamic
+ * @apiGroup Sale
+ *
+ * @apiDescription Creates new dynamic sale
+ *
+ * @apiSchema {jsonschema=sale/createDynamic.json} apiRequest
+ * @apiSchema {jsonschema=response/sale/createDynamic.json} apiResponse
+ */
 function saleCreate({ params: message }) {
   const { config, redis } = this;
   const promise = Promise.bind(this);

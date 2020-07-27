@@ -1,3 +1,5 @@
 {
-  "$ref": "agreement"
+  "$id": "response.agreement.execute",
+  "title": "agreement.execute response",
+  "$ref": "response.common.agreement#"
 }

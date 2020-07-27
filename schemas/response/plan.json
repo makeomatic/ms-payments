@@ -1,0 +1,21 @@
+{
+  "$id": "response.common.plan",
+  "title": "[response.common] Payment plan object",
+  "type": "object",
+  "additionalProperties": false,
+	"properties": {
+		"id":                   { "type": "string", "minLength": 1 },
+		"name":                 { "type": "string", "minLength": 1 },
+    "description":          { "type": "string", "minLength": 1 },
+    "hidden":               { "type": "boolean" },
+		"type":                 { "$ref": "plan#/definitions/type" },
+		"state":                { "type": "string", "minLength": 1 },
+		"create_time":          { "type": "string", "minLength": 1 },
+		"update_time":          { "type": "string", "minLength": 1 },
+		"payment_definitions":  { "type": "array", "items": { "$ref": "response.common#/definitions/payment_definition" } },
+		"terms":                { "type": "array", "items": { "$ref": "common#/definitions/term" } },
+		"merchant_preferences": { "$ref": "response.common#/definitions/merchant_preferences"},
+    "links":                { "type": "array", "items": { "$ref": "common#/definitions/links" } },
+    "httpStatusCode":       { "type": "integer" }
+	}
+}

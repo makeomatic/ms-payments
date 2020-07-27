@@ -7,6 +7,17 @@ const key = require('../../redis-key');
 const { deserialize } = require('../../utils/redis');
 const { TRANSACTIONS_COMMON_DATA } = require('../../constants');
 
+/**
+ * @api {amqp} <prefix>.transaction.get Get transaction
+ * @apiVersion 1.0.0
+ * @apiName transactionGet
+ * @apiGroup Transaction
+ *
+ * @apiDescription Returns selected trasactions common data
+ *
+ * @apiSchema {jsonschema=transaction/aggregate.json} apiRequest
+ * @apiSchema {jsonschema=response/transaction/aggregate.json} apiResponse
+ */
 async function saleGet({ params: opts }) {
   const { redis } = this;
   const { owner, id } = opts;

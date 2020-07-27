@@ -1,8 +1,10 @@
 {
+  "$id": "response.charge.stripe.create",
+  "title": "Create stripe charge",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Stripe charge",
       "type": "object",
       "properties": {
         "amount": {
@@ -19,7 +21,7 @@
           "format": "date"
         },
         "owner": {
-          "$ref": "../../../common.json#/definitions/owner"
+          "$ref": "common#/definitions/owner"
         },
         "failReason": {
           "type": "string"

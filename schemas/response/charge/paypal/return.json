@@ -1,25 +1,25 @@
 {
+  "$id": "response.charge.paypal.return",
+  "title": "Paypal charge return",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Charge information",
       "type": "object",
       "properties": {
         "id": {
           "type": "string",
-          "format": "uuid",
-          "description": "#TODO"
+          "format": "uuid"
         },
         "type": {
           "type": "string",
-          "const": "charge",
-          "description": "#TODO"
+          "const": "charge"
         },
         "attributes": {
           "type": "object",
           "properties": {
             "amount": {
-              "type": "number"
+              "type": "string"
             },
             "description": {
               "type": "string"
@@ -29,10 +29,10 @@
             },
             "createAt": {
               "type": "string",
-              "format": "date"
+              "format": "date-time"
             },
             "owner": {
-              "$ref": "../../../common.json#/definitions/owner"
+              "$ref": "common#/definitions/owner"
             },
             "failReason": {
               "type": "string"
@@ -42,6 +42,7 @@
       }
     },
     "meta": {
+      "description": "Paypal metadata",
       "type": "object",
       "properties": {
         "paypal": {

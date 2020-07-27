@@ -1,5 +1,8 @@
 {
+  "$id": "response.agreement.create",
   "type": "object",
+  "title": "agreement.create response",
+  "description": "Created agreement",
   "properties": {
     "token": {
       "type": "string",
@@ -10,7 +13,7 @@
       "minLength": 1
     },
     "agreement": {
-      "$ref": "agreement"
+      "$ref": "response.common.agreement#"
     }
   }
 }

@@ -1,0 +1,28 @@
+{
+  "$id": "response.transaction.list",
+  "title": "List of the transactions",
+  "type": "object",
+  "required": [
+    "items",
+    "cursor",
+    "page",
+    "pages"
+  ],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "response.common.transaction#"
+      }
+    },
+    "cursor": {
+      "type": "number"
+    },
+    "page": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "number"
+    }
+  }
+}

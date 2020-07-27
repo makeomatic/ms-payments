@@ -1,0 +1,27 @@
+{
+  "$id": "response.common.subscription",
+  "title": "[response.common] Subscription object",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "models",
+    "definition",
+    "price"
+  ],
+  "properties": {
+    "models": {
+      "type": "number"
+    },
+    "price": {
+      "type": "number"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "definition": {
+      "$ref": "common#/definitions/payment_definition"
+    }
+  }
+}

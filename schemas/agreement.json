@@ -1,5 +1,7 @@
 {
   "$id": "agreement",
+  "title": "[common] Agreement object",
+  "description": "Agreement object structure",
   "type": "object",
   "required": [
     "name",

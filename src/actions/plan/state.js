@@ -19,6 +19,17 @@ function isAlreadyInState(err) {
     ));
 }
 
+/**
+ * @api {amqp, internal} <prefix>.plan.state Change plan state
+ * @apiVersion 1.0.0
+ * @apiName planState
+ * @apiGroup Plan
+ *
+ * @apiDescription Changes plan state
+ *
+ * @apiSchema {jsonschema=plan/state.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/state.json} apiResponse
+ */
 async function planState({ log, params: message }) {
   const { config, redis } = this;
   const { id, state } = message;

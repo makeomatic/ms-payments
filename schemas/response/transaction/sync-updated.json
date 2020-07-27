@@ -1,0 +1,5 @@
+{
+  "$id": "response.transaction.sync-updated",
+  "title": "Transaction sync-updated response",
+  "type": "number"
+}

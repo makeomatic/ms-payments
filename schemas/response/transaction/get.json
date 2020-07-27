@@ -1,0 +1,39 @@
+{
+  "$id": "response.transaction.get",
+  "type": "object",
+  "title": "transaction.get response",
+  "additionalProperties": false,
+  "properties": {
+    "amount": {
+      "type": "number"
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "type": {
+      "type": "number",
+      "description": "Transaction type"
+    },
+    "agreementId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payer": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 127,
+      "description": "Payer information"
+    },
+    "date": {
+      "type": "number"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 512
+    },
+    "status": {
+      "type": "string",
+      "description": "Transaction status"
+    }
+  }
+}

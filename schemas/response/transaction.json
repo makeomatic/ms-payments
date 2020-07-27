@@ -1,0 +1,30 @@
+{
+  "$id": "response.common.transaction",
+  "type": "object",
+  "title": "[response.common] Transaction object",
+  "additionalProperties": false,
+  "properties": {
+    "agreement": {
+      "type": "string"
+    },
+    "payer_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "status": {
+      "type": "string"
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "transaction_type": {
+      "type": "string"
+    },
+    "transaction": {
+      "$ref": "response.common.transaction-info#"
+    },
+    "time_stamp": {
+      "type": "number"
+    }
+  }
+}

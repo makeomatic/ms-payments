@@ -1,6 +1,7 @@
 {
+  "$id": "response.charge.get",
+  "title": "Charge",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
       "type": "object",
@@ -19,7 +20,7 @@
           "format": "date"
         },
         "owner": {
-          "$ref": "../../../common.json#/definitions/owner"
+          "$ref": "common#/definitions/owner"
         },
         "failReason": {
           "type": "string"

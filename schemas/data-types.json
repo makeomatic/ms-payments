@@ -1,0 +1,9 @@
+{
+  "$id": "data-types",
+  "title": "[common] Extra `DataTypes`",
+  "definitions": {
+    "nullable-string": {
+      "type": [ "string", "null"]
+    }
+  }
+}

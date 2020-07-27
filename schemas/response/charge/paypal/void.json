@@ -1,8 +1,10 @@
 {
+  "$id": "response.charge.paypal.void",
+  "title": "Void paypal charge",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Paypal charge",
       "type": "object",
       "properties": {
         "amount": {
@@ -19,7 +21,7 @@
           "format": "date"
         },
         "owner": {
-          "$ref": "../../../common.json#/definitions/owner"
+          "$ref": "common#/definitions/owner"
         },
         "failReason": {
           "type": "string"

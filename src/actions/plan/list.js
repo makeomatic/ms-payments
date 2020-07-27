@@ -6,6 +6,17 @@ const { processResult, mapResult } = require('../../list-utils');
 const key = require('../../redis-key');
 const { PLANS_DATA, PLANS_INDEX } = require('../../constants');
 
+/**
+ * @api {amqp} <prefix>.plan.list List plans
+ * @apiVersion 1.0.0
+ * @apiName planList
+ * @apiGroup Plan
+ *
+ * @apiDescription Returns list of the plans
+ *
+ * @apiSchema {jsonschema=plan/list.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/list.json} apiResponse
+ */
 function planList({ params: opts }) {
   const { redis } = this;
   const { filter, criteria } = opts;

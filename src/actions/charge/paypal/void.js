@@ -37,6 +37,17 @@ async function paypalVoidAction(service, request) {
   return chargeResponse(updatedCharge, { owner: updatedCharge.owner });
 }
 
+/**
+ * @api {amqp} <prefix>.charge.paypal.void Paypal - Void paypal charge
+ * @apiVersion 1.0.0
+ * @apiName chargePaypalVoid
+ * @apiGroup Charge.Paypal
+ *
+ * @apiDescription Invalidate `charge`
+ *
+ * @apiSchema {jsonschema=charge/paypal/void.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/paypal/void.json} apiResponse
+ */
 async function wrappedAction(request) {
   const lockPromise = acquireLock(this, `tx!paypal:complete:${request.params.paymentId}`);
   return Promise

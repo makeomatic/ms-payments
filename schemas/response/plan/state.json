@@ -1,0 +1,8 @@
+{
+  "$id": "response.plan.state",
+  "title": "Plan state response",
+  "type": "array",
+  "items": {
+    "type": "string"
+  }
+}

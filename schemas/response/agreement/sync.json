@@ -1,5 +1,7 @@
 {
+  "$id": "response.agreement.sync",
   "type": "array",
+  "title": "agreement.sync response",
   "items": {
     "type": "string",
     "const": "OK"

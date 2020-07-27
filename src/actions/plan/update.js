@@ -118,10 +118,19 @@ function saveToRedis({ plans, additionalData }) {
 }
 
 /**
- * Update paypal plan with a special case for a free plan
- * WARNING: this method is prone to race conditions, and, therefore, requires a lock to be
+ * @api {amqp} <prefix>.plan.state Update plan
+ * @apiVersion 1.0.0
+ * @apiName planUpdate
+ * @apiGroup Plan
+ *
+ * @apiDescription Update paypal plan with a special case for a free plan
+ * **WARNING**: this method is prone to race conditions, and, therefore, requires a lock to be
  * used before updating data
  *
+ * @apiSchema {jsonschema=plan/update.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/update.json} apiResponse
+ */
+/**
  * TODO: add lock when updating aliases
  *
  * @param  {Object} message

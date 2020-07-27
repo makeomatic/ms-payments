@@ -1,0 +1,14 @@
+{
+  "$id": "response.transaction.aggregate",
+  "type": "array",
+  "title": "transaction.aggregate response",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "amount": {
+        "type": "number"
+      }
+    }
+  }
+}

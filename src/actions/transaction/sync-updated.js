@@ -90,6 +90,17 @@ async function performSync(ctx, { log }) {
   return initialSize - txIds.size;
 }
 
+/**
+ * @api {amqp} <prefix>.transaction.sync-updated Sync Updated transactions
+ * @apiVersion 1.0.0
+ * @apiName transactionSync
+ * @apiGroup Transaction
+ *
+ * @apiDescription Syncs updated transactions for agreement
+ *
+ * @apiSchema {jsonschema=transaction/sync-updated.json} apiRequest
+ * @apiSchema {jsonschema=response/transaction/sync-updated.json} apiResponse
+ */
 async function txUpdatedSync(request) {
   return Promise
     .using(this, request, acquireLock(this, 'tx!charge:paypal:sync:updated'), performSync)

@@ -11,6 +11,17 @@ const { parseSale, saveCommon } = require('../../utils/transactions');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const { payment: { create: createPayment } } = require('../../utils/paypal');
 
+/**
+ * @api {amqp} <prefix>.sale.create Create sale
+ * @apiVersion 1.0.0
+ * @apiName saleCreate
+ * @apiGroup Sale
+ *
+ * @apiDescription Creates new sale
+ *
+ * @apiSchema {jsonschema=sale/create.json} apiRequest
+ * @apiSchema {jsonschema=response/sale/create.json} apiResponse
+ */
 function saleCreate({ params: message }) {
   const { config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = config;

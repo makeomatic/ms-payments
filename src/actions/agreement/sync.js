@@ -96,6 +96,16 @@ async function billUser(ctx, user) {
   return null;
 }
 
+/**
+ * @api {amqp} <prefix>.agreement.sync Sync agreements
+ * @apiVersion 1.0.0
+ * @apiName agreementSync
+ * @apiGroup Agreement
+ *
+ * @apiDescription Performs agreements synchronization
+ *
+ * @apiSchema {jsonschema=agreement/sync.json} apiRequest
+ */
 async function agreementSync({ params = {} }) {
   const { config, amqp, log } = this;
   const { users: { prefix, postfix, audience } } = config;

@@ -1,8 +1,10 @@
 {
+  "$id": "response.charge.paypal.capture",
+  "title": "Paypal charge result",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Charge info",
       "type": "object",
       "properties": {
         "amount": {
@@ -19,7 +21,7 @@
           "format": "date"
         },
         "owner": {
-          "$ref": "../../../common.json#/definitions/owner"
+          "$ref": "common#/definitions/owner"
         },
         "failReason": {
           "type": "string"

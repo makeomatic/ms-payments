@@ -1,4 +1,12 @@
 {
-  "type": "boolean",
-  "const": true
+  "$id": "response.charge.stripe.webhook",
+  "title": "Create stripe webhook",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "received": {
+      "type": "boolean",
+      "const": true
+    }
+  }
 }

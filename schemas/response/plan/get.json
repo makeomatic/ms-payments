@@ -1,0 +1,54 @@
+{
+  "$id": "response.plan.get",
+  "title": "Plan information",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": { "$ref": "common#/definitions/planId" },
+    "state": {
+      "type": "string"
+    },
+    "alias": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "hidden": {
+      "type": "boolean"
+    },
+    "level": {
+      "$ref": "plan#/definitions/level"
+    },
+    "subs": {
+      "type": "array",
+      "items": {
+        "$ref": "response.common.subscription#"
+      }
+    },
+    "plan": {
+      "$ref": "response.common.plan#"
+    },
+    "meta": {
+      "$ref": "plan#/definitions/meta"
+    },
+    "type": {
+      "$ref": "plan#/definitions/type"
+    },
+    "month": {
+      "$ref": "data-types#/definitions/nullable-string"
+    },
+    "year": {
+      "$ref": "data-types#/definitions/nullable-string"
+    }
+  }
+}

@@ -1,8 +1,10 @@
 {
+  "$id": "response.charge.paypal.create",
+  "title": "Create paypal charge",
   "type": "object",
-  "additionalProperties": "false",
   "properties": {
     "data": {
+      "description": "Charge information",
       "type": "object",
       "properties": {
         "amount": {
@@ -19,7 +21,7 @@
           "format": "date"
         },
         "owner": {
-          "$ref": "../../../common.json#/definitions/owner"
+          "$ref": "common#/definitions/owner"
         },
         "failReason": {
           "type": "string"
@@ -30,13 +32,14 @@
       "type": "object",
       "properties": {
         "paypal": {
+          "description": "Paypal charge metadata",
           "type": "object",
           "properties": {
             "approvalUrl": {
-              "$ref": "../../../common.json#/definitions/links"
+              "$ref": "common#/definitions/links"
             },
             "paymentId": {
-              "$ref": "../../../common.json#/definitions/paymentId"
+              "$ref": "common#/definitions/paymentId"
             }
           }
         }

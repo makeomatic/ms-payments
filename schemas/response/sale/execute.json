@@ -1,0 +1,5 @@
+{
+  "$id": "response.sale.execute",
+  "title": "Sale execution result",
+  "$ref": "response.common.sale#"
+}

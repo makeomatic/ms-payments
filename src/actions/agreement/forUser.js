@@ -5,6 +5,17 @@ const key = require('../../redis-key');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 const { deserialize } = require('../../utils/redis');
 
+/**
+ * @api {amqp} <prefix>.agreement.forUser Get agreement for user
+ * @apiVersion 1.0.0
+ * @apiName forUser
+ * @apiGroup Agreement
+ *
+ * @apiDescription Retrieves agreement information for user
+  *
+ * @apiSchema {jsonschema=agreement/forUser.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/forUser.json} apiResponse
+ */
 function forUser({ params: message }) {
   const { config, redis, amqp } = this;
   const { users: { prefix, postfix, audience } } = config;
