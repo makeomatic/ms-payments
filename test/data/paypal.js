@@ -2,6 +2,7 @@ const moment = require('moment');
 
 exports.testPlanData = {
   alias: 'basic',
+  title: 'Premium',
   hidden: false,
   plan: {
     name: 'basic',

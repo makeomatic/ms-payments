@@ -4,6 +4,7 @@
   "additionalProperties": false,
   "required": [
     "alias",
+    "title",
     "hidden",
     "subscriptions",
     "plan"
@@ -13,6 +14,10 @@
       "type": "boolean"
     },
     "alias": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
       "type": "string",
       "minLength": 1
     },
