@@ -51,6 +51,7 @@ exports.testPlanData = {
 
 exports.freePlanData = {
   alias: 'free',
+  title: 'Free',
   hidden: false,
   plan: {
     name: 'free',
