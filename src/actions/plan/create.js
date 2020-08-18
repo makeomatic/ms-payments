@@ -56,7 +56,7 @@ function sendRequest(config, message) {
 function createSaveToRedis(redis, message) {
   return function saveToRedis(data) {
     const { plan, plans } = data;
-    const { meta, level } = message;
+    const { meta, level, title } = message;
     const aliasedId = message.alias || plan.id;
     const hidden = message.hidden || false;
 
@@ -89,6 +89,7 @@ function createSaveToRedis(redis, message) {
       name: plan.name,
       hidden,
       ...plansData,
+      title,
       meta,
       level,
     };
