@@ -12,9 +12,11 @@ describe('Migrations suite', function PlansSuite() {
 
   describe('unit tests', () => {
     const createPlan = 'payments.plan.create';
+    const deletePlan = 'payments.plan.delete';
 
     let payments;
     let dispatch;
+    let basicPlan;
 
     before('startService', async () => {
       payments = new Payments();
@@ -22,16 +24,12 @@ describe('Migrations suite', function PlansSuite() {
       dispatch = simpleDispatcher(payments);
     });
 
-    before('clear redis', async () => clearRedis(payments.redis));
-
     it('Should migrate plan titles', async () => {
-      const [freePlan, basicPlan] = await Promise.all([
-        dispatch(createPlan, freePlanData).reflect().then(inspectPromise()),
-        dispatch(createPlan, { ...testPlanData, title: 'Basic' }).reflect().then(inspectPromise()),
-      ]);
+      basicPlan = await dispatch(createPlan, { ...testPlanData, title: 'Basic' })
+        .reflect()
+        .then(inspectPromise());
 
       // Before migration
-      assert.strictEqual(freePlan.title, 'Free');
       assert.strictEqual(basicPlan.title, 'Basic');
 
       const { redis } = payments;
@@ -46,6 +44,10 @@ describe('Migrations suite', function PlansSuite() {
       // After migration
       assert.strictEqual(await redis.hget('plans-data:free', 'title'), '"Free"');
       assert.strictEqual(await redis.hget('plans-data:basic', 'title'), '"Premium"');
+
+      // Cleanup
+      await dispatch(deletePlan, basicPlan.plan.id);
+      basicPlan = null;
     });
   });
 });
