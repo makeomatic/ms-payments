@@ -1,3 +1,10 @@
+# [8.4.0](https://github.com/makeomatic/ms-payments/compare/v8.3.1...v8.4.0) (2020-08-27)
+
+
+### Features
+
+* new plan titles ([91f228d](https://github.com/makeomatic/ms-payments/commit/91f228d32aa4cdb438a292198ae53722d6de2722))
+
 ## [8.3.1](https://github.com/makeomatic/ms-payments/compare/v8.3.0...v8.3.1) (2020-06-10)
 
 
