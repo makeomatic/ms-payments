@@ -117,6 +117,7 @@ function createSaveToRedis(redis, message) {
         state: planData.state,
         name: planData.name,
         hidden,
+        title,
         meta,
         level,
       };
