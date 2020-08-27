@@ -2,6 +2,7 @@ const moment = require('moment');
 
 exports.testPlanData = {
   alias: 'basic',
+  title: 'Premium',
   hidden: false,
   plan: {
     name: 'basic',
@@ -50,6 +51,7 @@ exports.testPlanData = {
 
 exports.freePlanData = {
   alias: 'free',
+  title: 'Free',
   hidden: false,
   plan: {
     name: 'free',

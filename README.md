@@ -33,6 +33,7 @@ To create a plan you need to provide certain data for create endpoint.
 {
   "hidden": <true|false>, // use true to make plan invisible to normal users
   "alias": <string>, // use this to set up plan alias (for your convenience)
+  "title": <string>, // plan title that is going to be displayed to user
   "subscriptions": [<subscription>], // this is most important part: links our metadata with plan charging models
   "plan": <plan> // charging models for plan, this must be strictly as paypal wants (see it's documentation or plan.json)
 }
