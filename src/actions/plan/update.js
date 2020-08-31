@@ -23,7 +23,7 @@ const DATA_HOLDERS = {
   yearly: 'year',
 };
 
-const FIELDS_TO_UPDATE = [PLAN_ALIAS_FIELD, 'hidden', 'meta', 'level'];
+const FIELDS_TO_UPDATE = [PLAN_ALIAS_FIELD, 'title', 'hidden', 'meta', 'level'];
 
 function joinPlans(plans) {
   const plan = mergeWith({}, ...plans, merger);
