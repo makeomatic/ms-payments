@@ -119,6 +119,7 @@ describe('Plans suite', function PlansSuite() {
       const hasSubscriptionName = (needle) => ({ name }) => name === needle;
 
       assert.strictEqual(result.title, 'The Super Master');
+      assert.strictEqual(result.alias, 'thesupermaster');
       assert.strictEqual(find(result.subs, hasSubscriptionName('month')).models, 100);
       assert.strictEqual(find(result.subs, hasSubscriptionName('year')).price, 10.5);
       assert.strictEqual(result.level, 10);
