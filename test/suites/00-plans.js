@@ -1,5 +1,6 @@
 const assert = require('assert');
 const Promise = require('bluebird');
+const find = require('lodash/find');
 const { inspectPromise } = require('@makeomatic/deploy');
 const { duration, simpleDispatcher } = require('../utils');
 
@@ -91,10 +92,11 @@ describe('Plans suite', function PlansSuite() {
       assert.equal(error.name, 'HttpStatusError');
     });
 
-    it('Should update plan info', () => {
+    it('Should update plan info', async () => {
       const updateData = {
         id: billingPlan.plan.id,
         alias: 'thesupermaster',
+        title: 'The Super Master',
         subscriptions: {
           monthly: {
             models: 100,
@@ -113,9 +115,14 @@ describe('Plans suite', function PlansSuite() {
         level: 10,
       };
 
-      return dispatch(updatePlan, updateData)
-        .reflect()
-        .then(inspectPromise());
+      const result = await dispatch(updatePlan, updateData);
+      const hasSubscriptionName = (needle) => ({ name }) => name === needle;
+
+      assert.strictEqual(result.title, 'The Super Master');
+      assert.strictEqual(find(result.subs, hasSubscriptionName('month')).models, 100);
+      assert.strictEqual(find(result.subs, hasSubscriptionName('year')).price, 10.5);
+      assert.strictEqual(result.level, 10);
+      assert.strictEqual(result.meta.storage.value, 0.5);
     });
 
     it('get plan must return updated info', async () => {

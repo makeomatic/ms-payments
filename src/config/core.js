@@ -71,6 +71,7 @@ exports.validator = {
 exports.defaultPlans = [{
   id: FREE_PLAN_ID,
   alias: FREE_PLAN_ID,
+  title: 'Free',
   hidden: false,
   plan: {
     name: FREE_PLAN_ID,
