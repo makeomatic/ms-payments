@@ -1,3 +1,10 @@
+## [8.4.1](https://github.com/makeomatic/ms-payments/compare/v8.4.0...v8.4.1) (2020-08-31)
+
+
+### Bug Fixes
+
+* test alias update ([#121](https://github.com/makeomatic/ms-payments/issues/121)) ([aa93a91](https://github.com/makeomatic/ms-payments/commit/aa93a91f4b13c12e0023bd2bbac44119dfee15a6))
+
 # [8.4.0](https://github.com/makeomatic/ms-payments/compare/v8.3.1...v8.4.0) (2020-08-27)
 
 
