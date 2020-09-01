@@ -1,6 +1,7 @@
 module.exports = {
   users: {
     audience: '*.localhost',
+    paymentAudience: '*.payments',
     prefix: 'users',
     postfix: {
       getInternalData: 'getInternalData',
@@ -12,6 +13,11 @@ module.exports = {
     verify: 'users.verify',
     timeouts: {
       verify: 5000,
+    },
+    consts: {
+      METADATA_FIELD_FIRST_NAME: 'firstName',
+      METADATA_FIELD_LAST_NAME: 'lastName',
+      METADATA_FIELD_EMAIL: 'username',
     },
   },
 };

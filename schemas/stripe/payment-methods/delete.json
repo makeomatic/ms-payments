@@ -1,0 +1,16 @@
+{
+  "$id": "stripe.payment-methods.delete",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "minLength": 1,
+      "maxLength": 1024
+    }
+  }
+}
