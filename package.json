@@ -16,7 +16,9 @@
     "semantic-release": "semantic-release",
     "docker-release": "mdep docker release",
     "release": "yarn --frozen-lockfile && yarn semantic-release",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "docs": "rimraf .apidoc .gh_pages && apidoc -i ./src -o ./.apidoc && mdoc-markdown && cp README.md .gh-pages/",
+    "publish-docs": "gh-pages -d .gh-pages"
   },
   "repository": {
     "type": "git",
@@ -87,6 +89,7 @@
     "eslint-plugin-mocha": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-unicorn": "^20.1.0",
+    "gh-pages": "^3.1.0",
     "mkdirp": "^1.0.4",
     "mocha": "^7.2.0",
     "nyc": "^15.1.0",

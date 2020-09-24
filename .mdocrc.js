@@ -1,6 +1,6 @@
 module.exports = {
   createPath: true,
   apiDocPath: './.apidoc',
-  output: 'docs/API.md',
+  output: '.gh-pages/docs/API.md',
   multi: false,
 }
