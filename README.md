@@ -10,7 +10,7 @@
 
 ## API Documentation
 
-Please follow [this link](./docs/API.md).
+Please follow [this link](https://makeomatic.github.com/ms-payments/docs/API.html).
 
 ## Tests
 
