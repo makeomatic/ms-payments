@@ -18,7 +18,7 @@
     "release": "yarn --frozen-lockfile && yarn semantic-release",
     "postinstall": "patch-package",
     "docs": "rimraf .apidoc .gh_pages && apidoc -i ./src -o ./.apidoc && mdoc-markdown && cp README.md .gh-pages/",
-    "publish-docs": "gh-pages -d .gh-pages"
+    "docs:deploy": "gh-pages -d .gh-pages"
   },
   "repository": {
     "type": "git",

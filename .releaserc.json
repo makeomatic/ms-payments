@@ -4,10 +4,12 @@
     "@semantic-release/changelog",
     "@semantic-release/npm",
     { "path": "@semantic-release/exec", "cmd": "yarn docker-release" },
+    { "path": "@semantic-release/exec", "cmd": "yarn docs" },
     "@semantic-release/git"
   ],
   "publish": [
     "@semantic-release/npm",
+    { "path": "@semantic-release/exec", "cmd": "yarn docs:deploy" },
     "@semantic-release/github"
   ],
   "analyzeCommits": {
