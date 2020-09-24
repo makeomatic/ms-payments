@@ -111,7 +111,7 @@ describe('Transactions suite', function TransactionsSuite() {
       assert.equal(transactions.page, 1);
       assert.equal(transactions.pages, 1);
       assert.equal(transactions.cursor, 10);
-      console.debug('transactions', require('util').inspect({ transactions }, { depth: null, colors: true }));
+
       // transaction data
       const [tx] = transactions.items;
 
