@@ -1,3 +1,5 @@
+## [8.5.1](https://github.com/makeomatic/ms-payments/compare/v8.5.0...v8.5.1) (2020-09-25)
+
 # [8.5.0](https://github.com/makeomatic/ms-payments/compare/v8.4.1...v8.5.0) (2020-09-25)
 
 
