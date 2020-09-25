@@ -1,0 +1,5 @@
+{
+  "$id": "response.sale.get",
+  "title": "Sale information",
+  "$ref": "response.common.sale#"
+}

@@ -1,12 +1,13 @@
 {
-	"$id": "plan",
+  "$id": "plan",
+  "title": "[common] Payment plan object",
 	"type": "object",
 	"required": ["name", "description", "type", "payment_definitions"],
 	"properties": {
 		"id":                   { "type": "string", "minLength": 1 },
 		"name":                 { "type": "string", "minLength": 1 },
 		"description":          { "type": "string", "minLength": 1 },
-		"type":                 { "type": "string", "minLength": 1, "enum": ["fixed", "infinite"] },
+		"type":                 { "$ref": "#/definitions/type" },
 		"state":                { "type": "string", "minLength": 1 },
 		"create_time":          { "type": "string", "minLength": 1 },
 		"update_time":          { "type": "string", "minLength": 1 },
@@ -17,6 +18,7 @@
 	},
   "definitions": {
     "meta": {
+      "description": "Variable metadata object",
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/feature"
@@ -41,6 +43,11 @@
           "description": "0/1 for boolean and any other number to compare with for number type"
         }
       }
+    },
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "enum": ["fixed", "infinite", "FIXED", "INFINITE"]
     }
   }
 }

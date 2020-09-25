@@ -1,0 +1,16 @@
+{
+  "$id": "response.sale.createDynamic",
+  "title": "Create dynamic sale response",
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "url": {
+      "type": "string"
+    },
+    "sale": {
+      "$ref": "response.common.sale#"
+    }
+  }
+}

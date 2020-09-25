@@ -1,5 +1,6 @@
 {
   "$id":"sale",
+  "title": "[common] Sale object",
   "type":"object",
   "required":[
     "intent",
@@ -23,6 +24,7 @@
       "$ref":"common#/definitions/payer"
     },
     "transactions":{
+      "description": "Transactions list",
       "type":"array",
       "items":{
         "type":"object",

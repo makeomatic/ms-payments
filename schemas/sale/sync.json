@@ -1,5 +1,6 @@
 {
   "$id": "sale.sync",
+  "title": "sale.sync",
   "type": "object",
   "additionalProperties": false,
   "properties": {

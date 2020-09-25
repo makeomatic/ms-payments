@@ -7,6 +7,17 @@ const key = require('../../redis-key');
 const { remapState } = require('../../utils/transactions');
 const { deserialize } = require('../../utils/redis');
 
+/**
+ * @api {amqp} <prefix>.sale.get Get sale
+ * @apiVersion 1.0.0
+ * @apiName saleGet
+ * @apiGroup Sale
+ *
+ * @apiDescription Returns sale information
+ *
+ * @apiSchema {jsonschema=sale/get.json} apiRequest
+ * @apiSchema {jsonschema=response/sale/get.json} apiResponse
+ */
 function saleGet({ params: opts }) {
   const { redis } = this;
   const { owner, id } = opts;

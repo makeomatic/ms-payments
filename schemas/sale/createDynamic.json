@@ -1,5 +1,6 @@
 {
   "$id": "sale.createDynamic",
+  "title": "sale.createDynamic",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -21,47 +22,6 @@
       "type": "integer",
       "const": 2
     },
-    "cart": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "id",
-        "shipping_type",
-        "shipping_price",
-        "printing_price",
-        "service_price",
-        "user_price"
-      ],
-      "properties": {
-        "id": {
-          "type": "string",
-          "minLength": 1
-        },
-        "shipping_type": {
-          "type": "string",
-          "minLength": 1
-        },
-        "shipping_price": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 999999
-        },
-        "printing_price": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 999999
-        },
-        "service_price": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 999999
-        },
-        "user_price": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 999999
-        }
-      }
-    }
+    "cart": { "$ref": "common#/definitions/cart" }
   }
 }

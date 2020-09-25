@@ -1,0 +1,43 @@
+{
+  "$id": "response.common.transaction-info",
+  "title": "[response.common] Transaction information object",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "transaction_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    },
+    "transaction_type": {
+      "type": "string"
+    },
+    "payer_email": {
+      "type": "string",
+      "format": "email"
+    },
+    "payer_name": {
+      "type": "string"
+    },
+    "time_stamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "time_zone": {
+      "type": "string"
+    },
+    "amount": {
+      "title": "Amount",
+      "$ref": "response.common#/definitions/amount"
+    },
+    "fee_amount": {
+      "title": "Fee amount",
+      "$ref": "response.common#/definitions/amount"
+    },
+    "net_amount": {
+      "title": "Net amount",
+      "$ref": "response.common#/definitions/amount"
+    }
+  }
+}

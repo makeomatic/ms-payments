@@ -8,8 +8,15 @@ const key = require('../../redis-key');
 const { TRANSACTIONS_INDEX, TRANSACTIONS_COMMON_DATA } = require('../../constants');
 
 /**
- * List files
- * @return {Promise}
+ * @api {amqp} <prefix>.transaction.aggregate Aggregate transaction
+ * @apiVersion 1.0.0
+ * @apiName transactionAggreggate
+ * @apiGroup Transaction
+ *
+ * @apiDescription Performs aggregate operation on filtered transactions
+ *
+ * @apiSchema {jsonschema=transaction/aggregate.json} apiRequest
+ * @apiSchema {jsonschema=response/transaction/aggregate.json} apiResponse
  */
 function listAggregateTransactions({ params }) {
   const { redis, config } = this;

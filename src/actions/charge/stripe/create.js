@@ -49,6 +49,17 @@ async function createStripeCharge(service, charge, source, params) {
   }
 }
 
+/**
+ * @api {http-post} <prefix>.charge.stripe.create Stripe - Create charge
+ * @apiVersion 1.0.0
+ * @apiName chargeStripeCreate
+ * @apiGroup Charge.Stripe
+ *
+ * @apiDescription Creates new Stripe charge
+ *
+ * @apiSchema {jsonschema=charge/stripe/create.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/stripe/create.json} apiResponse
+ */
 async function createStripeChargeAction(service, request) {
   strictEqual(service.config.stripe.enabled, true, notEnabled);
 

@@ -127,7 +127,17 @@ function sendCartEmail({ sale, cart, parsedSale }) {
     });
 }
 
-// Action itself
+/**
+ * @api {amqp} <prefix>.sale.execute Execute sale
+ * @apiVersion 1.0.0
+ * @apiName saleExecute
+ * @apiGroup Sale
+ *
+ * @apiDescription Executes sale
+ *
+ * @apiSchema {jsonschema=sale/create.json} apiRequest
+ * @apiSchema {jsonschema=response/sale/create.json} apiResponse
+ */
 function saleExecute({ params: message }) {
   return Promise
     .bind(this, message)

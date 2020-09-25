@@ -37,6 +37,15 @@ async function createPaypalChargeAction(service, request) {
   return chargeResponse(charge, { owner: alias }, { paypal: { approvalUrl, paymentId: sourceId } });
 }
 
+/**
+ * @api {http-post} <prefix>.charge.paypal.create Paypal - Create Paypal charge
+ * @apiVersion 1.0.0
+ * @apiName chargePaypalCreate
+ * @apiGroup Charge.Paypal
+ *
+ * @apiSchema {jsonschema=charge/paypal/create.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/paypal/create.json} apiResponse
+ */
 async function wrappedAction(request) {
   const { id: ownerId } = request.auth.credentials;
 

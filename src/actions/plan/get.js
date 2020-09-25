@@ -45,17 +45,15 @@ function retrievePlan(redis, id, fetchParent = false) {
 }
 
 /**
- * @api {amqp} <prefix>.plan.get Retrieves Plan by its Id.
+ * @api {amqp, internal} <prefix>.plan.get Get Plan
  * @apiVersion 1.0.0
- * @apiName retrievePlan
+ * @apiName planGet
  * @apiGroup Plan
  *
  * @apiDescription Retrieves plan or parent plan by its id.
  *
- * @apiParam (Payload_v1) {String} params - id of the plan
- * @apiParam (Payload_v2) {Object} params - data container
- * @apiParam (Payload_v2) {String} params.id - id of the plan
- * @apiParam (Payload_v2) {Boolean} params.fetchParent - whether to try retrieving parent plan
+ * @apiSchema {jsonschema=plan/get.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/get.json} apiResponse
  */
 function planGet({ params }) {
   let id;

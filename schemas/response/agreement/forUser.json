@@ -1,0 +1,6 @@
+{
+  "$id": "response.agreement.forUser",
+  "type": "object",
+  "title": "agreement.forUser response",
+  "$ref": "response.agreement.get#"
+}

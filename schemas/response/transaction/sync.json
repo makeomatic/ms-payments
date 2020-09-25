@@ -1,0 +1,17 @@
+{
+  "$id": "response.transaction.sync",
+  "title": "Transaction sync response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "agreement": {
+      "$ref": "response.common.agreement#"
+    },
+    "transactions": {
+      "type": "array",
+      "items": {
+        "$ref": "response.common.transaction-info#"
+      }
+    }
+  }
+}

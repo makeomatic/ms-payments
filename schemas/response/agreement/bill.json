@@ -1,0 +1,6 @@
+{
+  "$id": "response.agreement.bill",
+  "title": "agreement.bill action response",
+  "description": "String as status of the operation",
+  "type": "string"
+}

@@ -1,0 +1,36 @@
+{
+  "$id": "response.common.transaction-common",
+  "title": "[response.common] Transaction common information object",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "type": {
+      "type": "number"
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "agreementId": {
+      "type": "string"
+    },
+    "payer": {
+      "type": "string",
+      "format": "email"
+    },
+    "date": {
+      "type": "number"
+    },
+    "amount": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string"
+    }
+  }
+}

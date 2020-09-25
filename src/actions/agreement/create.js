@@ -157,19 +157,15 @@ function setToken(response) {
 }
 
 /**
- * @api {amqp} <prefix>.agreement.create Creates agreement for approval
+ * @api {amqp} <prefix>.agreement.create Create agreement
  * @apiVersion 1.0.0
  * @apiName createAgreement
  * @apiGroup Agreement
  *
  * @apiDescription Creates agreement for approval through paypal and sends link back
  *
- * @apiParam (Payload) {Object} agreement agreement data
- * @apiParam (Payload) {Object} agreement.plan plan data
- * @apiParam (Payload) {String} agreement.plan.id plan id
- * @apiParam (Payload) {String} owner user, for which we create the agreement for
- * @apiParam (Payload) {Number{0..100}=0} [trialDiscount] defines discount for a trial period
- * @apiParam (Payload) {Number{0..}=12} [trialCycle] cycle for trial payments
+ * @apiSchema {jsonschema=agreement/create.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/create.json} apiResponse
  */
 function agreementCreate({ log, params }) {
   const { config, redis } = this;

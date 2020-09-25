@@ -1,5 +1,6 @@
 {
   "$id": "subscription",
+  "title": "[common] Subscription object",
   "type": "object",
   "additionalProperties": false,
   "required": [

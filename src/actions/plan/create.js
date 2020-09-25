@@ -134,6 +134,17 @@ function createSaveToRedis(redis, message) {
 }
 
 /**
+ * @api {amqp} <prefix>.plan.create Create plan
+ * @apiVersion 1.0.0
+ * @apiName planCreate
+ * @apiGroup Plan
+ *
+ * @apiDescription Creates new plan
+ *
+ * @apiSchema {jsonschema=plan/create.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/create.json} apiResponse
+ */
+/**
  * Creates paypal plan with a special case for a free plan
  * @param  {Object} message
  * @return {Promise}

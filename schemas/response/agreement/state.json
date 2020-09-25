@@ -1,0 +1,10 @@
+{
+  "$id": "response.agreement.state",
+  "type": "string",
+  "title": "agreement.state response",
+  "enum": [
+    "suspend",
+    "reactivate",
+    "cancel"
+  ]
+}

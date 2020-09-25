@@ -1,5 +1,6 @@
 {
   "$id": "sale.create",
+  "title": "sale.create",
   "type": "object",
   "additionalProperties": false,
   "required": [

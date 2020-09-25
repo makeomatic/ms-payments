@@ -1,0 +1,149 @@
+{
+  "$id": "response.common",
+  "title": "[response.common] Definitions",
+  "definitions": {
+    "payment_definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1,
+          "enum": [
+            "trial",
+            "regular",
+            "TRIAL",
+            "REGULAR"
+          ]
+        },
+        "frequency_interval": {
+          "type": "string",
+          "minLength": 1
+        },
+        "frequency": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cycles": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "$ref": "common#/definitions/currency"
+        },
+        "charge_models": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "type",
+              "amount"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "amount": {
+                "$ref": "common#/definitions/currency"
+              }
+            }
+          }
+        }
+      }
+    },
+    "merchant_preferences": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "setup_fee": {
+          "$ref": "common#/definitions/currency"
+        },
+        "cancel_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "return_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notify_url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "max_fail_attempts": {
+          "type": "string",
+          "minLength": 1
+        },
+        "auto_bill_amount": {
+          "type": "string",
+          "minLength": 1
+        },
+        "initial_fail_amount_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "accepted_payment_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "char_set": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "amount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "currency": {
+          "type": "string"
+        },
+        "value": {
+          "type": ["number", "string"]
+        }
+      }
+    },
+    "transaction_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "quantity": {
+          "type": ["number", "string"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "price": {
+          "type": "string"
+        },
+        "tax": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

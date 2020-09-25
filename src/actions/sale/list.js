@@ -6,6 +6,17 @@ const { processResult, mapResult } = require('../../list-utils');
 const { SALES_ID_INDEX, SALES_DATA_PREFIX } = require('../../constants');
 const key = require('../../redis-key');
 
+/**
+ * @api {amqp} <prefix>.sale.list List sales
+ * @apiVersion 1.0.0
+ * @apiName saleList
+ * @apiGroup Sale
+ *
+ * @apiDescription Returns list of the sales
+ *
+ * @apiSchema {jsonschema=sale/list.json} apiRequest
+ * @apiSchema {jsonschema=response/sale/list.json} apiResponse
+ */
 function saleList({ params: opts }) {
   const { redis } = this;
   const { filter, criteria } = opts;

@@ -231,6 +231,17 @@ async function verifyToken() {
   return true;
 }
 
+/**
+ * @api {amqp} <prefix>.agreement.execute Executes agreement for approval
+ * @apiVersion 1.0.0
+ * @apiName executeAgreement
+ * @apiGroup Agreement
+ *
+ * @apiDescription Performs agreement approval through paypal and sends link back
+  *
+ * @apiSchema {jsonschema=agreement/execute.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/execute.json} apiResponse
+ */
 function agreementExecute({ params }) {
   const { config } = this;
   const { token } = params;

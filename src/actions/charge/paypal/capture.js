@@ -49,6 +49,17 @@ async function paypalCaptureAction(service, request) {
   return chargeResponse(updatedCharge, { owner: updatedCharge.owner });
 }
 
+/**
+ * @api {amqp} <prefix>.charge.paypal.capture Paypal - Capture paypal funds
+ * @apiVersion 1.0.0
+ * @apiName chargePaypalCreate
+ * @apiGroup Charge.Paypal
+ *
+ * @apiDescription Captures requested `charge`
+ *
+ * @apiSchema {jsonschema=charge/paypal/capture.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/paypal/capture.json} apiResponse
+ */
 async function wrappedAction(request) {
   // NOTE: lock is the same as in void so that we
   // cant try to void/capture the same payment at the same time

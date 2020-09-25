@@ -222,7 +222,15 @@ const saveToRedis = async (ctx, agreement, subs) => {
   return 'OK';
 };
 
-// check agreement bill
+/**
+ * @api {AMQP,internal} agreement.bill Bill agreement
+ * @apiVersion 1.0.0
+ * @apiName billAgreement
+ * @apiGroup Agreement
+ * @apiDescription Bills requested agreement
+ * @apiSchema {jsonschema=agreement/bill.json} apiRequest
+ * @apiSchema {jsonschema=response/agreement/bill.json} apiResponse
+ */
 async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username } = params;
   const { config } = this;

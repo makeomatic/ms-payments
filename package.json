@@ -16,7 +16,9 @@
     "semantic-release": "semantic-release",
     "docker-release": "mdep docker release",
     "release": "yarn --frozen-lockfile && yarn semantic-release",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "docs": "rimraf .apidoc .gh-pages && apidoc -i ./src -o ./.apidoc && mdoc-markdown && cp README.md .gh-pages/",
+    "docs:deploy": "gh-pages -d .gh-pages"
   },
   "repository": {
     "type": "git",
@@ -33,10 +35,11 @@
   "homepage": "https://github.com/makeomatic/ms-payments#readme",
   "dependencies": {
     "@hapi/hapi": "^19.1.1",
-    "@microfleet/core": "^17.3.2",
+    "@microfleet/core": "^17.5.3",
     "@microfleet/transport-amqp": "^15.2.0",
     "@microfleet/validation": "^9.0.1",
     "@sentry/node": "^5.17.0",
+    "apidoc": "^0.25.0",
     "bluebird": "^3.7.2",
     "bluebird-retry": "^0.11.0",
     "bytes": "^3.0.0",
@@ -72,6 +75,8 @@
     "@babel/plugin-transform-strict-mode": "^7.10.1",
     "@babel/register": "^7.10.1",
     "@makeomatic/deploy": "^10.2.1",
+    "@microfleet/apidoc-plugin-json-schema": "^0.1.3",
+    "@microfleet/mdoc": "^0.1.4",
     "@semantic-release/changelog": "^5.0.1",
     "@semantic-release/exec": "^5.0.0",
     "@semantic-release/git": "^9.0.0",
@@ -84,6 +89,7 @@
     "eslint-plugin-mocha": "^7.0.1",
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-unicorn": "^20.1.0",
+    "gh-pages": "^3.1.0",
     "mkdirp": "^1.0.4",
     "mocha": "^7.2.0",
     "nyc": "^15.1.0",

@@ -1,5 +1,6 @@
 {
   "$id": "sale.get",
+  "title": "sale.get",
   "type": "object",
   "required": [
     "id"

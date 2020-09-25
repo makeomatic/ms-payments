@@ -1,0 +1,31 @@
+{
+  "$id": "response.charge.get",
+  "title": "Charge",
+  "type": "object",
+  "properties": {
+    "data": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "type": "number"
+        },
+        "createAt": {
+          "type": "string",
+          "format": "date"
+        },
+        "owner": {
+          "$ref": "common#/definitions/owner"
+        },
+        "failReason": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

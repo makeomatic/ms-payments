@@ -1,0 +1,28 @@
+{
+  "$id": "response.agreement.get",
+  "type": "object",
+  "title": "`agreement.get` action response",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 4
+    },
+    "owner": {
+      "$ref": "common#/definitions/owner"
+    },
+    "state": {
+      "type": "string",
+      "description": "The state of the agreement"
+    },
+    "token": {
+      "type": "string",
+      "minLength": 10
+    },
+    "plan": {
+      "$ref": "common#/definitions/planId"
+    },
+    "agreement": {
+      "$ref": "response.common.agreement#"
+    }
+  }
+}

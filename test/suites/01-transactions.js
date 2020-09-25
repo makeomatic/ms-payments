@@ -106,8 +106,8 @@ describe('Transactions suite', function TransactionsSuite() {
       const transactions = await dispatch(listTransaction, {});
 
       // common props
-      // could be 1 -- updating or 2 - completed + created
-      assert(transactions.items.length > 0 && transactions.items.length <= 2);
+      // could be 1 -- updating or 2 - completed + created or 2 updated ))))
+      assert(transactions.items.length > 0 && transactions.items.length <= 2, `Got 0 < ${transactions.items.length} <= 2`);
       assert.equal(transactions.page, 1);
       assert.equal(transactions.pages, 1);
       assert.equal(transactions.cursor, 10);
@@ -127,8 +127,9 @@ describe('Transactions suite', function TransactionsSuite() {
       let syncedTx = 0;
       while (syncedTx === 0) {
         // eslint-disable-next-line no-await-in-loop
-        syncedTx = await dispatch(syncUpdatedTx, '');
+        syncedTx = await dispatch(syncUpdatedTx, {});
         if (syncedTx === 0) {
+          payments.log.debug({ syncedTx }, 'waiting for transaction status update');
           // eslint-disable-next-line no-await-in-loop
           await Promise.delay(500);
         }

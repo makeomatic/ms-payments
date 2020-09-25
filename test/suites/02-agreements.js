@@ -5,7 +5,6 @@ const conf = require('../../src/conf');
 const { duration, simpleDispatcher } = require('../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
 
-
 describe('Agreements suite', function AgreementSuite() {
   const Payments = require('../../src');
   const {

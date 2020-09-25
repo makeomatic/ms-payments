@@ -5,6 +5,7 @@
     "minLength": 1,
     "maxLength": 100
   }, {
+    "description": "Plan object",
     "type": "object",
     "required": ["id"],
     "properties": {

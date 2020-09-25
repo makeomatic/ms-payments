@@ -1,0 +1,4 @@
+{
+  "$id": "response.balance.decrement",
+  "type": "number"
+}

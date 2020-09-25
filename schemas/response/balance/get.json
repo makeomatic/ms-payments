@@ -1,0 +1,31 @@
+{
+  "$id": "response.balance.get",
+  "title": "balance.get response",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "description": "Balance information",
+      "type":"object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "balance"
+        },
+        "id": {
+          "$ref": "common#/definitions/owner"
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "value": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    }
+  }
+}

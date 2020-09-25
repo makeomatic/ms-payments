@@ -163,7 +163,17 @@ async function saveToRedis(ctx, owner, paypalData, oldAgreement) {
 }
 
 /**
- * Syncs transactions for agreements
+ * @api {amqp} <prefix>.transaction.sync Sync transactions
+ * @apiVersion 1.0.0
+ * @apiName transactionSync
+ * @apiGroup Transaction
+ *
+ * @apiDescription Syncs transactions for agreement
+ *
+ * @apiSchema {jsonschema=transaction/sync.json} apiRequest
+ * @apiSchema {jsonschema=response/transaction/sync.json} apiResponse
+ */
+/**
  * @param  {Object} params
  * @return {Promise}
  */

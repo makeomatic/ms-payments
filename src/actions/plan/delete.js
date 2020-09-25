@@ -39,6 +39,17 @@ async function actualDelete(id) {
   await deleteFromRedis(id, redis);
 }
 
+/**
+ * @api {amqp} <prefix>.plan.delete Delete plan
+ * @apiVersion 1.0.0
+ * @apiName planDelete
+ * @apiGroup Plan
+ *
+ * @apiDescription Deletes plan
+ *
+ * @apiSchema {jsonschema=plan/create.json} apiRequest
+ * @apiSchema {jsonschema=response/plan/create.json} apiResponse
+ */
 function planDelete({ params: id }) {
   if (id === FREE_PLAN_ID) {
     return Promise.reject(new HttpStatusError(400, 'unable to delete free plan'));

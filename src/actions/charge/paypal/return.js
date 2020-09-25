@@ -37,6 +37,17 @@ async function paypalReturnAction(service, request) {
   return chargeResponse(updatedCharge, { owner: updatedCharge.owner }, { paypal: { payer: paypalPayment.payer } });
 }
 
+/**
+ * @api {http-get} <prefix>.charge.paypal.return Paypal - Return Paypal funds
+ * @apiVersion 1.0.0
+ * @apiName chargePaypalReturn
+ * @apiGroup Charge.Paypal
+ *
+ * @apiDescription Returns funds
+ *
+ * @apiSchema {jsonschema=charge/paypal/return.json} apiRequest
+ * @apiSchema {jsonschema=response/charge/paypal/return.json} apiResponse
+ */
 async function wrappedAction(request) {
   return Promise
     .using(this, request, acquireLock(

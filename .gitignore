@@ -33,6 +33,7 @@ node_modules
 lib
 .env
 docs
+.gh-pages
 .vagrant
 .babel-cache
 compiled-test

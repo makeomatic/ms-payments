@@ -1,0 +1,29 @@
+{
+  "$id": "response.transaction.common",
+  "type": "object",
+  "title": "transaction.common response",
+  "required": [
+    "items",
+    "cursor",
+    "page",
+    "pages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "$ref": "response.common.transaction-common#"
+      }
+    },
+    "cursor": {
+      "type": "number"
+    },
+    "page": {
+      "type": "number"
+    },
+    "pages": {
+      "type": "number"
+    }
+  }
+}

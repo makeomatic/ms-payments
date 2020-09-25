@@ -4,6 +4,7 @@
   "auto_compose": true,
   "with_local_compose": true,
   "tester_flavour": "chrome-tester",
+  "sort": true,
   "services": [
     "redisCluster",
     "redisSentinel",
