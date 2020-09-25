@@ -1,3 +1,10 @@
+# [8.5.0](https://github.com/makeomatic/ms-payments/compare/v8.4.1...v8.5.0) (2020-09-25)
+
+
+### Features
+
+* response docs ([#118](https://github.com/makeomatic/ms-payments/issues/118)) ([769bfac](https://github.com/makeomatic/ms-payments/commit/769bfac7c5548197fbccf0b318f54a8642f6df7b))
+
 ## [8.4.1](https://github.com/makeomatic/ms-payments/compare/v8.4.0...v8.4.1) (2020-08-31)
 
 
