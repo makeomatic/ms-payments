@@ -1,12 +1,11 @@
 const assert = require('assert');
-const Promise = require('bluebird');
 const { inspectPromise } = require('@makeomatic/deploy');
-const { duration, simpleDispatcher, clearRedis } = require('../utils');
+const { duration, simpleDispatcher } = require('../../utils');
 
 describe('Migrations suite', function PlansSuite() {
-  const Payments = require('../../src');
-  const { testPlanData, freePlanData } = require('../data/paypal');
-  const planTitlesMigration = require('../../src/migrations/plan-titles');
+  const Payments = require('../../../src');
+  const { testPlanData } = require('../../data/paypal');
+  const planTitlesMigration = require('../../../src/migrations/plan-titles');
 
   this.timeout(duration);
 

@@ -5,13 +5,13 @@ const path = require('path');
 const replace = require('lodash/replace');
 const { inspectPromise } = require('@makeomatic/deploy');
 
-const { createSignature } = require('../helpers/stripe');
-const { getToken, makeHeader } = require('../helpers/auth');
-const { isUUIDv4 } = require('../helpers/uuid');
+const { createSignature } = require('../../helpers/stripe');
+const { getToken, makeHeader } = require('../../helpers/auth');
+const { isUUIDv4 } = require('../../helpers/uuid');
 
 describe('stripe', function suite() {
-  const Payments = require('../../src');
-  const Charge = require('../../src/utils/charge');
+  const Payments = require('../../../src');
+  const Charge = require('../../../src/utils/charge');
   const service = new Payments({ stripe: { enabled: true, webhook: { enabled: true } } });
   let successChargeId;
   let failChargeId;
@@ -72,7 +72,7 @@ describe('stripe', function suite() {
     it('should complete charge and increase balance', async () => {
       const secret = await service.redis.hget('stripe:webhook:charge', 'secret');
       const payload = replace(
-        fs.readFileSync(path.resolve(__dirname, '../helpers/mocks/stripe-webhook-successed.json'), 'utf8'),
+        fs.readFileSync(path.resolve(__dirname, '../../helpers/mocks/stripe-webhook-successed.json'), 'utf8'),
         /{{INTERNAL_ID_PLACEHOLDER}}/g,
         successChargeId
       );
@@ -144,7 +144,7 @@ describe('stripe', function suite() {
     it('should fail charge', async () => {
       const secret = await service.redis.hget('stripe:webhook:charge', 'secret');
       const payload = replace(
-        fs.readFileSync(path.resolve(__dirname, '../helpers/mocks/stripe-webhook-failed.json'), 'utf8'),
+        fs.readFileSync(path.resolve(__dirname, '../../helpers/mocks/stripe-webhook-failed.json'), 'utf8'),
         /{{INTERNAL_ID_PLACEHOLDER}}/g,
         failChargeId
       );

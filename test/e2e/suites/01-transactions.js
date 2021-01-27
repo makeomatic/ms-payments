@@ -4,10 +4,10 @@ const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
 
 describe('Transactions suite', function TransactionsSuite() {
-  const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
-  const { duration, simpleDispatcher } = require('../utils');
-  const { testAgreementData, testPlanData } = require('../data/paypal');
-  const Payments = require('../../src');
+  const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
+  const { duration, simpleDispatcher } = require('../../utils');
+  const { testAgreementData, testPlanData } = require('../../data/paypal');
+  const Payments = require('../../../src');
 
   const syncTransaction = 'payments.transaction.sync';
   const listTransaction = 'payments.transaction.list';

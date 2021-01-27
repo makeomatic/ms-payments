@@ -5,6 +5,7 @@
   "with_local_compose": true,
   "tester_flavour": "chrome-tester",
   "sort": true,
+  "tests": "./test/e2e/**/*.js",
   "services": [
     "redisCluster",
     "redisSentinel",

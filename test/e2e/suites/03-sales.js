@@ -2,13 +2,13 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const sinon = require('sinon');
 const { inspectPromise } = require('@makeomatic/deploy');
-const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
-const { duration, simpleDispatcher } = require('../utils');
+const { initChrome, closeChrome, approveSale } = require('../../helpers/chrome');
+const { duration, simpleDispatcher } = require('../../utils');
 
 describe('Sales suite', function SalesSuite() {
-  const Payments = require('../../src');
+  const Payments = require('../../../src');
 
-  const { testSaleData, testDynamicSaleData } = require('../data/paypal');
+  const { testSaleData, testDynamicSaleData } = require('../../data/paypal');
   const createSale = 'payments.sale.create';
   const createDynamicSale = 'payments.sale.createDynamic';
   const executeSale = 'payments.sale.execute';

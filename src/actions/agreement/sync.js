@@ -82,7 +82,6 @@ async function getPendingAgreements(ctx, query, opts = {}) {
   return null;
 }
 
-
 // 3. bill users
 async function billUser(ctx, user) {
   const meta = user.metadata[ctx.audience];
@@ -147,7 +146,6 @@ async function agreementSync({ params = {} }) {
       },
     }),
   ]);
-
 
   log.info({
     pendingAgreements: Array.from(ctx.pendingAgreements),
