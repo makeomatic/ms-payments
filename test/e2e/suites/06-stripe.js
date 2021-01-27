@@ -144,7 +144,7 @@ describe('stripe', function suite() {
     it('should fail charge', async () => {
       const secret = await service.redis.hget('stripe:webhook:charge', 'secret');
       const payload = replace(
-        fs.readFileSync(path.resolve(__dirname, '../helpers/mocks/stripe-webhook-failed.json'), 'utf8'),
+        fs.readFileSync(path.resolve(__dirname, '../../helpers/mocks/stripe-webhook-failed.json'), 'utf8'),
         /{{INTERNAL_ID_PLACEHOLDER}}/g,
         failChargeId
       );
