@@ -1,12 +1,12 @@
 const assert = require('assert');
 const request = require('request-promise');
 
-const randomOwner = require('../helpers/random-owner');
-const { getToken, makeHeader } = require('../helpers/auth');
+const randomOwner = require('../../helpers/random-owner');
+const { getToken, makeHeader } = require('../../helpers/auth');
 
 describe('balance actions', function suite() {
-  const Payments = require('../../src');
-  const Balance = require('../../src/utils/balance');
+  const Payments = require('../../../src');
+  const Balance = require('../../../src/utils/balance');
   const service = new Payments();
 
   before('start service', () => service.connect());

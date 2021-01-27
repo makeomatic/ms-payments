@@ -5,13 +5,13 @@ const path = require('path');
 const replace = require('lodash/replace');
 const { inspectPromise } = require('@makeomatic/deploy');
 
-const { createSignature } = require('../helpers/stripe');
-const { getToken, makeHeader } = require('../helpers/auth');
-const { isUUIDv4 } = require('../helpers/uuid');
+const { createSignature } = require('../../helpers/stripe');
+const { getToken, makeHeader } = require('../../helpers/auth');
+const { isUUIDv4 } = require('../../helpers/uuid');
 
 describe('stripe', function suite() {
-  const Payments = require('../../src');
-  const Charge = require('../../src/utils/charge');
+  const Payments = require('../../../src');
+  const Charge = require('../../../src/utils/charge');
   const service = new Payments({ stripe: { enabled: true, webhook: { enabled: true } } });
   let successChargeId;
   let failChargeId;

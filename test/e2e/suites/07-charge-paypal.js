@@ -2,13 +2,13 @@ const request = require('request-promise');
 const assert = require('assert');
 
 const { strictEqual } = assert;
-const { getToken, makeHeader } = require('../helpers/auth');
-const { isUUIDv4 } = require('../helpers/uuid');
-const { initChrome, closeChrome, approveSale } = require('../helpers/chrome');
+const { getToken, makeHeader } = require('../../helpers/auth');
+const { isUUIDv4 } = require('../../helpers/uuid');
+const { initChrome, closeChrome, approveSale } = require('../../helpers/chrome');
 
 describe('charge.paypal', function suite() {
-  const Payments = require('../../src');
-  const Charge = require('../../src/utils/charge');
+  const Payments = require('../../../src');
+  const Charge = require('../../../src/utils/charge');
   const service = new Payments();
 
   before('start service', () => service.connect());

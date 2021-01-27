@@ -1,20 +1,20 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const { inspectPromise } = require('@makeomatic/deploy');
-const conf = require('../../src/conf');
-const { duration, simpleDispatcher } = require('../utils');
-const { initChrome, closeChrome, approveSubscription } = require('../helpers/chrome');
+const conf = require('../../../src/conf');
+const { duration, simpleDispatcher } = require('../../utils');
+const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
 
 describe('Agreements suite', function AgreementSuite() {
-  const Payments = require('../../src');
+  const Payments = require('../../../src');
   const {
     agreement: { cancel: billingAgreementCancel },
     handleError,
-  } = require('../../src/utils/paypal');
+  } = require('../../../src/utils/paypal');
 
   const paypalConfig = conf.get('/paypal', { env: process.env.NODE_ENV });
 
-  const { testAgreementData, testPlanData } = require('../data/paypal');
+  const { testAgreementData, testPlanData } = require('../../data/paypal');
 
   const createPlan = 'payments.plan.create';
   const deletePlan = 'payments.plan.delete';

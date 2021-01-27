@@ -6,10 +6,11 @@
   "scripts": {
     "compile": "rimraf ./lib && babel -d ./lib --copy-files ./src",
     "pretest": "rimraf ./ss/*; mkdirp ./ss",
-    "test": "yarn lint && yarn test:e2e",
+    "test": "yarn lint && yarn test:unit && yarn test:e2e",
     "test:e2e:cluster": "mdep test run --docker_compose ./test/docker-compose.cluster.yml",
     "test:e2e:sentinel": "mdep test run --docker_compose ./test/docker-compose.sentinel.yml",
     "test:e2e": "yarn test:e2e:cluster && yarn test:e2e:sentinel",
+    "test:unit": "mocha --recursive ./test/unit",
     "lint": "eslint ./src ./test",
     "start": "mfleet",
     "prepublishOnly": "yarn compile",

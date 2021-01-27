@@ -2,11 +2,11 @@ const assert = require('assert');
 const Promise = require('bluebird');
 const find = require('lodash/find');
 const { inspectPromise } = require('@makeomatic/deploy');
-const { duration, simpleDispatcher } = require('../utils');
+const { duration, simpleDispatcher } = require('../../utils');
 
 describe('Plans suite', function PlansSuite() {
-  const Payments = require('../../src');
-  const { testPlanData, freePlanData } = require('../data/paypal');
+  const Payments = require('../../../src');
+  const { testPlanData, freePlanData } = require('../../data/paypal');
 
   this.timeout(duration);
 
