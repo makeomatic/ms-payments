@@ -72,7 +72,7 @@ describe('stripe', function suite() {
     it('should complete charge and increase balance', async () => {
       const secret = await service.redis.hget('stripe:webhook:charge', 'secret');
       const payload = replace(
-        fs.readFileSync(path.resolve(__dirname, '../helpers/mocks/stripe-webhook-successed.json'), 'utf8'),
+        fs.readFileSync(path.resolve(__dirname, '../../helpers/mocks/stripe-webhook-successed.json'), 'utf8'),
         /{{INTERNAL_ID_PLACEHOLDER}}/g,
         successChargeId
       );
