@@ -36,12 +36,13 @@ const initPublisherForSubscriber = (publisher, log, message) => async (subscribe
     publishPromise = retry(publisher.publish, { context: publisher, args, ...retryOptions });
   }
 
-  return publishPromise
-    .catch((e) => {
-      const wrap = new PublishingError(e);
-      log.error({ err: wrap.inner_error }, wrap.message);
-      throw wrap;
-    });
+  try {
+    return await publishPromise;
+  } catch (e) {
+    const wrap = new PublishingError(e);
+    log.error({ err: wrap.inner_error }, wrap.message);
+    throw wrap;
+  }
 };
 
 /**

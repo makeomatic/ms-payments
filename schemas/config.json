@@ -12,8 +12,8 @@
         "events": {
           "type": "object",
           "description": "Event names to subscriptions",
-          "patternProperties": {
-            "^.*$": { "$ref": "payment-event-subscription" }
+          "additionalProperties": {
+            "$ref": "payment-event-subscription"
           },
           "default": {}
         }
