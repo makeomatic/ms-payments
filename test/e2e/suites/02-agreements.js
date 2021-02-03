@@ -1,11 +1,13 @@
 const Promise = require('bluebird');
 const assert = require('assert');
+const sinon = require('sinon');
 const { inspectPromise } = require('@makeomatic/deploy');
 const conf = require('../../../src/conf');
 const { duration, simpleDispatcher } = require('../../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
 
 describe('Agreements suite', function AgreementSuite() {
+  const sandbox = sinon.createSandbox();
   const Payments = require('../../../src');
   const {
     agreement: { cancel: billingAgreementCancel },
@@ -25,6 +27,7 @@ describe('Agreements suite', function AgreementSuite() {
   const listAgreement = 'payments.agreement.list';
   const forUserAgreement = 'payments.agreement.forUser';
   const syncAgreements = 'payments.agreement.sync';
+  const billAgreement = 'payments.agreement.bill';
 
   let billingAgreement;
   let planId;
@@ -53,6 +56,10 @@ describe('Agreements suite', function AgreementSuite() {
 
   beforeEach('init Chrome', initChrome);
   afterEach('close chrome', closeChrome);
+  afterEach('reset sandbox', () => {
+    sandbox.reset();
+    sandbox.restore();
+  });
 
   describe('unit tests', function UnitSuite() {
     it('Should fail to create agreement on invalid schema', async () => {
@@ -102,6 +109,38 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       billingAgreement.id = result.id;
+    });
+
+    // sorry for being verbose, will deal with it later
+    it('should bill agreement', async () => {
+      const { id } = billingAgreement;
+      // stub internal action call
+      const publishStub = sandbox.stub(payments.amqp, 'publish');
+      publishStub
+        .withArgs('payments.hook.publish', sinon.match({
+          event: 'paypal:agreements:billing:success',
+          payload: { cyclesBilled: 0, agreement: { id, owner: 'test@test.ru', status: 'active' } },
+        }))
+        .resolves();
+      publishStub.callThrough();
+
+      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+
+      assert.strictEqual(result, 'OK');
+
+      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+      assert.strictEqual(hookPublishCalls.length, 1);
+      sinon.assert.calledWithExactly(hookPublishCalls[0], 'payments.hook.publish', sinon.match({
+        event: 'paypal:agreements:billing:success',
+        payload: sinon.match({
+          cyclesBilled: 0,
+          agreement: sinon.match({
+            id,
+            owner: 'test@test.ru',
+            status: 'active',
+          }),
+        }),
+      }));
     });
 
     it('Should create a trial agreement', async () => {
@@ -157,6 +196,35 @@ describe('Agreements suite', function AgreementSuite() {
     // this test is perf
     it('Should cancel agreement', () => {
       return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
+    });
+
+    // sorry for being verbose, will deal with it later
+    it('should fail when billing is not permitted', async () => {
+      const { id } = billingAgreement;
+      const publishStub = sandbox.stub(payments.amqp, 'publish');
+      publishStub
+        .withArgs('payments.hook.publish', sinon.match({
+          event: 'paypal:agreements:billing:failure',
+          payload: sinon.match({
+            error: sinon.match.object,
+            agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
+          }),
+        }))
+        .resolves();
+      publishStub.callThrough();
+
+      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+      assert.strictEqual(result, 'FAIL');
+
+      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+      assert.strictEqual(hookPublishCalls.length, 1);
+      sinon.assert.calledWithExactly(hookPublishCalls[0], 'payments.hook.publish', sinon.match({
+        event: 'paypal:agreements:billing:failure',
+        payload: sinon.match({
+          error: sinon.match({ code: 'agreement-state-forbidden', meta: { state: 'cancelled' } }),
+          agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
+        }),
+      }));
     });
 
     it('Should get free agreement for user after cancelling', async () => {

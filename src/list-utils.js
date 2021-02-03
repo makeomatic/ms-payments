@@ -48,6 +48,7 @@ function hmget(fields, func = passThrough, ctx, defaults) {
     return fields.reduce((acc, field, idx) => {
       const datum = data[idx] || defaults;
       acc[field] = func.call(ctx || this, datum);
+
       return acc;
     }, {});
   };

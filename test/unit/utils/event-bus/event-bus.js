@@ -2,6 +2,7 @@ const assert = require('assert');
 const sinon = require('sinon');
 const { EventBus, error: eventBusError } = require('../../../../src/utils/event-bus');
 const AMQPPublisher = require('../../../../src/utils/event-bus/publisher/amqp');
+const { subscriptions } = require('../../../configs/subscriptions');
 
 describe('Event bus', () => {
   const sandbox = sinon.createSandbox();
@@ -141,5 +142,23 @@ describe('Event bus', () => {
     );
 
     sinon.assert.calledOnceWithExactly(logStub.error, sinon.match({ err: unexpectedError }), sinon.match.string);
+  });
+
+  it('should be able to instantiate from config', () => {
+    const amqpFake = sandbox.fake();
+    const logFake = sandbox.fake();
+    const bus = EventBus.fromParams(amqpFake, subscriptions, logFake);
+
+    assert.ok(bus.subscriptions instanceof Map);
+    assert.strictEqual(bus.subscriptions.size, 2);
+    const success = bus.subscriptions.get('paypal:agreements:billing:success');
+    assert.strictEqual(success.length, 1);
+    assert.strictEqual(success[0].endpoint, 'ms-billing.paypal.agreements.billing.success');
+    assert.strictEqual(success[0].publishing.retry.enabled, false);
+    const failure = bus.subscriptions.get('paypal:agreements:billing:failure');
+    assert.strictEqual(failure.length, 1);
+    assert.strictEqual(failure[0].endpoint, 'ms-billing.paypal.agreements.billing.failure');
+    assert.strictEqual(failure[0].publishing.retry.enabled, false);
+    assert.strictEqual(bus.subscriptions.get('paypal:transactions:create'), undefined);
   });
 });
