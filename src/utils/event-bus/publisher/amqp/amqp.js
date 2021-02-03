@@ -17,25 +17,11 @@ class AMQPPublisher {
    * @returns {Promise<void>}
    */
   async publish(route, message) {
-    console.log('args', {
-      route,
-      message,
-      options: {
-        confirm: true,
-        mandatory: true,
-        deliveryMode: 2,
-      },
-    });
-
-    const result = await this.amqp.publishAndWait(route, message, {
+    return this.amqp.publishAndWait(route, message, {
       confirm: true,
       mandatory: true,
       deliveryMode: 2,
     });
-
-    console.log('publish result', result);
-
-    return result;
   }
 }
 
