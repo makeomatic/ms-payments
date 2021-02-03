@@ -1,0 +1,24 @@
+{
+  "$id": "config",
+  "title": "MS-Payments configuration object",
+  "description": "Configuration object structure",
+  "type": "object",
+  "properties": {
+    "subscriptions": {
+      "description": "Payment event subscriptions",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "events": {
+          "type": "object",
+          "description": "Event names to subscriptions",
+          "patternProperties": {
+            "^.*$": { "$ref": "payment-event-subscription" }
+          },
+          "default": {}
+        }
+      },
+      "default": {}
+    }
+  }
+}
