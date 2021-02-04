@@ -117,10 +117,7 @@ describe('Agreements suite', function AgreementSuite() {
       // stub internal action call
       const publishStub = sandbox.stub(payments.amqp, 'publish');
       publishStub
-        .withArgs('payments.hook.publish', sinon.match({
-          event: 'paypal:agreements:billing:success',
-          payload: { cyclesBilled: 0, agreement: { id, owner: 'test@test.ru', status: 'active' } },
-        }))
+        .withArgs('payments.hook.publish', sinon.match.object, sinon.match.object)
         .resolves();
       publishStub.callThrough();
 
@@ -130,17 +127,22 @@ describe('Agreements suite', function AgreementSuite() {
 
       const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
       assert.strictEqual(hookPublishCalls.length, 1);
-      sinon.assert.calledWithExactly(hookPublishCalls[0], 'payments.hook.publish', sinon.match({
-        event: 'paypal:agreements:billing:success',
-        payload: sinon.match({
-          cyclesBilled: 0,
-          agreement: sinon.match({
-            id,
-            owner: 'test@test.ru',
-            status: 'active',
+      sinon.assert.calledWithExactly(
+        hookPublishCalls[0],
+        'payments.hook.publish',
+        sinon.match({
+          event: 'paypal:agreements:billing:success',
+          payload: sinon.match({
+            cyclesBilled: 0,
+            agreement: sinon.match({
+              id,
+              owner: 'test@test.ru',
+              status: 'active',
+            }),
           }),
         }),
-      }));
+        sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
+      );
     });
 
     it('Should create a trial agreement', async () => {
@@ -203,7 +205,19 @@ describe('Agreements suite', function AgreementSuite() {
       const { id } = billingAgreement;
       const publishStub = sandbox.stub(payments.amqp, 'publish');
       publishStub
-        .withArgs('payments.hook.publish', sinon.match({
+        .withArgs('payments.hook.publish', sinon.match.object, sinon.match.object)
+        .resolves();
+      publishStub.callThrough();
+
+      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+      assert.strictEqual(result, 'FAIL');
+
+      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+      assert.strictEqual(hookPublishCalls.length, 1);
+      sinon.assert.calledWithExactly(
+        hookPublishCalls[0],
+        'payments.hook.publish',
+        sinon.match({
           event: 'paypal:agreements:billing:failure',
           payload: sinon.match({
             error: sinon.match({
@@ -213,26 +227,9 @@ describe('Agreements suite', function AgreementSuite() {
             }),
             agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
           }),
-        }))
-        .resolves();
-      publishStub.callThrough();
-
-      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
-      assert.strictEqual(result, 'FAIL');
-
-      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-      assert.strictEqual(hookPublishCalls.length, 1);
-      sinon.assert.calledWithExactly(hookPublishCalls[0], 'payments.hook.publish', sinon.match({
-        event: 'paypal:agreements:billing:failure',
-        payload: sinon.match({
-          error: sinon.match({
-            message: 'Billing not permitted. Reason: Forbidden agreement status "cancelled"',
-            code: 'agreement-status-forbidden',
-            params: sinon.match({ status: 'cancelled' }),
-          }),
-          agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
         }),
-      }));
+        sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
+      );
     });
 
     it('Should get free agreement for user after cancelling', async () => {

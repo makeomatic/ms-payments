@@ -1,6 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const moment = require('moment');
-const { error: { BillingNotPermittedError } } = require('../../utils/paypal/agreements');
+const { error: { BillingNotPermittedError, BillingIncompleteError } } = require('../../utils/paypal/agreements');
 
 // helpers
 const key = require('../../redis-key');
@@ -94,6 +94,15 @@ const getActualTransactions = async (service, agreement, start, end) => {
   return transactions;
 };
 
+async function publishHook(event, payload) {
+  await this.amqp.publish('payments.hook.publish', { event, payload }, {
+    confirm: true,
+    mandatory: true,
+    deliveryMode: 2,
+    priority: 0,
+  });
+}
+
 /**
  * @api {AMQP,internal} agreement.bill Bill agreement
  * @apiVersion 1.0.0
@@ -112,13 +121,9 @@ async function agreementBill({ log, params }) {
   log.debug('billing %s on %s', username, id);
 
   if (id === FREE_PLAN_ID) {
-    // @todo message builder, pass publish options
-    await this.amqp.publish('payments.hook.publish', {
-      event: 'paypal:agreements:billing:success',
-      payload: {
-        agreement: freeAgreementPayload(username),
-        cyclesBilled: Number(nextCycle.isBefore(now)),
-      },
+    await publishHook.call(this, 'paypal:agreements:billing:success', {
+      agreement: freeAgreementPayload(username),
+      cyclesBilled: Number(nextCycle.isBefore(now)),
     });
 
     return 'OK';
@@ -131,14 +136,10 @@ async function agreementBill({ log, params }) {
   } catch (error) {
     if (error instanceof BillingNotPermittedError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
-      // @todo message builder, pass publish options
       const { message, code, params: errorParams } = error;
-      await this.amqp.publish('payments.hook.publish', {
-        event: 'paypal:agreements:billing:failure',
-        payload: {
-          error: { message, code, params: errorParams },
-          agreement: paidAgreementPayload(agreement, state, username),
-        },
+      await publishHook.call(this, 'paypal:agreements:billing:failure', {
+        error: { message, code, params: errorParams },
+        agreement: paidAgreementPayload(agreement, state, username),
       });
 
       return 'FAIL';
@@ -158,16 +159,17 @@ async function agreementBill({ log, params }) {
     throw e;
   }
 
-  if (agreement.plan.id === FREE_PLAN_ID || transactions.length !== 0) {
+  if (transactions.length !== 0) {
     const currentCycleEnd = moment(params.nextCycle).subtract(1, 'day');
-    // @todo message builder, pass publish options
-    await this.amqp.publish('payments.hook.publish', {
-      event: 'paypal:agreements:billing:success',
-      payload: {
-        agreement: paidAgreementPayload(agreement, state, username),
-        cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
-      },
+    await publishHook.call(this, 'paypal:agreements:billing:success', {
+      agreement: paidAgreementPayload(agreement, state, username),
+      cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
     });
+  } else {
+    // @todo decide: throw err + qos retry || warn + fail
+    // for now remain silent with hooks and treat as successful billing, just no transactions yet
+    const error = new BillingIncompleteError();
+    log.debug({ err: error }, 'No outstanding transactions');
   }
 
   return 'OK';
