@@ -1,7 +1,7 @@
 const EventBus = require('./event-bus');
-const Error = require('./error');
+const error = require('./error');
 
 module.exports = {
   EventBus,
-  Error,
+  error,
 };

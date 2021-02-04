@@ -1,6 +1,6 @@
 const assert = require('assert');
 const sinon = require('sinon');
-const { EventBus, Error: EventBusError } = require('../../../../src/utils/event-bus');
+const { EventBus, error: eventBusError } = require('../../../../src/utils/event-bus');
 const AMQPPublisher = require('../../../../src/utils/event-bus/publisher/amqp');
 
 describe('Event bus', () => {
@@ -61,6 +61,14 @@ describe('Event bus', () => {
       { endpoint: 'first.target.endpoint' },
       { endpoint: 'second.target.endpoint' },
     ]);
+  });
+
+  it('should resolve publish when there is no such event in subscriptions', async () => {
+    const bus = new EventBus(publisherStub, logStub);
+    const result = await bus.publish('some:new:event:with:no:subscribers', sampleMessage);
+
+    assert.ok(Array.isArray(result));
+    assert.strictEqual(result.length, 0);
   });
 
   it('should be able to publish message to a subscriber', async () => {
@@ -125,9 +133,9 @@ describe('Event bus', () => {
     await assert.rejects(
       bus.publish(sampleEvent, sampleMessage),
       (e) => {
-        assert.ok(e instanceof EventBusError.PublishingError);
-        assert.deepStrictEqual(e.inner_error, unexpectedError);
-        assert.strictEqual(e.message, 'Failed to publish event. Error: Any kind of error');
+        assert.ok(e instanceof eventBusError.PublishingError);
+        assert.deepStrictEqual(e.innerError, unexpectedError);
+        assert.strictEqual(e.message, 'Failed to publish event. Any kind of error');
         return true;
       }
     );

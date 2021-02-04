@@ -40,7 +40,7 @@ const initPublisherForSubscriber = (publisher, log, message) => async (subscribe
     return await publishPromise;
   } catch (e) {
     const wrap = new PublishingError(e);
-    log.error({ err: wrap.inner_error }, wrap.message);
+    log.error({ err: wrap.innerError }, wrap.message);
     throw wrap;
   }
 };

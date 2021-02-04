@@ -1,12 +1,11 @@
 /**
  * @property message
- * @property inner_error
+ * @property innerError
  */
 class PublishingError extends Error {
-  constructor(error) {
-    super(`Failed to publish event. ${error}`);
-    this.inner_error = error;
-    Error.captureStackTrace(this, this.constructor);
+  constructor(originalError) {
+    super(`Failed to publish event. ${originalError.message}`);
+    this.innerError = originalError;
   }
 }
 
