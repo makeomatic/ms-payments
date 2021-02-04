@@ -207,9 +207,9 @@ describe('Agreements suite', function AgreementSuite() {
           event: 'paypal:agreements:billing:failure',
           payload: sinon.match({
             error: sinon.match({
-              message: 'Billing not permitted. Reason: Forbidden agreement state "cancelled"',
-              code: 'agreement-state-forbidden',
-              params: sinon.match({ state: 'cancelled' }),
+              message: 'Billing not permitted. Reason: Forbidden agreement status "cancelled"',
+              code: 'agreement-status-forbidden',
+              params: sinon.match({ status: 'cancelled' }),
             }),
             agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
           }),
@@ -225,7 +225,11 @@ describe('Agreements suite', function AgreementSuite() {
       sinon.assert.calledWithExactly(hookPublishCalls[0], 'payments.hook.publish', sinon.match({
         event: 'paypal:agreements:billing:failure',
         payload: sinon.match({
-          error: sinon.match({ code: 'agreement-state-forbidden', meta: { state: 'cancelled' } }),
+          error: sinon.match({
+            message: 'Billing not permitted. Reason: Forbidden agreement status "cancelled"',
+            code: 'agreement-status-forbidden',
+            params: sinon.match({ status: 'cancelled' }),
+          }),
           agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
         }),
       }));
