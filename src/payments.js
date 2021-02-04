@@ -11,6 +11,7 @@ const conf = require('./conf');
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync');
 const syncAgreements = require('./actions/agreement/sync');
+const { EventBus } = require('./utils/event-bus');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
 const Stripe = require('./utils/stripe');
@@ -34,6 +35,7 @@ class Payments extends Microfleet {
 
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
+      this.eventBus = EventBus.fromParams(amqp, this.config.subscriptions, this.log);
     });
 
     // add migration connector

@@ -1,0 +1,19 @@
+{
+  "$id": "hook.publish",
+  "type": "object",
+  "required": ["event", "payload"],
+  "additionalProperties": false,
+  "properties": {
+    "event": {
+      "description": "Event title",
+      "type": "string"
+    },
+    "payload": {
+      "description": "Event payload"
+    },
+    "options": {
+      "description": "not implemented"
+    }
+  }
+}
+
