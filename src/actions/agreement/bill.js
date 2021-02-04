@@ -132,10 +132,11 @@ async function agreementBill({ log, params }) {
     if (error instanceof BillingNotPermittedError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
       // @todo message builder, pass publish options
+      const { message, code, params: errorParams } = error;
       await this.amqp.publish('payments.hook.publish', {
         event: 'paypal:agreements:billing:failure',
         payload: {
-          error,
+          error: { message, code, params: errorParams },
           agreement: paidAgreementPayload(agreement, state, username),
         },
       });

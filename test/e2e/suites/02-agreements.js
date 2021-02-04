@@ -206,7 +206,11 @@ describe('Agreements suite', function AgreementSuite() {
         .withArgs('payments.hook.publish', sinon.match({
           event: 'paypal:agreements:billing:failure',
           payload: sinon.match({
-            error: sinon.match.object,
+            error: sinon.match({
+              message: 'Billing not permitted. Reason: Forbidden agreement state "cancelled"',
+              code: 'agreement-state-forbidden',
+              params: sinon.match({ state: 'cancelled' }),
+            }),
             agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
           }),
         }))

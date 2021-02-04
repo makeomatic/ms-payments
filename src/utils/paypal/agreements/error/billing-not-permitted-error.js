@@ -8,7 +8,7 @@ class BillingNotPermittedError extends Error {
   static forbiddenState(state) {
     const error = new BillingNotPermittedError(`Forbidden agreement state "${state}"`);
     error.code = CODE_AGREEMENT_STATE_FORBIDDEN;
-    error.meta = { state };
+    error.params = { state };
     return error;
   }
 }
