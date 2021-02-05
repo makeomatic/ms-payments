@@ -1,5 +1,5 @@
 <a name="top"></a>
-# Service ms-payments v8.5.1
+# Service ms-payments v8.5.2
 
 Core of the microservice for handling payments
 
