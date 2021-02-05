@@ -9,7 +9,7 @@ class AMQPPublisher {
   }
 
   /**
-   * @todo check result is 200
+   * @todo check result is OK
    * @todo set up timeout
    *
    * @param {String} route

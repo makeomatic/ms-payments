@@ -1,6 +1,7 @@
 {
   "$id": "agreement.bill",
   "type": "object",
+  "required": ["agreement", "username"],
   "properties": {
     "agreement": {
       "type": "string"

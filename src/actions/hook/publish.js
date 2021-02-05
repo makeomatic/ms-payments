@@ -9,7 +9,7 @@ const { ActionTransport } = require('@microfleet/core');
  * @apiSchema {jsonschema=hook/publish.json} apiRequest
  * @apiSchema {jsonschema=response/hook/publish.json} apiResponse
  */
-async function hookPublish({ params }) {
+function hookPublish({ params }) {
   const { event, payload } = params;
 
   return this.eventBus.publish(event, {
