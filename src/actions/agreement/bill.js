@@ -1,48 +1,53 @@
-const assert = require('assert');
 const { ActionTransport } = require('@microfleet/core');
-const { NotPermitted, HttpStatusError } = require('common-errors');
-const Promise = require('bluebird');
 const moment = require('moment');
-const get = require('get-value');
+const { error: { BillingNotPermittedError, BillingIncompleteError } } = require('../../utils/paypal/agreements');
 
 // helpers
 const key = require('../../redis-key');
-const resetToFreePlan = require('../../utils/reset-to-free-plan');
 const { hmget } = require('../../list-utils');
-const { PLANS_DATA, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 
 // constants
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
-const PLAN_KEYS = ['subs'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
-const planParser = hmget(PLAN_KEYS, JSON.parse, JSON);
-const kValidTxStatuses = {
-  completed: true,
+const freeAgreementPayload = (username) => ({
+  id: 'free',
+  owner: username,
+  status: 'active',
+});
+const paidAgreementPayload = (agreement, state, owner) => ({
+  owner,
+  id: agreement.id,
+  status: state.toLowerCase(),
+});
+const kBannedStates = ['cancelled', 'suspended'];
+const verifyAgreementState = (state) => {
+  if (!state || kBannedStates.includes(state.toLowerCase())) {
+    throw BillingNotPermittedError.forbiddenState(state);
+  }
+};
+const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
+  const status = it.status && it.status.toLowerCase();
+  const isRelevant = ['completed'].includes(status) && moment(it.time_stamp).isAfter(currentCycleEnd);
+
+  return isRelevant ? acc + 1 : acc;
 };
 
 /**
- * Parses agreement data retrieved from redis
+ * Parses and completes agreement data retrieved from redis
  * @param  {Object} service - current microfleet
  * @param  {String} id - agreement id
  * @return {Object} agreement
+ * @throws DataError When agreement data cannot be parsed
  */
-async function parseAgreementData(service, id) {
+async function buildAgreementData(service, id) {
   const { redis, log } = service;
   const agreementKey = key(AGREEMENT_DATA, id);
   const data = await redis.hmget(agreementKey, AGREEMENT_KEYS);
 
+  let parsed;
   try {
-    const parsed = agreementParser(data);
-
-    // assign owner
-    parsed.agreement.owner = parsed.owner;
-
-    // FIXME: PAYPAL agreement doesn't have embedded plan id...
-    // bug in paypal
-    parsed.agreement.plan.id = parsed.plan;
-
-    // return data
-    return parsed;
+    parsed = agreementParser(data);
   } catch (e) {
     log.error({
       err: e,
@@ -53,71 +58,32 @@ async function parseAgreementData(service, id) {
 
     throw e;
   }
-}
 
-const freeAgreementForUser = (username) => ({
-  owner: username,
-  plan: {
-    id: FREE_PLAN_ID,
-  },
-});
+  // assign owner
+  parsed.agreement.owner = parsed.owner;
 
-const kBannedStates = ['cancelled', 'suspended'];
-const verifyAgreementState = (state) => {
-  // verify state
-  if (!state || kBannedStates.includes(state.toLowerCase())) {
-    throw new NotPermitted(`Operation not permitted on "${state}" agreements.`);
-  }
-};
+  // FIXME: PAYPAL agreement doesn't have embedded plan id...
+  // bug in paypal
+  parsed.agreement.plan.id = parsed.plan;
 
-/**
- * Retrieves agreement data from redis & parses it
- * @return {Agreement}
- */
-async function getAgreement(ctx) {
-  const { id, username, service } = ctx;
-
-  if (id === FREE_PLAN_ID) {
-    return freeAgreementForUser(username);
-  }
-
-  // parsed correctly
-  const { agreement, state } = await parseAgreementData(service, id);
-  verifyAgreementState(state);
-
-  return agreement;
+  return parsed;
 }
 
 /**
- * Retrieves associated plan for requested agreement
- * @return {Object} { plan, subs }
+ * Fetch transactions from PayPal for the period [start; end]
+ * @param service
+ * @param id Agreement ID
+ * @param start
+ * @param end
+ * @param agreement
+ * @returns {bluebird<[]>}
  */
-const getPlan = async (ctx, agreement) => {
-  const { service, username } = ctx;
-  const { redis, log } = service;
-
-  const planKey = key(PLANS_DATA, agreement.plan.id);
-  const response = await redis.hmget(planKey, PLAN_KEYS);
-
-  try {
-    const { subs } = planParser(response);
-    assert(subs, 'subs not present');
-    return subs;
-  } catch (e) {
-    log.error({ response, planKey, username }, 'failed to fetch plan in redis');
-    throw e;
-  }
-};
-
-// fetch transactions from paypal
-const getTransactions = async (ctx, agreement) => {
-  const { service, id, start, end } = ctx;
-
+const getActualTransactions = async (service, agreement, start, end) => {
   if (agreement.plan.id === FREE_PLAN_ID) {
-    return {};
+    return [];
   }
-
-  const agreementData = await service.dispatch('transaction.sync', {
+  const { id } = agreement;
+  const { transactions } = await service.dispatch('transaction.sync', {
     params: {
       id,
       start,
@@ -125,102 +91,17 @@ const getTransactions = async (ctx, agreement) => {
     },
   });
 
-  return agreementData;
+  return transactions;
 };
 
-// bill next free cycle
-const billNextFreeCycle = (ctx) => {
-  const { params } = ctx;
-
-  const nextCycle = moment(params.nextCycle);
-  const current = moment();
-
-  // 0 or 1
-  ctx.cyclesBilled = Number(nextCycle.isBefore(current));
-  ctx.nextCycle = nextCycle;
-
-  // if we missed many cycles
-  if (ctx.cyclesBilled) {
-    while (nextCycle.isBefore(current)) {
-      nextCycle.add(1, 'month');
-    }
-  }
-};
-
-function billPaidCycle(ctx, details) {
-  const { params } = ctx;
-
-  // agreement nextCycle date
-  const nextCycle = moment(details.agreement.agreement_details.next_billing_date || params.nextCycle);
-  const currentCycle = moment(params.nextCycle).subtract(1, 'day');
-  const { transactions } = details;
-
-  // determine how many cycles and next billing date
-  ctx.nextCycle = nextCycle;
-  ctx.cyclesBilled = transactions.reduce((acc, it) => {
-    const status = it.status && it.status.toLowerCase();
-
-    // TODO: does paypal charge earlier?
-    // we need to filter out setup fee
-    if (kValidTxStatuses[status] && moment(it.time_stamp).isAfter(currentCycle)) {
-      return acc + 1;
-    }
-
-    return acc;
-  }, 0);
+async function publishHook(amqp, event, payload) {
+  await amqp.publish('payments.hook.publish', { event, payload }, {
+    confirm: true,
+    mandatory: true,
+    deliveryMode: 2,
+    priority: 0,
+  });
 }
-
-// verify transactions data
-const checkData = (ctx, agreement, details) => {
-  if (agreement.plan.id === FREE_PLAN_ID) {
-    return billNextFreeCycle(ctx);
-  }
-
-  if (details.transactions.length === 0) {
-    // no outstanding transactions
-    ctx.shouldUpdate = false;
-    return false;
-  }
-
-  return billPaidCycle(ctx, details);
-};
-
-const saveToRedis = async (ctx, agreement, subs) => {
-  const { updateMetadata, service, audience } = ctx;
-  const { amqp } = service;
-
-  // no updates yet - skip to next
-  if (ctx.shouldUpdate === false) {
-    return 'OK';
-  }
-
-  const planFreq = get(agreement, ['plan', 'payment_definitions', 0, 'frequency'], 'month').toLowerCase();
-  const sub = subs.find((x) => x.name === planFreq);
-
-  if (!sub) {
-    ctx.log.error({ subs, agreement, planFreq }, 'failed to fetch subs');
-    throw new HttpStatusError(500, 'internal application error');
-  }
-
-  const models = sub.models * ctx.cyclesBilled;
-
-  const updateRequest = {
-    username: agreement.owner,
-    audience,
-    metadata: {
-      $set: {
-        nextCycle: ctx.nextCycle.valueOf(),
-      },
-      $incr: {
-        models,
-      },
-    },
-  };
-
-  await amqp.publishAndWait(updateMetadata, updateRequest, { timeout: 15000 });
-
-  return 'OK';
-};
 
 /**
  * @api {AMQP,internal} agreement.bill Bill agreement
@@ -232,54 +113,67 @@ const saveToRedis = async (ctx, agreement, subs) => {
  * @apiSchema {jsonschema=response/agreement/bill.json} apiResponse
  */
 async function agreementBill({ log, params }) {
-  const { agreement: id, subscriptionInterval, username } = params;
-  const { config } = this;
-  const { users: { prefix, postfix } } = config;
-  const start = moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
-  const end = moment().add(1, 'day').format('YYYY-MM-DD');
+  const { agreement: id, subscriptionInterval, username, nextCycle } = params;
+  const now = moment();
+  const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
+  const end = now.add(1, 'day').format('YYYY-MM-DD');
+  const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
 
-  const ctx = {
-    service: this,
-    log,
+  if (id === FREE_PLAN_ID) {
+    await publishHook(amqp, 'paypal:agreements:billing:success', {
+      agreement: freeAgreementPayload(username),
+      cyclesBilled: Number(nextCycle.isBefore(now)),
+    });
 
-    // used params
-    id,
-    username,
-    start,
-    end,
-    params,
-    audience: config.users.audience,
+    return 'OK';
+  }
 
-    // pre-calculated vars
-    updateMetadata: `${prefix}.${postfix.updateMetadata}`,
-  };
+  const { agreement, state } = await buildAgreementData(this, id);
 
   try {
-    const agreement = await getAgreement(ctx);
+    verifyAgreementState(state);
+  } catch (error) {
+    if (error instanceof BillingNotPermittedError) {
+      log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
+      const { message, code, params: errorParams } = error;
+      await publishHook(amqp, 'paypal:agreements:billing:failure', {
+        error: { message, code, params: errorParams },
+        agreement: paidAgreementPayload(agreement, state, username),
+      });
 
-    const [subs, details] = await Promise.all([
-      getPlan(ctx, agreement),
-      getTransactions(ctx, agreement),
-    ]);
+      return 'FAIL';
+    }
+    // 'failed to fetch agreement data' or unexpected error
+    log.warn({ err: error }, 'Failed to sync', username, id);
+    throw error;
+  }
 
-    checkData(ctx, agreement, details);
-
-    return await saveToRedis(ctx, agreement, subs);
+  let transactions;
+  try {
+    transactions = await getActualTransactions(this, agreement, start, end);
+    log.debug('fetched transactions for agreement %s created from %s to %s', id, start, end);
   } catch (e) {
-    if (e instanceof NotPermitted) {
-      log.warn({ err: e }, 'Agreement %s was cancelled by user %s', username, id);
-      return resetToFreePlan.call(this, username);
-    }
-
-    if (e.statusCode === 400 && e.message === 'The profile ID is invalid') {
-      return resetToFreePlan.call(this, username);
-    }
-
     log.warn({ err: e }, 'Failed to sync', username, id);
+
     throw e;
   }
+
+  if (transactions.length !== 0) {
+    const currentCycleEnd = moment(params.nextCycle).subtract(1, 'day');
+    await publishHook(amqp, 'paypal:agreements:billing:success', {
+      agreement: paidAgreementPayload(agreement, state, username),
+      cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
+    });
+  } else {
+    // @todo decide: throw err + qos retry || warn + fail
+    // for now remain silent with hooks and treat as successful billing, just no transactions yet
+    const error = new BillingIncompleteError();
+    log.debug({ err: error }, 'No outstanding transactions');
+  }
+
+  return 'OK';
 }
 
 agreementBill.transports = [ActionTransport.amqp, ActionTransport.internal];
