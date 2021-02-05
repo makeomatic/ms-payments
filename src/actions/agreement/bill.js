@@ -94,8 +94,8 @@ const getActualTransactions = async (service, agreement, start, end) => {
   return transactions;
 };
 
-async function publishHook(event, payload) {
-  await this.amqp.publish('payments.hook.publish', { event, payload }, {
+async function publishHook(amqp, event, payload) {
+  await amqp.publish('payments.hook.publish', { event, payload }, {
     confirm: true,
     mandatory: true,
     deliveryMode: 2,
@@ -117,11 +117,12 @@ async function agreementBill({ log, params }) {
   const now = moment();
   const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = now.add(1, 'day').format('YYYY-MM-DD');
+  const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
 
   if (id === FREE_PLAN_ID) {
-    await publishHook.call(this, 'paypal:agreements:billing:success', {
+    await publishHook(amqp, 'paypal:agreements:billing:success', {
       agreement: freeAgreementPayload(username),
       cyclesBilled: Number(nextCycle.isBefore(now)),
     });
@@ -137,7 +138,7 @@ async function agreementBill({ log, params }) {
     if (error instanceof BillingNotPermittedError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
       const { message, code, params: errorParams } = error;
-      await publishHook.call(this, 'paypal:agreements:billing:failure', {
+      await publishHook(amqp, 'paypal:agreements:billing:failure', {
         error: { message, code, params: errorParams },
         agreement: paidAgreementPayload(agreement, state, username),
       });
@@ -161,7 +162,7 @@ async function agreementBill({ log, params }) {
 
   if (transactions.length !== 0) {
     const currentCycleEnd = moment(params.nextCycle).subtract(1, 'day');
-    await publishHook.call(this, 'paypal:agreements:billing:success', {
+    await publishHook(amqp, 'paypal:agreements:billing:success', {
       agreement: paidAgreementPayload(agreement, state, username),
       cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
     });

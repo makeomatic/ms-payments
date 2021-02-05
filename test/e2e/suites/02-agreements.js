@@ -124,11 +124,8 @@ describe('Agreements suite', function AgreementSuite() {
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
 
       assert.strictEqual(result, 'OK');
-
-      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-      assert.strictEqual(hookPublishCalls.length, 1);
       sinon.assert.calledWithExactly(
-        hookPublishCalls[0],
+        publishStub,
         'payments.hook.publish',
         sinon.match({
           event: 'paypal:agreements:billing:success',
@@ -143,6 +140,8 @@ describe('Agreements suite', function AgreementSuite() {
         }),
         sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
       );
+      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+      assert.strictEqual(hookPublishCalls.length, 1);
     });
 
     it('Should create a trial agreement', async () => {
@@ -211,11 +210,8 @@ describe('Agreements suite', function AgreementSuite() {
 
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
       assert.strictEqual(result, 'FAIL');
-
-      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-      assert.strictEqual(hookPublishCalls.length, 1);
       sinon.assert.calledWithExactly(
-        hookPublishCalls[0],
+        publishStub,
         'payments.hook.publish',
         sinon.match({
           event: 'paypal:agreements:billing:failure',
@@ -230,6 +226,8 @@ describe('Agreements suite', function AgreementSuite() {
         }),
         sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
       );
+      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+      assert.strictEqual(hookPublishCalls.length, 1);
     });
 
     it('Should get free agreement for user after cancelling', async () => {
