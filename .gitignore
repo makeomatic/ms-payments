@@ -32,7 +32,8 @@ node_modules
 # compiled source code
 lib
 .env
-docs
+docs/api
+.apidoc
 .gh-pages
 .vagrant
 .babel-cache
