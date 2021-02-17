@@ -6,7 +6,6 @@ The current format of the supported hooks.
 ### Agreements execution
 For now, you may never receive a hook if:
 * An unexpected error has happen
-* Subscription token was not found in ms-payments database (should not happen if you do everything right)
 
 #### Success
 
@@ -14,9 +13,11 @@ For now, you may never receive a hook if:
 {
   "meta": { "type": "paypal:agreements:execution:success" },
   "data": {
-    "id": "I-21LTDJU14P4U",
-    "owner": "test@test.com",
-    "status": "active"
+    "agreement": {
+      "id": "I-21LTDJU14P4U",
+      "owner": "test@test.com",
+      "status": "active"  
+    }
   }
 }
 ```
@@ -29,7 +30,7 @@ For now, you may never receive a hook if:
   "meta": { "type": "paypal:agreements:execution:failure" },
   "data": {
     "error": {
-      "message": "Paypal agreement in state: \"cancelled\", not \"active\"",
+      "message": "Agreement execution failed. Reason: Paypal agreement in state: \"cancelled\", not \"active\"",
       "code": "agreement-status-forbidden",
       "params": {
         "status": "cancelled"  
@@ -40,12 +41,30 @@ For now, you may never receive a hook if:
 ```
 
 ##### Unknown subscription token
+Agreement data not found in ms-payments database
 ```json
 {
   "meta": { "type": "paypal:agreements:execution:failure" },
   "data": {
     "error": {
-      "message": "Unknown subscription token \"BA-5G371300PF745064S\"",
+      "message": "Agreement execution failed. Reason: Unknown subscription token \"BA-5G371300PF745064S\"",
+      "code": "agreement-status-forbidden",
+      "params": {
+        "token": "BA-5G371300PF745064S"  
+      }
+    }
+  }
+}
+```
+
+##### Invalid subscription token
+Paypal has not found token
+```json
+{
+  "meta": { "type": "paypal:agreements:execution:failure" },
+  "data": {
+    "error": {
+      "message": "Agreement execution failed. Reason: Paypal considers token \"BA-5G371300PF745064S\" as invalid",
       "code": "agreement-status-forbidden",
       "params": {
         "token": "BA-5G371300PF745064S"  

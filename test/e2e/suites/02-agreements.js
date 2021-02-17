@@ -132,11 +132,11 @@ describe('Agreements suite', function AgreementSuite() {
         message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
       });
       assertExecutionFailureHookCalled(publishSpy, {
-        error: {
+        error: sinon.match({
           message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
           code: 'invalid-subscription-token',
-          params: { token },
-        },
+          params: sinon.match({ token }),
+        }),
       });
     });
 
@@ -153,9 +153,11 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement.id = result.id;
 
       assertExecutionSuccessHookCalled(publishSpy, {
-        id: result.id,
-        owner: 'test@test.ru',
-        status: 'active',
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -196,9 +198,11 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement.id = result.id;
 
       assertExecutionSuccessHookCalled(publishSpy, {
-        id: result.id,
-        owner: 'test@test.ru',
-        status: 'active',
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -283,9 +287,11 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement.id = result.id;
 
       assertExecutionSuccessHookCalled(publishSpy, {
-        id: result.id,
-        owner: 'test@test.ru',
-        status: 'active',
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);

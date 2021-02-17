@@ -286,11 +286,11 @@ async function agreementExecute({ params }) {
   const { oldAgreement, subscriptionInterval, subscriptionType } = await getCurrentAgreement(amqp, config.users, owner);
   await checkAndDeleteAgreement(this.log, dispatch, agreement, owner, oldAgreement, subscriptionType);
 
-  const payload = planId === FREE_PLAN_ID
+  const agreementPayload = planId === FREE_PLAN_ID
     ? freeAgreementPayload(owner)
     : paidAgreementPayload(agreement, agreement.state, owner);
 
-  await publishSuccessHook(amqp, payload);
+  await publishSuccessHook(amqp, { agreement: agreementPayload });
 
   await updateRedis(redis, token, agreement, owner, planId);
 
