@@ -129,11 +129,11 @@ describe('Agreements suite', function AgreementSuite() {
       await assert.rejects(dispatch(executeAgreement, { token }), {
         name: 'HttpStatusError',
         statusCode: 400,
-        message: 'Token is invalid.',
+        message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
       });
       assertExecutionFailureHookCalled(publishSpy, {
         error: {
-          message: `Paypal considers token "${token}" as invalid`,
+          message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
           code: 'invalid-subscription-token',
           params: { token },
         },
