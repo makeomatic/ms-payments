@@ -1,6 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const moment = require('moment');
-const { error: { BillingNotPermittedError, BillingIncompleteError } } = require('../../utils/paypal/agreements');
+const { BillingNotPermittedError, BillingIncompleteError } = require('../../utils/paypal/agreements').error;
 
 // helpers
 const key = require('../../redis-key');
