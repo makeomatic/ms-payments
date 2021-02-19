@@ -23,7 +23,7 @@ function planList({ params: opts }) {
   const strFilter = typeof filter === 'string' ? filter : fsort.filter(filter || {});
   const order = opts.order || 'ASC';
   const offset = opts.offset || 0;
-  const limit = opts.limit || 10;
+  const limit = opts.limit || 20;
 
   return redis
     .fsort(PLANS_INDEX, key(PLANS_DATA, '*'), criteria, order, strFilter, Date.now(), offset, limit)
