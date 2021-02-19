@@ -6,10 +6,10 @@ class ExecutionIncompleteError extends Error {
     super(`Execution incomplete. Reason: ${reason}`);
   }
 
-  static noTransactionsAfter(agreementId, attemptsCount) {
+  static noTransactionsAfter(agreementId, owner, attemptsCount) {
     const reason = `Agreement "${agreementId}" has been executed, but there is no sufficient transactions after ${attemptsCount} attempts`;
     const error = new ExecutionIncompleteError(reason);
-    error.params = { agreementId, attemptsCount };
+    error.params = { agreementId, owner, attemptsCount };
 
     return error;
   }

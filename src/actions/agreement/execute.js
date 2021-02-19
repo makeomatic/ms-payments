@@ -75,14 +75,14 @@ async function findAgreementData(redis, amqp, token) {
  * @throws ExecutionError Paypal request failed for expected reason
  * @throws RequestError   Paypal request failed for any other reason
  */
-async function sendRequest(token, paypal) {
+async function sendRequest(token, owner, paypal) {
   let result;
   try {
     result = await execute(token, {}, paypal);
   } catch (error) {
     const wrapper = RequestError.wrapOrigin(error);
     if (wrapper.isTokenInvalidError()) {
-      throw ExecutionError.invalidSubscriptionToken(token);
+      throw ExecutionError.invalidSubscriptionToken(token, owner);
     }
     throw wrapper;
   }
@@ -97,7 +97,7 @@ async function sendRequest(token, paypal) {
  * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
  * @param  {string} agreementId - Agreement Id.
  */
-async function fetchUpdatedAgreement(paypal, log, agreementId, attempt = 0) {
+async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 0) {
   const agreement = await getAgreement(agreementId, paypal);
   log.debug('fetched agreement %j', agreement);
   const state = String(agreement.state).toLowerCase();
@@ -114,12 +114,12 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, attempt = 0) {
 
     await Promise.delay(250);
 
-    return fetchUpdatedAgreement(paypal, log, agreementId, attempt + 1);
+    return fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt + 1);
   }
 
-  const error = ExecutionError.agreementStatusForbidden(state);
+  const error = ExecutionError.agreementStatusForbidden(agreementId, state, owner);
   log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
-  throw ExecutionError.agreementStatusForbidden(state);
+  throw error;
 }
 
 async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
@@ -136,8 +136,8 @@ async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
 
   if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
     if (attempt > 150) {
-      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, attempt);
-      log.error({ err: error, attempt, agreement }, error.message);
+      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
+      log.error({ err: error }, error.message);
       // ATTENTION! originally we don't throw an error, just log it
       // so we don't send niether failure not success hooks for now
       return agreement;
@@ -202,10 +202,10 @@ async function agreementExecute({ params }) {
   }
 
   this.log = this.log.child({ agreementData });
-
+  const { owner, planId } = agreementData;
   let agreementId;
   try {
-    agreementId = await sendRequest(token, config.paypal);
+    agreementId = await sendRequest(token, owner, config.paypal);
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishFailureHook(amqp, e);
@@ -228,7 +228,6 @@ async function agreementExecute({ params }) {
     throw e;
   }
 
-  const { owner, planId } = agreementData;
   // todo Why do we need plan merge?
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 

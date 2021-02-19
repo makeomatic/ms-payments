@@ -135,7 +135,7 @@ describe('Agreements suite', function AgreementSuite() {
         error: sinon.match({
           message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
           code: 'invalid-subscription-token',
-          params: sinon.match({ token }),
+          params: sinon.match({ token, owner: 'test@test.ru' }),
         }),
       });
     });
@@ -255,11 +255,10 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(result, 'FAIL');
       assertBillingFailureHookCalled(publishSpy, {
         error: sinon.match({
-          message: `Billing not permitted. Reason: Agreement "${id}" has status "cancelled"`,
+          message: `Agreement billing failed. Reason: Agreement "${id}" has status "cancelled"`,
           code: 'agreement-status-forbidden',
-          params: sinon.match({ status: 'cancelled', agreementId: id }),
+          params: sinon.match({ status: 'cancelled', agreementId: id, owner: 'test@test.ru' }),
         }),
-        agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
       });
     });
 

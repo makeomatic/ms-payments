@@ -34,7 +34,8 @@ For now, you may never receive a hook if:
       "code": "agreement-status-forbidden",
       "params": {
         "agreementId": "I-VG69HM654BKF",
-        "status": "cancelled"  
+        "status": "cancelled",
+        "owner": "test@test.ru"
       }
     }
   }
@@ -49,7 +50,7 @@ Agreement data not found in ms-payments database
   "data": {
     "error": {
       "message": "Agreement execution failed. Reason: Unknown subscription token \"BA-5G371300PF745064S\"",
-      "code": "agreement-status-forbidden",
+      "code": "unknown-subscription-token",
       "params": {
         "token": "BA-5G371300PF745064S"  
       }
@@ -66,9 +67,10 @@ Paypal has not found token
   "data": {
     "error": {
       "message": "Agreement execution failed. Reason: Paypal considers token \"BA-5G371300PF745064S\" as invalid",
-      "code": "agreement-status-forbidden",
+      "code": "invalid-subscription-token",
       "params": {
-        "token": "BA-5G371300PF745064S"  
+        "token": "BA-5G371300PF745064S",
+        "owner": "test@test.com"
       }
     }
   }
@@ -122,15 +124,10 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
 {
   "meta": { "type": "paypal:agreements:billing:failure" },
   "data": {
-    "agreement": {
-      "id": "I-21LTDJU14P4U",
-      "owner": "test@test.ru",
-      "status": "cancelled"
-    },
     "error": {
       "code": "agreement-status-forbidden",
-      "params": { "status": "cancelled", "agreementId": "I-21LTDJU14P4U" },
-      "message": "Billing not permitted. Reason: Agreement \"I-21LTDJU14P4U\" has status \"cancelled\""
+      "params": { "status": "cancelled", "agreementId": "I-21LTDJU14P4U", "owner": "test@test.ru" },
+      "message": "Agreement billing failed. Reason: Agreement \"I-21LTDJU14P4U\" has status \"cancelled\""
     }
   }
 }

@@ -1,6 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const moment = require('moment');
-const { BillingNotPermittedError, BillingIncompleteError } = require('../../utils/paypal/agreements').error;
+const { BillingError, BillingIncompleteError } = require('../../utils/paypal/agreements').error;
 
 // helpers
 const key = require('../../redis-key');
@@ -21,9 +21,9 @@ const paidAgreementPayload = (agreement, state, owner) => ({
   status: state.toLowerCase(),
 });
 const kBannedStates = ['cancelled', 'suspended'];
-const verifyAgreementState = (id, state) => {
+const verifyAgreementState = (id, owner, state) => {
   if (!state || kBannedStates.includes(state.toLowerCase())) {
-    throw BillingNotPermittedError.forbiddenState(id, state);
+    throw BillingError.agreementStatusForbidden(id, owner, state);
   }
 };
 const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
@@ -133,14 +133,13 @@ async function agreementBill({ log, params }) {
   const { agreement, state } = await buildAgreementData(this, id);
 
   try {
-    verifyAgreementState(id, state);
+    verifyAgreementState(id, username, state);
   } catch (error) {
-    if (error instanceof BillingNotPermittedError) {
+    if (error instanceof BillingError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
       const { message, code, params: errorParams } = error;
       await publishHook(amqp, 'paypal:agreements:billing:failure', {
         error: { message, code, params: errorParams },
-        agreement: paidAgreementPayload(agreement, state, username),
       });
 
       return 'FAIL';

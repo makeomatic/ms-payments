@@ -17,17 +17,17 @@ class ExecutionError extends Error {
     return error;
   }
 
-  static invalidSubscriptionToken(token) {
+  static invalidSubscriptionToken(token, owner) {
     const error = new ExecutionError(`Paypal considers token "${token}" as invalid`);
     error.code = CODE_INVALID_SUBSCRIPTION_TOKEN;
-    error.params = { token };
+    error.params = { token, owner };
     return error;
   }
 
-  static agreementStatusForbidden(agreementId, status) {
+  static agreementStatusForbidden(agreementId, status, owner) {
     const error = new ExecutionError(`Paypal agreement "${agreementId}" has status: "${status}", not "active"`);
     error.code = CODE_AGREEMENT_STATUS_FORBIDDEN;
-    error.params = { agreementId, status };
+    error.params = { agreementId, status, owner };
     return error;
   }
 }
