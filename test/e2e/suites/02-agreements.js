@@ -255,9 +255,9 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(result, 'FAIL');
       assertBillingFailureHookCalled(publishSpy, {
         error: sinon.match({
-          message: 'Billing not permitted. Reason: Forbidden agreement status "cancelled"',
+          message: `Billing not permitted. Reason: Agreement "${id}" has status "cancelled"`,
           code: 'agreement-status-forbidden',
-          params: sinon.match({ status: 'cancelled' }),
+          params: sinon.match({ status: 'cancelled', agreementId: id }),
         }),
         agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
       });
