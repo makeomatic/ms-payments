@@ -21,9 +21,9 @@ const paidAgreementPayload = (agreement, state, owner) => ({
   status: state.toLowerCase(),
 });
 const kBannedStates = ['cancelled', 'suspended'];
-const verifyAgreementState = (state) => {
+const verifyAgreementState = (id, state) => {
   if (!state || kBannedStates.includes(state.toLowerCase())) {
-    throw BillingNotPermittedError.forbiddenState(state);
+    throw BillingNotPermittedError.forbiddenState(id, state);
   }
 };
 const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
@@ -133,7 +133,7 @@ async function agreementBill({ log, params }) {
   const { agreement, state } = await buildAgreementData(this, id);
 
   try {
-    verifyAgreementState(state);
+    verifyAgreementState(id, state);
   } catch (error) {
     if (error instanceof BillingNotPermittedError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);

@@ -24,10 +24,10 @@ class ExecutionError extends Error {
     return error;
   }
 
-  static agreementStatusForbidden(status) {
-    const error = new ExecutionError(`Paypal agreement in state: "${status}", not "active"`);
+  static agreementStatusForbidden(agreementId, status) {
+    const error = new ExecutionError(`Paypal agreement "${agreementId}" has status: "${status}", not "active"`);
     error.code = CODE_AGREEMENT_STATUS_FORBIDDEN;
-    error.params = { status };
+    error.params = { agreementId, status };
     return error;
   }
 }

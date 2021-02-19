@@ -1,14 +1,17 @@
 /**
- * @property attemptsCount
+ * @property params.attemptsCount
  */
 class ExecutionIncompleteError extends Error {
-  constructor(attemptsCount) {
-    super(`Execution incomplete. No transactions after ${attemptsCount} attempts`);
-    this.attemptsCount = attemptsCount;
+  constructor(reason) {
+    super(`Execution incomplete. Reason: ${reason}`);
   }
 
-  static fromParams(attemptsCount) {
-    return new ExecutionIncompleteError(attemptsCount);
+  static noTransactionsAfter(agreementId, attemptsCount) {
+    const reason = `Agreement "${agreementId}" has been executed, but there is no sufficient transactions after ${attemptsCount} attempts`;
+    const error = new ExecutionIncompleteError(reason);
+    error.params = { agreementId, attemptsCount };
+
+    return error;
   }
 }
 

@@ -3,6 +3,7 @@ const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const moment = require('moment');
 const pick = require('lodash/pick');
+const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
@@ -45,6 +46,11 @@ const publishFailureHook = (amqp, executionError) => publishHook(
   failureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
+const successPayload = (agreement, planId, owner) => ({
+  agreement: planId === FREE_PLAN_ID
+    ? freeAgreementPayload(owner)
+    : paidAgreementPayload(agreement, agreement.state, owner),
+});
 
 /**
  * @throws ExecutionError Unknown subscription token
@@ -116,58 +122,21 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, attempt = 0) {
   throw ExecutionError.agreementStatusForbidden(state);
 }
 
-async function fetchPlan(redis, log, token, agreement) {
-  const tokenKey = key('subscription-token', token);
-
-  const data = await redis
-    .hgetall(tokenKey)
-    .then(deserialize);
-
-  log.info({ data, token: tokenKey }, 'fetched plan for token');
-
-  return {
-    owner: data.owner,
-    planId: data.planId,
-    agreement: {
-      ...agreement,
-      plan: mergeWithNotNull(data.plan, agreement.plan),
-    },
-  };
-}
-
-async function getCurrentAgreement(amqp, users, owner) {
-  const { prefix, postfix, audience } = users;
-  const path = `${prefix}.${postfix.getMetadata}`;
-  const getRequest = {
-    username: owner,
-    audience,
-  };
-
-  const metadata = await amqp
-    .publishAndWait(path, getRequest, { timeout: 5000 })
-    .get(audience);
-
-  return {
-    oldAgreement: metadata.agreement,
-    subscriptionType: metadata.subscriptionType,
-    subscriptionInterval: metadata.subscriptionInterval,
-  };
-}
-
-async function syncTransactions(dispatch, log, agreement, owner, subscriptionInterval, attempt = 0) {
+async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
+  const syncInterval = get(agreement, ['plan', 'payment_definitions', '0', 'frequency'], 'year').toLowerCase();
   // we pass owner, so transaction.sync won't try to find user by agreement.id, which is OK as a tradeoff for now
   const { transactions } = await dispatch('transaction.sync', {
     params: {
       id: agreement.id,
       owner,
-      start: moment().subtract(2, subscriptionInterval).format('YYYY-MM-DD'),
+      start: moment().subtract(2, syncInterval).format('YYYY-MM-DD'),
       end: moment().add(1, 'day').format('YYYY-MM-DD'),
     },
   });
 
   if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
     if (attempt > 150) {
-      const error = ExecutionIncompleteError.fromParams(attempt);
+      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, attempt);
       log.error({ err: error, attempt, agreement }, error.message);
       // ATTENTION! originally we don't throw an error, just log it
       // so we don't send niether failure not success hooks for now
@@ -177,33 +146,10 @@ async function syncTransactions(dispatch, log, agreement, owner, subscriptionInt
     await Promise.delay(15000);
     // is it also incomplete?
     log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
-    return syncTransactions(dispatch, log, agreement, owner, subscriptionInterval, attempt + 1);
+    return syncTransactions(dispatch, log, agreement, owner, attempt + 1);
   }
 
   return agreement;
-}
-
-async function checkAndDeleteAgreement(log, dispatch, agreement, owner, oldAgreement, subscriptionType) {
-  log.info({ agreement, owner, oldAgreement, subscriptionType }, 'checking agreement data');
-
-  const oldAgreementIsNotFree = oldAgreement !== FREE_PLAN_ID;
-  const oldAgreementIsNotNew = oldAgreement !== agreement.id;
-  const oldAgreementIsPresent = oldAgreement && oldAgreementIsNotFree && oldAgreementIsNotNew;
-  const subscriptionTypeIsPaypal = subscriptionType == null || subscriptionType === 'paypal';
-
-  if (oldAgreementIsPresent && subscriptionTypeIsPaypal) {
-    // should we really cancel the agreement?
-    log.warn({ oldAgreement, agreement }, 'cancelling old agreement because of new agreement');
-
-    await dispatch('agreement.state', {
-      params: {
-        owner,
-        state: 'cancel',
-      },
-    }).catch({ statusCode: 400 }, (err) => {
-      log.warn({ err }, 'oldAgreement was already cancelled');
-    });
-  }
 }
 
 async function updateRedis(redis, token, agreement, owner, planId) {
@@ -282,19 +228,14 @@ async function agreementExecute({ params }) {
     throw e;
   }
 
-  const { owner, planId, agreement } = await fetchPlan(redis, this.log, token, updatedAgreement);
-  const { oldAgreement, subscriptionInterval, subscriptionType } = await getCurrentAgreement(amqp, config.users, owner);
-  await checkAndDeleteAgreement(this.log, dispatch, agreement, owner, oldAgreement, subscriptionType);
+  const { owner, planId } = agreementData;
+  // todo Why do we need plan merge?
+  const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
-  const agreementPayload = planId === FREE_PLAN_ID
-    ? freeAgreementPayload(owner)
-    : paidAgreementPayload(agreement, agreement.state, owner);
-
-  await publishSuccessHook(amqp, { agreement: agreementPayload });
-
+  await publishSuccessHook(amqp, successPayload(agreement, planId, owner));
   await updateRedis(redis, token, agreement, owner, planId);
 
-  const agreementWithSyncedTransactions = await syncTransactions(dispatch, this.log, agreement, owner, subscriptionInterval);
+  const agreementWithSyncedTransactions = await syncTransactions(dispatch, this.log, agreement, owner);
 
   return agreementWithSyncedTransactions;
 }

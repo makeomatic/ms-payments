@@ -30,9 +30,10 @@ For now, you may never receive a hook if:
   "meta": { "type": "paypal:agreements:execution:failure" },
   "data": {
     "error": {
-      "message": "Agreement execution failed. Reason: Paypal agreement in state: \"cancelled\", not \"active\"",
+      "message": "Agreement execution failed. Reason: Paypal agreement \"I-VG69HM654BKF\" has status: \"cancelled\", not \"active\"",
       "code": "agreement-status-forbidden",
       "params": {
+        "agreementId": "I-VG69HM654BKF",
         "status": "cancelled"  
       }
     }
@@ -128,8 +129,8 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
     },
     "error": {
       "code": "agreement-status-forbidden",
-      "params": { "status": "cancelled" },
-      "message": "Billing not permitted. Reason: Forbidden agreement status \"cancelled\"",
+      "params": { "status": "cancelled", "agreementId": "I-21LTDJU14P4U" },
+      "message": "Billing not permitted. Reason: Agreement \"I-21LTDJU14P4U\" has status \"cancelled\""
     }
   }
 }

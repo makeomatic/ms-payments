@@ -5,10 +5,10 @@ class BillingNotPermittedError extends Error {
     super(`Billing not permitted. Reason: ${reason}`);
   }
 
-  static forbiddenState(status) {
-    const error = new BillingNotPermittedError(`Forbidden agreement status "${status}"`);
+  static forbiddenState(agreementId, status) {
+    const error = new BillingNotPermittedError(`Agreement "${agreementId}" has status "${status}"`);
     error.code = CODE_AGREEMENT_STATUS_FORBIDDEN;
-    error.params = { status };
+    error.params = { agreementId, status };
     return error;
   }
 }
