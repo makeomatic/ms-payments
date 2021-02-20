@@ -1,9 +1,8 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const sinon = require('sinon');
-const { inspectPromise } = require('@makeomatic/deploy');
 const conf = require('../../../src/conf');
-const { duration, simpleDispatcher } = require('../../utils');
+const { duration, simpleDispatcher, afterAgreementExecution } = require('../../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
 
 describe('Agreements suite', function AgreementSuite() {
@@ -36,6 +35,36 @@ describe('Agreements suite', function AgreementSuite() {
 
   this.timeout(duration * 16);
 
+  function assertHookPublishing(publishSpy, event, payload) {
+    sinon.assert.calledWithExactly(
+      publishSpy,
+      'payments.hook.publish',
+      sinon.match({
+        event,
+        payload: sinon.match(payload),
+      }),
+      sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
+    );
+    const hookPublishCalls = publishSpy.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
+    assert.strictEqual(hookPublishCalls.length, 1);
+  }
+
+  function assertExecutionSuccessHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:execution:success', payload);
+  }
+
+  function assertExecutionFailureHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:execution:failure', payload);
+  }
+
+  function assertBillingSuccessHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:billing:success', payload);
+  }
+
+  function assertBillingFailureHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:billing:failure', payload);
+  }
+
   before('startService', async () => {
     payments = new Payments();
     await payments.connect();
@@ -63,17 +92,18 @@ describe('Agreements suite', function AgreementSuite() {
 
   describe('unit tests', function UnitSuite() {
     it('Should fail to create agreement on invalid schema', async () => {
-      const error = await dispatch(createAgreement, { random: true })
-        .reflect()
-        .then(inspectPromise(false));
-
-      assert.equal(error.name, 'HttpStatusError');
+      await assert.rejects(dispatch(createAgreement, { random: true }), {
+        name: 'HttpStatusError',
+        statusCode: 400,
+        message: 'agreement.create validation failed: data should NOT have additional properties, '
+          + 'data should have required property \'owner\', data should have required property \'agreement\'',
+      });
     });
 
     it('By default user should have free agreement', async () => {
       const result = await dispatch(forUserAgreement, { user: 'pristine@test.ru' });
-      assert.equal(result.id, 'free');
-      assert.equal(result.agreement.id, 'free');
+      assert.strictEqual(result.id, 'free');
+      assert.strictEqual(result.agreement.id, 'free');
     });
 
     it('Should create an agreement', async () => {
@@ -85,22 +115,34 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement = await dispatch(createAgreement, data);
     });
 
-    it('Should fail to execute on an unknown token', () => {
-      return dispatch(executeAgreement, 'random token')
-        .reflect()
-        .then(inspectPromise(false));
+    it('Should fail to execute on an unknown token', async () => {
+      await assert.rejects(dispatch(executeAgreement, 'random token'), {
+        name: 'HttpStatusError',
+        statusCode: 400,
+        message: 'agreement.execute validation failed: data should be object',
+      });
     });
 
-    it('Should reject unapproved agreement', () => {
-      return dispatch(executeAgreement, { token: billingAgreement.token })
-        .reflect()
-        .then(inspectPromise(false));
+    it('Should reject unapproved agreement', async () => {
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const { token } = billingAgreement;
+      await assert.rejects(dispatch(executeAgreement, { token }), {
+        name: 'HttpStatusError',
+        statusCode: 400,
+        message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
+      });
+      assertExecutionFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: `Agreement execution failed. Reason: Paypal considers token "${token}" as invalid`,
+          code: 'invalid-subscription-token',
+          params: sinon.match({ token, owner: 'test@test.ru' }),
+        }),
+      });
     });
 
     it('Should execute an approved agreement', async () => {
-      console.info('trying to approve %s', billingAgreement.url);
-
       const params = await approveSubscription(billingAgreement.url);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(executeAgreement, { token: params.token });
 
       result.plan.payment_definitions.forEach((definition) => {
@@ -109,39 +151,33 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       billingAgreement.id = result.id;
+
+      assertExecutionSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
+      });
+
+      await afterAgreementExecution(payments, dispatch, result, planId);
     });
 
     // sorry for being verbose, will deal with it later
     it('should bill agreement', async () => {
       const { id } = billingAgreement;
-      // stub internal action call
-      const publishStub = sandbox.stub(payments.amqp, 'publish');
-      publishStub
-        .withArgs('payments.hook.publish', sinon.match.object, sinon.match.object)
-        .resolves();
-      publishStub.callThrough();
-
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
 
       assert.strictEqual(result, 'OK');
-      sinon.assert.calledWithExactly(
-        publishStub,
-        'payments.hook.publish',
-        sinon.match({
-          event: 'paypal:agreements:billing:success',
-          payload: sinon.match({
-            cyclesBilled: 0,
-            agreement: sinon.match({
-              id,
-              owner: 'test@test.ru',
-              status: 'active',
-            }),
-          }),
+      assertBillingSuccessHookCalled(publishSpy, {
+        cyclesBilled: 0,
+        agreement: sinon.match({
+          id,
+          owner: 'test@test.ru',
+          status: 'active',
         }),
-        sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
-      );
-      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-      assert.strictEqual(hookPublishCalls.length, 1);
+      });
     });
 
     it('Should create a trial agreement', async () => {
@@ -156,15 +192,26 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an approved trial agreement', async () => {
       const params = await approveSubscription(billingAgreement.url);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(executeAgreement, { token: params.token });
 
       billingAgreement.id = result.id;
+
+      assertExecutionSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
+      });
+
+      await afterAgreementExecution(payments, dispatch, result, planId);
     });
 
     it('Should get agreement for user', async () => {
       const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
 
-      assert.equal(result.agreement.id, billingAgreement.id);
+      assert.strictEqual(result.agreement.id, billingAgreement.id);
       result.agreement.plan.payment_definitions.forEach((definition) => {
         assert.ok(definition.id);
         assert.ok(definition.name);
@@ -202,37 +249,22 @@ describe('Agreements suite', function AgreementSuite() {
     // sorry for being verbose, will deal with it later
     it('should fail when billing is not permitted', async () => {
       const { id } = billingAgreement;
-      const publishStub = sandbox.stub(payments.amqp, 'publish');
-      publishStub
-        .withArgs('payments.hook.publish', sinon.match.object, sinon.match.object)
-        .resolves();
-      publishStub.callThrough();
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
 
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
       assert.strictEqual(result, 'FAIL');
-      sinon.assert.calledWithExactly(
-        publishStub,
-        'payments.hook.publish',
-        sinon.match({
-          event: 'paypal:agreements:billing:failure',
-          payload: sinon.match({
-            error: sinon.match({
-              message: 'Billing not permitted. Reason: Forbidden agreement status "cancelled"',
-              code: 'agreement-status-forbidden',
-              params: sinon.match({ status: 'cancelled' }),
-            }),
-            agreement: sinon.match({ id, owner: 'test@test.ru', status: 'cancelled' }),
-          }),
+      assertBillingFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: `Agreement billing failed. Reason: Agreement "${id}" has status "cancelled"`,
+          code: 'agreement-status-forbidden',
+          params: sinon.match({ status: 'cancelled', agreementId: id, owner: 'test@test.ru' }),
         }),
-        sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
-      );
-      const hookPublishCalls = publishStub.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-      assert.strictEqual(hookPublishCalls.length, 1);
+      });
     });
 
     it('Should get free agreement for user after cancelling', async () => {
       const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.equal(result.id, 'free');
+      assert.strictEqual(result.id, 'free');
     });
 
     it('Should create and execute an agreement for a case when statuses for Paypal and Redis are different', async () => {
@@ -248,9 +280,20 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement = await dispatch(createAgreement, data);
 
       const params = await approveSubscription(billingAgreement.url);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(executeAgreement, { token: params.token });
 
       billingAgreement.id = result.id;
+
+      assertExecutionSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+        }),
+      });
+
+      await afterAgreementExecution(payments, dispatch, result, planId);
     });
 
     it('Should pull updates for an agreement for a case when statuses for Paypal and Redis are different', async () => {
@@ -290,7 +333,7 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should get free agreement for user after cancelling', async () => {
       const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.equal(result.id, 'free');
+      assert.strictEqual(result.id, 'free');
     });
 
     it('Should list all agreements', () => {

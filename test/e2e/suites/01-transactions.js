@@ -1,11 +1,10 @@
 const Promise = require('bluebird');
 const moment = require('moment');
 const assert = require('assert');
-const { inspectPromise } = require('@makeomatic/deploy');
 
 describe('Transactions suite', function TransactionsSuite() {
   const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
-  const { duration, simpleDispatcher } = require('../../utils');
+  const { duration, simpleDispatcher, afterAgreementExecution } = require('../../utils');
   const { testAgreementData, testPlanData } = require('../../data/paypal');
   const Payments = require('../../../src');
 
@@ -65,6 +64,7 @@ describe('Transactions suite', function TransactionsSuite() {
   before('executeAgreement', async () => {
     const parsed = await approveSubscription(agreement.url);
     agreement = await dispatch(executeAgreement, { token: parsed.token });
+    await afterAgreementExecution(payments, dispatch, agreement, planId);
   });
 
   before('getAgreement', async () => {
@@ -74,15 +74,17 @@ describe('Transactions suite', function TransactionsSuite() {
     assert(agreement.id, result.id);
   });
 
-  after('cleanUp', () => dispatch(deletePlan, planId).reflect());
+  after('cleanUp', async () => {
+    await dispatch(deletePlan, planId);
+  });
 
   describe('transactions tests', () => {
     it('Should not sync transaction on invalid data', async () => {
-      const error = await dispatch(syncTransaction, { wrong: 'data' })
-        .reflect()
-        .then(inspectPromise(false));
-
-      assert.equal(error.name, 'HttpStatusError');
+      await assert.rejects(dispatch(syncTransaction, { wrong: 'data' }), {
+        name: 'HttpStatusError',
+        statusCode: 400,
+        message: 'transaction.sync validation failed: data should NOT have additional properties, data should have required property \'id\'',
+      });
     });
 
     it('Should sync transactions', async () => {
@@ -108,16 +110,16 @@ describe('Transactions suite', function TransactionsSuite() {
       // common props
       // could be 1 -- updating or 2 - completed + created or 2 updated ))))
       assert(transactions.items.length > 0 && transactions.items.length <= 2, `Got 0 < ${transactions.items.length} <= 2`);
-      assert.equal(transactions.page, 1);
-      assert.equal(transactions.pages, 1);
-      assert.equal(transactions.cursor, 10);
+      assert.strictEqual(transactions.page, 1);
+      assert.strictEqual(transactions.pages, 1);
+      assert.strictEqual(transactions.cursor, 10);
 
       // transaction data
       const [tx] = transactions.items;
 
-      assert.equal(tx.owner, userId);
-      assert.equal(tx.transaction_type, 'Recurring Payment');
-      assert.equal(tx.agreement, agreement.id);
+      assert.strictEqual(tx.owner, userId);
+      assert.strictEqual(tx.transaction_type, 'Recurring Payment');
+      assert.strictEqual(tx.agreement, agreement.id);
 
       // we are done in this case
       if (tx.status === 'Completed') {
