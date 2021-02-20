@@ -2,6 +2,81 @@
 The current format of the supported hooks.
 
 ## Paypal
+
+### Agreements execution
+For now, you may never receive a hook if:
+* An unexpected error has happen
+
+#### Success
+
+```json
+{
+  "meta": { "type": "paypal:agreements:execution:success" },
+  "data": {
+    "agreement": {
+      "id": "I-21LTDJU14P4U",
+      "owner": "test@test.com",
+      "status": "active"  
+    }
+  }
+}
+```
+
+#### Failure
+
+##### Forbidden agreement status
+```json
+{
+  "meta": { "type": "paypal:agreements:execution:failure" },
+  "data": {
+    "error": {
+      "message": "Agreement execution failed. Reason: Paypal agreement \"I-VG69HM654BKF\" has status: \"cancelled\", not \"active\"",
+      "code": "agreement-status-forbidden",
+      "params": {
+        "agreementId": "I-VG69HM654BKF",
+        "status": "cancelled",
+        "owner": "test@test.ru"
+      }
+    }
+  }
+}
+```
+
+##### Unknown subscription token
+Agreement data not found in ms-payments database
+```json
+{
+  "meta": { "type": "paypal:agreements:execution:failure" },
+  "data": {
+    "error": {
+      "message": "Agreement execution failed. Reason: Unknown subscription token \"BA-5G371300PF745064S\"",
+      "code": "unknown-subscription-token",
+      "params": {
+        "token": "BA-5G371300PF745064S"  
+      }
+    }
+  }
+}
+```
+
+##### Invalid subscription token
+Paypal has not found token
+```json
+{
+  "meta": { "type": "paypal:agreements:execution:failure" },
+  "data": {
+    "error": {
+      "message": "Agreement execution failed. Reason: Paypal considers token \"BA-5G371300PF745064S\" as invalid",
+      "code": "invalid-subscription-token",
+      "params": {
+        "token": "BA-5G371300PF745064S",
+        "owner": "test@test.com"
+      }
+    }
+  }
+}
+```
+
 ### Agreements billing
 For now, you may never receive a hook if:
 * An unexpected error has happen
@@ -49,15 +124,10 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
 {
   "meta": { "type": "paypal:agreements:billing:failure" },
   "data": {
-    "agreement": {
-      "id": "I-21LTDJU14P4U",
-      "owner": "test@test.ru",
-      "status": "cancelled"
-    },
     "error": {
       "code": "agreement-status-forbidden",
-      "params": { "status": "cancelled" },
-      "message": "Billing not permitted. Reason: Forbidden agreement status \"cancelled\"",
+      "params": { "status": "cancelled", "agreementId": "I-21LTDJU14P4U", "owner": "test@test.ru" },
+      "message": "Agreement billing failed. Reason: Agreement \"I-21LTDJU14P4U\" has status \"cancelled\""
     }
   }
 }
