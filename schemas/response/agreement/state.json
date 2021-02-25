@@ -3,8 +3,8 @@
   "type": "string",
   "title": "agreement.state response",
   "enum": [
-    "suspend",
-    "reactivate",
-    "cancel"
+    "suspended",
+    "active",
+    "cancelled"
   ]
 }
