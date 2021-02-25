@@ -65,6 +65,10 @@ describe('Agreements suite', function AgreementSuite() {
     assertHookPublishing(publishSpy, 'paypal:agreements:billing:failure', payload);
   }
 
+  function assertStateSuccessHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:state:success', payload);
+  }
+
   before('startService', async () => {
     payments = new Payments();
     await payments.connect();
@@ -168,10 +172,9 @@ describe('Agreements suite', function AgreementSuite() {
       const { id } = billingAgreement;
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
-
       assert.strictEqual(result, 'OK');
       assertBillingSuccessHookCalled(publishSpy, {
-        cyclesBilled: 0,
+        cyclesBilled: sinon.match.in([0, 1]),
         agreement: sinon.match({
           id,
           owner: 'test@test.ru',
@@ -242,8 +245,17 @@ describe('Agreements suite', function AgreementSuite() {
     });
 
     // this test is perf
-    it('Should cancel agreement', () => {
-      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
+    it('Should cancel agreement', async () => {
+      const { id } = billingAgreement;
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      await dispatch(stateAgreement, { agreement: id, owner: 'test@test.ru', state: 'cancel' });
+      assertStateSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id,
+          owner: 'test@test.ru',
+          status: 'cancelled',
+        }),
+      });
     });
 
     // sorry for being verbose, will deal with it later
@@ -260,11 +272,6 @@ describe('Agreements suite', function AgreementSuite() {
           params: sinon.match({ status: 'cancelled', agreementId: id, owner: 'test@test.ru' }),
         }),
       });
-    });
-
-    it('Should get free agreement for user after cancelling', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.strictEqual(result.id, 'free');
     });
 
     it('Should create and execute an agreement for a case when statuses for Paypal and Redis are different', async () => {
@@ -327,13 +334,17 @@ describe('Agreements suite', function AgreementSuite() {
         });
     });
 
-    it('Should cancel the agreement with unsynchronized statuses', () => {
-      return dispatch(stateAgreement, { owner: 'test@test.ru', state: 'cancel' });
-    });
-
-    it('Should get free agreement for user after cancelling', async () => {
-      const result = await dispatch(forUserAgreement, { user: 'test@test.ru' });
-      assert.strictEqual(result.id, 'free');
+    it('Should cancel the agreement with unsynchronized statuses', async () => {
+      const { id } = billingAgreement;
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      await dispatch(stateAgreement, { agreement: id, owner: 'test@test.ru', state: 'cancel' });
+      assertStateSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id,
+          owner: 'test@test.ru',
+          status: 'cancelled',
+        }),
+      });
     });
 
     it('Should list all agreements', () => {
