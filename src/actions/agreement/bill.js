@@ -22,8 +22,9 @@ const paidAgreementPayload = (agreement, state, owner) => ({
 });
 const kBannedStates = ['cancelled', 'suspended'];
 const verifyAgreementState = (id, owner, state) => {
+  // why could it be in uppercase anyway?
   if (!state || kBannedStates.includes(state.toLowerCase())) {
-    throw BillingError.agreementStatusForbidden(id, owner, state);
+    throw BillingError.agreementStatusForbidden(id, owner, state.toLowerCase());
   }
 };
 const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
