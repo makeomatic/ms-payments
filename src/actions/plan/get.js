@@ -9,7 +9,7 @@ const { PLANS_DATA, PLAN_ALIAS_FIELD } = require('../../constants');
 const { handlePipeline } = require('../../utils/redis');
 
 // constants
-const EXTRACT_FIELDS = [PLAN_ALIAS_FIELD, 'plan', 'subs', 'hidden', 'meta', 'level', 'year', 'month'];
+const EXTRACT_FIELDS = [PLAN_ALIAS_FIELD, 'plan', 'subs', 'hidden', 'meta', 'level', 'year', 'month', 'day'];
 const responseParser = hmget(EXTRACT_FIELDS, JSON.parse, JSON, null);
 
 /**
