@@ -113,13 +113,14 @@ class Payments extends Microfleet {
         this.log.error({ err }, 'failed to sync sale transactions');
       });
 
-    syncAgreements.call(this, {})
-      .then(() => {
-        return this.log.info('completed sync of agreements');
-      })
-      .catch((err) => {
-        this.log.error({ err }, 'failed to sync recurring transactions');
-      });
+    // NOTE: Disable synchro, this process is performed by billing.
+    // syncAgreements.call(this, {})
+    //   .then(() => {
+    //     return this.log.info('completed sync of agreements');
+    //   })
+    //   .catch((err) => {
+    //     this.log.error({ err }, 'failed to sync recurring transactions');
+    //   });
 
     return null;
   }
