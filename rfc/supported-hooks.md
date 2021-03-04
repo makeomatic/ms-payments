@@ -16,7 +16,8 @@ For now, you may never receive a hook if:
     "agreement": {
       "id": "I-21LTDJU14P4U",
       "owner": "test@test.com",
-      "status": "active"  
+      "status": "active",
+      "token": "BA-5G371300PF745064S"  
     }
   }
 }
@@ -35,7 +36,8 @@ For now, you may never receive a hook if:
       "params": {
         "agreementId": "I-VG69HM654BKF",
         "status": "cancelled",
-        "owner": "test@test.ru"
+        "owner": "test@test.ru",
+        "token": "BA-5G371300PF745064S"  
       }
     }
   }
