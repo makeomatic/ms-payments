@@ -10,7 +10,6 @@ const conf = require('./conf');
 // internal actions
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync');
-const syncAgreements = require('./actions/agreement/sync');
 const { EventBus } = require('./utils/event-bus');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
