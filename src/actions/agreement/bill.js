@@ -1,6 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const moment = require('moment');
-const { BillingError, BillingIncompleteError } = require('../../utils/paypal/agreements').error;
+const { BillingError } = require('../../utils/paypal/agreements').error;
 
 // helpers
 const key = require('../../redis-key');
@@ -10,11 +10,10 @@ const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 // constants
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
-const freeAgreementPayload = (username) => ({
-  id: 'free',
-  owner: username,
-  status: 'active',
-});
+
+const HOOK_BILLING_SUCCESS = 'paypal:agreements:billing:success';
+const HOOK_BILLING_FAILURE = 'paypal:agreements:billing:failure';
+
 const paidAgreementPayload = (agreement, state, owner) => ({
   owner,
   id: agreement.id,
@@ -115,21 +114,13 @@ async function publishHook(amqp, event, payload) {
  */
 async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username, nextCycle } = params;
-  const now = moment();
-  const start = now.clone().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
-  const end = now.clone().add(1, 'day').format('YYYY-MM-DD');
+  const momentCycle = moment(nextCycle);
+  const start = momentCycle.clone().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
+  const endDate = momentCycle.clone().add(1, 'day');
+  const end = endDate.format('YYYY-MM-DD');
   const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
-
-  if (id === FREE_PLAN_ID) {
-    await publishHook(amqp, 'paypal:agreements:billing:success', {
-      agreement: freeAgreementPayload(username),
-      cyclesBilled: Number(nextCycle.isBefore(now)),
-    });
-
-    return 'OK';
-  }
 
   const { agreement, state } = await buildAgreementData(this, id);
 
@@ -139,7 +130,7 @@ async function agreementBill({ log, params }) {
     if (error instanceof BillingError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
       const { message, code, params: errorParams } = error;
-      await publishHook(amqp, 'paypal:agreements:billing:failure', {
+      await publishHook(amqp, HOOK_BILLING_FAILURE, {
         error: { message, code, params: errorParams },
       });
 
@@ -159,19 +150,33 @@ async function agreementBill({ log, params }) {
 
     throw e;
   }
+  const agreementPayload = paidAgreementPayload(agreement, state, username);
 
   if (transactions.length !== 0) {
     // 1 day is too much for 'daily' interval. HOPE this doesn't break something
     const currentCycleEnd = moment(params.nextCycle).subtract(1, 'minute'); // .subtract(1, 'day');
-    await publishHook(amqp, 'paypal:agreements:billing:success', {
-      agreement: paidAgreementPayload(agreement, state, username),
+    await publishHook(amqp, HOOK_BILLING_SUCCESS, {
+      agreement: agreementPayload,
       cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
     });
   } else {
-    // @todo decide: throw err + qos retry || warn + fail
-    // for now remain silent with hooks and treat as successful billing, just no transactions yet
-    const error = new BillingIncompleteError();
+    const error = BillingError.noRelevantTransactions(agreementPayload.id, agreementPayload.owner, { start, end });
     log.debug({ err: error }, 'No outstanding transactions');
+
+    // IDK but Generally transactions should appear in 1 day after next cycle
+    if (endDate.valueOf() <= Date.now()) {
+      // If already one day passed, notify billing to enforce generic payment retry strategy
+      const { message, code, params: errorParams } = error;
+      await publishHook(amqp, HOOK_BILLING_FAILURE, {
+        error: { message, code, params: errorParams },
+      });
+    } else {
+      // in this case billing starts short interval polling
+      await publishHook(amqp, HOOK_BILLING_SUCCESS, {
+        agreement: agreementPayload,
+        cyclesBilled: 0,
+      });
+    }
   }
 
   return 'OK';

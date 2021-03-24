@@ -1,6 +1,8 @@
 const Promise = require('bluebird');
 const assert = require('assert');
 const sinon = require('sinon');
+const moment = require('moment');
+
 const conf = require('../../../src/conf');
 const { duration, simpleDispatcher, afterAgreementExecution } = require('../../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
@@ -179,6 +181,45 @@ describe('Agreements suite', function AgreementSuite() {
           id,
           owner: 'test@test.ru',
           status: 'active',
+        }),
+      });
+    });
+
+    it('should bill agreement: no transactions and billingCycle < Date.now() + 1d', async () => {
+      const { id } = billingAgreement;
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const dispatchStub = sandbox.stub(payments, 'dispatch');
+      dispatchStub.withArgs('transaction.sync').resolves({ transactions: [] });
+      dispatchStub.callThrough();
+
+      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+      assert.strictEqual(result, 'OK');
+      assertBillingSuccessHookCalled(publishSpy, {
+        cyclesBilled: 0,
+        agreement: {
+          id,
+          owner: 'test@test.ru',
+          status: 'active',
+        },
+      });
+    });
+
+    it('should bill agreement: no transactions and billingCycle < Date.now() + 1d', async () => {
+      const { id } = billingAgreement;
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const dispatchStub = sandbox.stub(payments, 'dispatch');
+      dispatchStub.withArgs('transaction.sync').resolves({ transactions: [] });
+      dispatchStub.callThrough();
+
+      const result = await dispatch(billAgreement, { agreement: id, nextCycle: moment().subtract(1, 'day').valueOf(), username: 'test@test.ru' });
+      assert.strictEqual(result, 'OK');
+      assertBillingFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: `Agreement billing failed. Reason: Agreement "${id}" has no transactions for period`,
+          code: 'agreement-no-transactions',
+          params: sinon.match(
+            ({ agreementId, owner }) => (agreementId === id && owner === 'test@test.ru')
+          ),
         }),
       });
     });
