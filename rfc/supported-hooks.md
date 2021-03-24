@@ -134,3 +134,23 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
   }
 }
 ```
+
+##### No transactions for period
+This error is retryable.
+Failure due to the absence of the transactions for the required billing cycle. Generally, this happens when PayPal was unable to bill the next billing cycle and will retry later.
+```json
+{
+  "meta": { "type": "paypal:agreements:billing:failure" },
+  "data": {
+    "error": {
+      "code": "agreement-status-forbidden",
+      "params": {
+        "agreementId": "I-21LTDJU14P4U",
+        "owner": "test@test.ru",
+        "period": { "start": "YYYY-MM-DD", "end": "YYYY-MM-DD" }
+      },
+      "message": "Agreement billing failed. Reason: Agreement \"I-21LTDJU14P4U\" has no transactions for period"
+    }
+  }
+}
+```
