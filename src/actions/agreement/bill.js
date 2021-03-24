@@ -152,31 +152,25 @@ async function agreementBill({ log, params }) {
   }
   const agreementPayload = paidAgreementPayload(agreement, state, username);
 
-  if (transactions.length !== 0) {
-    // 1 day is too much for 'daily' interval. HOPE this doesn't break something
-    const currentCycleEnd = moment(params.nextCycle).subtract(1, 'minute'); // .subtract(1, 'day');
+  // 1 day is too much for 'daily' interval. HOPE this doesn't break something
+  const currentCycleEnd = moment(params.nextCycle).subtract(1, 'minute');
+  const cyclesBilled = transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0);
+
+  // IDK but Generally transactions should appear in 1 day after next cycle
+  if (cyclesBilled !== 0 || endDate.valueOf() >= Date.now()) {
     await publishHook(amqp, HOOK_BILLING_SUCCESS, {
       agreement: agreementPayload,
-      cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
+      cyclesBilled,
     });
   } else {
     const error = BillingError.noRelevantTransactions(agreementPayload.id, agreementPayload.owner, { start, end });
     log.debug({ err: error }, 'No outstanding transactions');
 
-    // IDK but Generally transactions should appear in 1 day after next cycle
-    if (endDate.valueOf() <= Date.now()) {
-      // If already one day passed, notify billing to enforce generic payment retry strategy
-      const { message, code, params: errorParams } = error;
-      await publishHook(amqp, HOOK_BILLING_FAILURE, {
-        error: { message, code, params: errorParams },
-      });
-    } else {
-      // in this case billing starts short interval polling
-      await publishHook(amqp, HOOK_BILLING_SUCCESS, {
-        agreement: agreementPayload,
-        cyclesBilled: 0,
-      });
-    }
+    // If already one day passed, notify billing to enforce generic payment retry strategy
+    const { message, code, params: errorParams } = error;
+    await publishHook(amqp, HOOK_BILLING_FAILURE, {
+      error: { message, code, params: errorParams },
+    });
   }
 
   return 'OK';
