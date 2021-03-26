@@ -135,7 +135,7 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
 }
 ```
 
-##### Incriased failed payment count.
+##### Increased failed payment count.
 This error is retryable.
 Failure due to increased `failed_payment_count` on Agreement. Generally, this happens when PayPal was unable to bill the next billing cycle and will retry later.
 ```json
