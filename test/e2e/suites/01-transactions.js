@@ -91,13 +91,12 @@ describe('Transactions suite', function TransactionsSuite() {
       const start = moment().startOf('day').subtract(1, 'day').format('YYYY-MM-DD');
       const end = moment().endOf('month').add(1, 'day').format('YYYY-MM-DD');
 
-      let state = 'Pending';
+      let count = 0;
       /* eslint-disable no-await-in-loop */
-      while (state === 'Pending') {
-        const { agreement: aggr, transactions } = await dispatch(syncTransaction, { id: agreement.id, start, end });
-        state = aggr.state;
-        if (state === 'Pending' || transactions.length === 0) {
-          state = 'Pending';
+      while (count === 0) {
+        const { transactions } = await dispatch(syncTransaction, { id: agreement.id, start, end });
+        if (transactions.length !== 0) {
+          count = transactions.length;
           await Promise.delay(5000);
         }
       }

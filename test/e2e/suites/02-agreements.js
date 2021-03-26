@@ -7,13 +7,15 @@ const conf = require('../../../src/conf');
 const { duration, simpleDispatcher, afterAgreementExecution } = require('../../utils');
 const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
 
+const paypalUtils = require('../../../src/utils/paypal');
+
 describe('Agreements suite', function AgreementSuite() {
   const sandbox = sinon.createSandbox();
   const Payments = require('../../../src');
   const {
     agreement: { cancel: billingAgreementCancel },
     handleError,
-  } = require('../../../src/utils/paypal');
+  } = paypalUtils;
 
   const paypalConfig = conf.get('/paypal', { env: process.env.NODE_ENV });
 
@@ -185,42 +187,58 @@ describe('Agreements suite', function AgreementSuite() {
       });
     });
 
-    it('should bill agreement: no transactions and billingCycle < Date.now() + 1d', async () => {
+    it('should bill agreement: send billing failed when no new cycles and failed count increased', async () => {
       const { id } = billingAgreement;
+      const getAgreementStub = sandbox.stub(paypalUtils.agreement, 'get');
+      getAgreementStub.resolves({
+        state: 'Active',
+        agreement_details: {
+          failed_payment_count: 1,
+        },
+      });
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const dispatchStub = sandbox.stub(payments, 'dispatch');
       dispatchStub.withArgs('transaction.sync').resolves({ transactions: [] });
       dispatchStub.callThrough();
 
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
-      assert.strictEqual(result, 'OK');
-      assertBillingSuccessHookCalled(publishSpy, {
-        cyclesBilled: 0,
-        agreement: {
-          id,
-          owner: 'test@test.ru',
-          status: 'active',
-        },
+      assert.strictEqual(result, 'FAIL');
+      assertBillingFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: `Agreement billing failed. Reason: Agreement "${id}" has increased failed payment count`,
+          code: 'agreement-payment-failed',
+          params: sinon.match(
+            ({ agreementId, owner }) => (agreementId === id && owner === 'test@test.ru')
+          ),
+        }),
       });
     });
 
-    it('should bill agreement: no transactions and billingCycle < Date.now() + 1d', async () => {
+    it('should bill agreement: send billing success when new cycles billed and failed count increased', async () => {
       const { id } = billingAgreement;
+      const getAgreementStub = sandbox.stub(paypalUtils.agreement, 'get');
+      getAgreementStub.resolves({
+        state: 'Active',
+        agreement_details: {
+          failed_payment_count: 1,
+          cycles_completed: 3,
+        },
+      });
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const dispatchStub = sandbox.stub(payments, 'dispatch');
       dispatchStub.withArgs('transaction.sync').resolves({ transactions: [] });
       dispatchStub.callThrough();
 
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: moment().subtract(1, 'day').valueOf(), username: 'test@test.ru' });
+
       assert.strictEqual(result, 'OK');
-      assertBillingFailureHookCalled(publishSpy, {
-        error: sinon.match({
-          message: `Agreement billing failed. Reason: Agreement "${id}" has no transactions for period`,
-          code: 'agreement-no-transactions',
-          params: sinon.match(
-            ({ agreementId, owner }) => (agreementId === id && owner === 'test@test.ru')
-          ),
-        }),
+      assertBillingSuccessHookCalled(publishSpy, {
+        cyclesBilled: 3,
+        agreement: {
+          id,
+          owner: 'test@test.ru',
+          status: 'active',
+        },
       });
     });
 
