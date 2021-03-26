@@ -176,6 +176,7 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   const gdprBtn = await page.$(GDPR_BTN);
+  console.info('[gdpr button]', { gdprBtn });
   if (gdprBtn) {
     console.info('accept gdpr');
     await Promise.delay(3000);
