@@ -12,6 +12,8 @@ const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
 const LOGIN_BUTTON = '#btnLogin';
 
+const GDPR_BTN = '#acceptAllButton';
+
 // instance variables
 let page;
 let chrome;
@@ -173,6 +175,14 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
+  const gdprBtn = await page.$(GDPR_BTN);
+  if (gdprBtn) {
+    console.info('accept gdpr');
+    await Promise.delay(3000);
+    await page.click(GDPR_BTN, { delay: 100 });
+    await dispose(gdprBtn);
+  }
+
   try {
     console.info('[after login] --> ', page.url());
     await confirmRetry(RETRY_LINK, CONFIRM_BUTTON, /paypal-subscription-return\?/);
@@ -216,6 +226,14 @@ exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-retu
     await Promise.delay(3000);
     await Promise.all([idle('2'), hasAccount.click({ delay: 100 })]);
     await dispose(hasAccount);
+  }
+
+  const gdprBtn = await page.$(GDPR_BTN);
+  if (gdprBtn) {
+    console.info('accept gdpr');
+    await Promise.delay(3000);
+    await page.click(GDPR_BTN, { delay: 100 });
+    await dispose(gdprBtn);
   }
 
   await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
