@@ -229,6 +229,9 @@ exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-retu
     await dispose(hasAccount);
   }
 
+  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
+  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
+
   const gdprBtn = await page.$(GDPR_BTN);
   if (gdprBtn) {
     console.info('accept gdpr');
@@ -236,9 +239,6 @@ exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-retu
     await page.click(GDPR_BTN, { delay: 100 });
     await dispose(gdprBtn);
   }
-
-  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
-  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
   try {
     console.info('[after login] --> ', page.url());
