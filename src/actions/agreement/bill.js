@@ -1,11 +1,15 @@
 const { ActionTransport } = require('@microfleet/core');
-const moment = require('moment');
+const get = require('get-value');
+
 const { BillingError } = require('../../utils/paypal/agreements').error;
+const paypal = require('../../utils/paypal');
 
 // helpers
 const key = require('../../redis-key');
 const { hmget } = require('../../list-utils');
-const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { serialize } = require('../../utils/redis');
+const { mergeWithNotNull } = require('../../utils/plans');
+const { AGREEMENT_DATA } = require('../../constants');
 
 // constants
 const AGREEMENT_KEYS = ['agreement', 'plan', 'owner', 'state'];
@@ -26,12 +30,6 @@ const verifyAgreementState = (id, owner, state) => {
     throw BillingError.agreementStatusForbidden(id, owner, state.toLowerCase());
   }
 };
-const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
-  const status = it.status && it.status.toLowerCase();
-  const isRelevant = ['completed'].includes(status) && moment(it.time_stamp).isAfter(currentCycleEnd);
-
-  return isRelevant ? acc + 1 : acc;
-};
 
 /**
  * Parses and completes agreement data retrieved from redis
@@ -40,59 +38,37 @@ const relevantTransactionsReducer = (currentCycleEnd) => (acc, it) => {
  * @return {Object} agreement
  * @throws DataError When agreement data cannot be parsed
  */
-async function buildAgreementData(service, id) {
+async function getStoredAgreement(service, id) {
   const { redis, log } = service;
   const agreementKey = key(AGREEMENT_DATA, id);
   const data = await redis.hmget(agreementKey, AGREEMENT_KEYS);
 
-  let parsed;
   try {
-    parsed = agreementParser(data);
+    const parsed = agreementParser(data);
+    // NOTE: PAYPAL agreement doesn't have embedded plan id and owner...
+    parsed.agreement.owner = parsed.owner;
+    parsed.agreement.plan.id = parsed.plan;
+
+    return parsed;
   } catch (e) {
     log.error({
-      err: e,
-      keys: AGREEMENT_KEYS,
-      source: String(data),
-      agreementKey,
+      err: e, keys: AGREEMENT_KEYS, source: String(data), agreementKey,
     }, 'failed to fetch agreement data');
 
     throw e;
   }
-
-  // assign owner
-  parsed.agreement.owner = parsed.owner;
-
-  // FIXME: PAYPAL agreement doesn't have embedded plan id...
-  // bug in paypal
-  parsed.agreement.plan.id = parsed.plan;
-
-  return parsed;
 }
 
-/**
- * Fetch transactions from PayPal for the period [start; end]
- * @param service
- * @param id Agreement ID
- * @param start
- * @param end
- * @param agreement
- * @returns {bluebird<[]>}
- */
-const getActualTransactions = async (service, agreement, start, end) => {
-  if (agreement.plan.id === FREE_PLAN_ID) {
-    return [];
-  }
-  const { id } = agreement;
-  const { transactions } = await service.dispatch('transaction.sync', {
-    params: {
-      id,
-      start,
-      end,
+async function updateAgreement(service, oldAgreement, newAgreement) {
+  const agreementKey = key(AGREEMENT_DATA, newAgreement.id);
+  await service.redis.hmset(agreementKey, serialize({
+    agreement: {
+      ...newAgreement,
+      plan: mergeWithNotNull(get(oldAgreement, ['agreement', 'plan']), newAgreement.plan),
     },
-  });
-
-  return transactions;
-};
+    state: newAgreement.state,
+  }));
+}
 
 async function publishHook(amqp, event, payload) {
   await amqp.publish('payments.hook.publish', { event, payload }, {
@@ -101,6 +77,15 @@ async function publishHook(amqp, event, payload) {
     deliveryMode: 2,
     priority: 0,
   });
+}
+
+function getAgreementDetails(agreement) {
+  const { agreement_details: agreementDetails } = agreement;
+
+  return {
+    failedPayments: parseInt(agreementDetails.failed_payment_count, 10) || 0,
+    cyclesCompleted: parseInt(agreementDetails.cycles_completed, 10) || 0,
+  };
 }
 
 /**
@@ -113,65 +98,60 @@ async function publishHook(amqp, event, payload) {
  * @apiSchema {jsonschema=response/agreement/bill.json} apiResponse
  */
 async function agreementBill({ log, params }) {
-  const { agreement: id, subscriptionInterval, username, nextCycle } = params;
-  const momentCycle = moment(nextCycle);
-  const start = momentCycle.clone().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
-  const endDate = momentCycle.clone().add(1, 'day');
-  const end = endDate.format('YYYY-MM-DD');
+  const { agreement: id, username } = params;
   const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
 
-  const { agreement, state } = await buildAgreementData(this, id);
+  const { paypal: paypalConfig } = this.config;
+  const localAgreementData = await getStoredAgreement(this, id);
+  const remoteAgreement = await paypal.agreement.get(id, paypalConfig).catch(paypal.handleError);
+
+  await updateAgreement(this, localAgreementData, remoteAgreement);
 
   try {
-    verifyAgreementState(id, username, state);
+    verifyAgreementState(id, username, remoteAgreement.state);
   } catch (error) {
     if (error instanceof BillingError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
-      const { message, code, params: errorParams } = error;
+
       await publishHook(amqp, HOOK_BILLING_FAILURE, {
-        error: { message, code, params: errorParams },
+        error: error.getHookErrorData(),
       });
 
       return 'FAIL';
     }
-    // 'failed to fetch agreement data' or unexpected error
     log.warn({ err: error }, 'Failed to sync', username, id);
     throw error;
   }
+  console.debug('LOCAL', localAgreementData.agreement);
+  console.debug('REMOTE', remoteAgreement);
+  const local = getAgreementDetails(localAgreementData.agreement);
+  const remote = getAgreementDetails(remoteAgreement);
+  console.debug('AGR INFO', { local, remote });
+  const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
+  const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
 
-  let transactions;
-  try {
-    transactions = await getActualTransactions(this, agreement, start, end);
-    log.debug('fetched transactions for agreement %s created from %s to %s', id, start, end);
-  } catch (e) {
-    log.warn({ err: e }, 'Failed to sync', username, id);
-
-    throw e;
-  }
-  const agreementPayload = paidAgreementPayload(agreement, state, username);
-
-  // 1 day is too much for 'daily' interval. HOPE this doesn't break something
-  const currentCycleEnd = moment(params.nextCycle).subtract(1, 'minute');
-  const cyclesBilled = transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0);
-
-  // IDK but Generally transactions should appear in 1 day after next cycle
-  if (cyclesBilled !== 0 || endDate.valueOf() >= Date.now()) {
-    await publishHook(amqp, HOOK_BILLING_SUCCESS, {
-      agreement: agreementPayload,
-      cyclesBilled,
+  if (cyclesBilled === 0 && failedPaymentsDiff > 0) {
+    const error = BillingError.hasIncreasedPaymentFailure(id, username, {
+      local: local.failedPayments,
+      remote: remote.failedPayments,
     });
-  } else {
-    const error = BillingError.noRelevantTransactions(agreementPayload.id, agreementPayload.owner, { start, end });
-    log.debug({ err: error }, 'No outstanding transactions');
+    log.debug({ err: error }, 'Failed payment increase');
 
-    // If already one day passed, notify billing to enforce generic payment retry strategy
-    const { message, code, params: errorParams } = error;
     await publishHook(amqp, HOOK_BILLING_FAILURE, {
-      error: { message, code, params: errorParams },
+      error: error.getHookErrorData(),
     });
+
+    return 'FAIL';
   }
+
+  const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, username);
+
+  await publishHook(amqp, HOOK_BILLING_SUCCESS, {
+    agreement: agreementPayload,
+    cyclesBilled,
+  });
 
   return 'OK';
 }

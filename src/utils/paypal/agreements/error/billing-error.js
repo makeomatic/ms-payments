@@ -1,9 +1,17 @@
 const CODE_AGREEMENT_STATUS_FORBIDDEN = 'agreement-status-forbidden';
-const CODE_AGREEMENT_STATUS_NO_TRANSACTIONS = 'agreement-no-transactions';
+const CODE_AGREEMENT_PAYMENT_FAILED = 'agreement-payment-failed';
 
 class BillingError extends Error {
   constructor(reason) {
     super(`Agreement billing failed. Reason: ${reason}`);
+  }
+
+  getHookErrorData() {
+    return {
+      message: this.message,
+      code: this.code,
+      params: this.params,
+    };
   }
 
   static agreementStatusForbidden(agreementId, owner, status) {
@@ -13,10 +21,10 @@ class BillingError extends Error {
     return error;
   }
 
-  static noRelevantTransactions(agreementId, owner, period) {
-    const error = new BillingError(`Agreement "${agreementId}" has no transactions for period`);
-    error.code = CODE_AGREEMENT_STATUS_NO_TRANSACTIONS;
-    error.params = { agreementId, owner, period };
+  static hasIncreasedPaymentFailure(agreementId, owner, failedCount) {
+    const error = new BillingError(`Agreement "${agreementId}" has increased failed payment count`);
+    error.code = CODE_AGREEMENT_PAYMENT_FAILED;
+    error.params = { agreementId, owner, failedCount };
     return error;
   }
 }

@@ -229,7 +229,7 @@ async function agreementExecute({ params }) {
     throw e;
   }
 
-  // todo Why do we need plan merge?
+  // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
   await publishSuccessHook(amqp, successPayload(agreement, token, planId, owner));
