@@ -1,5 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const get = require('get-value');
+const moment = require('moment');
 
 const { BillingError } = require('../../utils/paypal/agreements').error;
 const paypal = require('../../utils/paypal');
@@ -30,6 +31,28 @@ const verifyAgreementState = (id, owner, state) => {
     throw BillingError.agreementStatusForbidden(id, owner, state.toLowerCase());
   }
 };
+
+/**
+ * Fetch transactions from PayPal for the period [start; end]
+ * @param service
+ * @param id Agreement ID
+ * @param start
+ * @param end
+ * @param agreement
+ * @returns {bluebird<[]>}
+ */
+async function getActualTransactions(service, agreement, start, end) {
+  const { id } = agreement;
+  const { transactions } = await service.dispatch('transaction.sync', {
+    params: {
+      id,
+      start,
+      end,
+    },
+  });
+
+  return transactions;
+}
 
 /**
  * Parses and completes agreement data retrieved from redis
@@ -98,7 +121,7 @@ function getAgreementDetails(agreement) {
  * @apiSchema {jsonschema=response/agreement/bill.json} apiResponse
  */
 async function agreementBill({ log, params }) {
-  const { agreement: id, username } = params;
+  const { agreement: id, username, subscriptionInterval } = params;
   const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
@@ -108,6 +131,11 @@ async function agreementBill({ log, params }) {
   const remoteAgreement = await paypal.agreement.get(id, paypalConfig).catch(paypal.handleError);
 
   await updateAgreement(this, localAgreementData, remoteAgreement);
+
+  const now = moment();
+  const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
+  const end = now.add(1, 'day').format('YYYY-MM-DD');
+  await getActualTransactions(this, localAgreementData.agreement, start, end);
 
   try {
     verifyAgreementState(id, username, remoteAgreement.state);
@@ -124,11 +152,9 @@ async function agreementBill({ log, params }) {
     log.warn({ err: error }, 'Failed to sync', username, id);
     throw error;
   }
-  console.debug('LOCAL', localAgreementData.agreement);
-  console.debug('REMOTE', remoteAgreement);
+
   const local = getAgreementDetails(localAgreementData.agreement);
   const remote = getAgreementDetails(remoteAgreement);
-  console.debug('AGR INFO', { local, remote });
   const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
   const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
 
