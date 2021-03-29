@@ -82,10 +82,15 @@ Paypal has not found token
 ### Agreements billing
 For now, you may never receive a hook if:
 * An unexpected error has happen
-* Agreement already has `active` status, but there are no outstanding transactions yet
+
+`Agreement.bill` will execute hooks:
+
+1. `billing:failure` hook when `agreement_details.failed_payment_count` increased and `agreement_details.cycles_complete` not increased. This condition means that PayPal will retry in a log future.
+2. `billing:success` hook:
+    * With `cyclesBilled === 0`, the receiver should retry the billing request in a while and wait for agreement_details.complete_cycles to increase. This condition means that PayPal didn't billed cycle.
+    * With `cyclesBilled > 0`, generally means that everything billed successfully.
 
 #### Success
-
 Cycles billed could be 0:
 
 ```json
@@ -130,6 +135,29 @@ Failure due to invalid agreement status, could be `cancelled` or `suspended`:
       "code": "agreement-status-forbidden",
       "params": { "status": "cancelled", "agreementId": "I-21LTDJU14P4U", "owner": "test@test.ru" },
       "message": "Agreement billing failed. Reason: Agreement \"I-21LTDJU14P4U\" has status \"cancelled\""
+    }
+  }
+}
+```
+
+##### Increased failed payment count.
+This error is retryable.
+Failure due to increased `failed_payment_count` on Agreement. Generally, this happens when PayPal was unable to bill the next billing cycle and will retry later.
+```json
+{
+  "meta": { "type": "paypal:agreements:billing:failure" },
+  "data": {
+    "error": {
+      "code": "agreement-payment-failed",
+      "params": {
+        "agreementId": "I-21LTDJU14P4U",
+        "owner": "test@test.ru",
+        "failedCount": {
+          "local": 1,
+          "remote": 2,
+        },
+      },
+      "message": "Agreement billing failed. Reason: Agreement \"I-21LTDJU14P4U\" as increased failed payment count"
     }
   }
 }
