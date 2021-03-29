@@ -155,12 +155,12 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       billingAgreement.id = result.id;
-
       assertExecutionSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id: result.id,
           owner: 'test@test.ru',
           status: 'active',
+          token: params.token,
         }),
       });
 
@@ -205,6 +205,7 @@ describe('Agreements suite', function AgreementSuite() {
           id: result.id,
           owner: 'test@test.ru',
           status: 'active',
+          token: params.token,
         }),
       });
 
@@ -297,6 +298,7 @@ describe('Agreements suite', function AgreementSuite() {
           id: result.id,
           owner: 'test@test.ru',
           status: 'active',
+          token: params.token,
         }),
       });
 

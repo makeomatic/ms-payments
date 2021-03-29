@@ -116,8 +116,8 @@ async function publishHook(amqp, event, payload) {
 async function agreementBill({ log, params }) {
   const { agreement: id, subscriptionInterval, username, nextCycle } = params;
   const now = moment();
-  const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
-  const end = now.add(1, 'day').format('YYYY-MM-DD');
+  const start = now.clone().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
+  const end = now.clone().add(1, 'day').format('YYYY-MM-DD');
   const { amqp } = this;
 
   log.debug('billing %s on %s', username, id);
@@ -161,7 +161,8 @@ async function agreementBill({ log, params }) {
   }
 
   if (transactions.length !== 0) {
-    const currentCycleEnd = moment(params.nextCycle).subtract(1, 'day');
+    // 1 day is too much for 'daily' interval. HOPE this doesn't break something
+    const currentCycleEnd = moment(params.nextCycle).subtract(1, 'minute'); // .subtract(1, 'day');
     await publishHook(amqp, 'paypal:agreements:billing:success', {
       agreement: paidAgreementPayload(agreement, state, username),
       cyclesBilled: transactions.reduce(relevantTransactionsReducer(currentCycleEnd), 0),
