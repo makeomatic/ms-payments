@@ -82,10 +82,15 @@ Paypal has not found token
 ### Agreements billing
 For now, you may never receive a hook if:
 * An unexpected error has happen
-* Agreement already has `active` status, but there are no outstanding transactions yet
+
+`Agreement.bill` will execute hooks:
+
+1. `billing:failure` hook when `agreement_details.failed_payment_count` increased and `agreement_details.cycles_complete` not increased. This condition means that PayPal will retry in a log future.
+2. `billing:success` hook:
+    * With `cyclesBilled === 0`, the receiver should retry the billing request in a while and wait for agreement_details.complete_cycles to increase. This condition means that PayPal didn't billed cycle.
+    * With `cyclesBilled > 0`, generally means that everything billed successfully.
 
 #### Success
-
 Cycles billed could be 0:
 
 ```json
