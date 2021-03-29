@@ -21,8 +21,9 @@ const freeAgreementPayload = (username) => ({
   owner: username,
   status: 'active',
 });
-const paidAgreementPayload = (agreement, state, owner) => ({
+const paidAgreementPayload = (agreement, token, state, owner) => ({
   owner,
+  token,
   id: agreement.id,
   status: state.toLowerCase(),
 });
@@ -46,10 +47,10 @@ const publishFailureHook = (amqp, executionError) => publishHook(
   failureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
-const successPayload = (agreement, planId, owner) => ({
+const successPayload = (agreement, token, planId, owner) => ({
   agreement: planId === FREE_PLAN_ID
     ? freeAgreementPayload(owner)
-    : paidAgreementPayload(agreement, agreement.state, owner),
+    : paidAgreementPayload(agreement, token, agreement.state, owner),
 });
 
 /**
@@ -117,7 +118,7 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 
     return fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt + 1);
   }
 
-  const error = ExecutionError.agreementStatusForbidden(agreementId, state, owner);
+  const error = ExecutionError.agreementStatusForbidden(agreementId, agreement.token, state, owner);
   log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
   throw error;
 }
@@ -231,7 +232,7 @@ async function agreementExecute({ params }) {
   // todo Why do we need plan merge?
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
-  await publishSuccessHook(amqp, successPayload(agreement, planId, owner));
+  await publishSuccessHook(amqp, successPayload(agreement, token, planId, owner));
   await updateRedis(redis, token, agreement, owner, planId);
 
   const agreementWithSyncedTransactions = await syncTransactions(dispatch, this.log, agreement, owner);
