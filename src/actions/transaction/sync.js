@@ -1,7 +1,6 @@
 const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
 const Errors = require('common-errors');
-const get = require('get-value');
 const moment = require('moment');
 
 // helpers
@@ -16,8 +15,8 @@ const {
   AGREEMENT_TRANSACTIONS_DATA,
   ARG_AGR_ID_FIELD,
 } = require('../../constants');
-const { agreement: { get: getAgreement, searchTransactions }, handleError } = require('../../utils/paypal');
-const { mergeWithNotNull } = require('../../utils/plans');
+
+const { agreement: { searchTransactions }, handleError } = require('../../utils/paypal');
 
 /**
  * Helper functions
@@ -25,20 +24,15 @@ const { mergeWithNotNull } = require('../../utils/plans');
 
 /**
  * Gets transactions for the passed agreementId
- * @return {Promise<{ agreement: Agreement, transactions: Transactions[] }>}
+ * @return {Promise<{ transactions: Transactions[] }>}
  */
 async function sendRequest(ctx) {
   const { agreementId, paypalConfig, start, end } = ctx;
-
-  // we request agreement & transactions sequentially so that
-  // if transactions request goes through first and contains non-finished transactions
-  // but agreement is already in active state we dont get an inconsistency
-  const agreement = await getAgreement(agreementId, paypalConfig).catch(handleError);
   const transactions = await searchTransactions(agreementId, start, end, paypalConfig)
     .catch(handleError)
     .get('agreement_transaction_list');
 
-  return { agreement, transactions };
+  return transactions;
 }
 
 /**
@@ -82,13 +76,15 @@ async function findOwner(ctx) {
  * Fetch old agreement from redis
  * @return {Promise<{ agreement: Agreement }>}
  */
-async function getOldAgreement(ctx) {
+async function getAgreement(ctx) {
   const agreementKey = key(AGREEMENT_DATA, ctx.agreementId);
   const data = await ctx.redis.hgetall(agreementKey);
 
-  return data
-    ? deserialize(data)
-    : null;
+  if (typeof data !== 'object' || data === undefined) {
+    throw new Error(`No agreement "${ctx.agreementId}"`);
+  }
+
+  return deserialize(data);
 }
 
 /**
@@ -112,27 +108,17 @@ function updateCommon(ctx, transaction, owner) {
 /**
  * Save transaction's data to redis
  * @param  {String}  owner
- * @param  {Object<{ agreement, transactions }>}  paypalData
- * @return {Promise<{ agreement, transactions }>}
+ * @param  {Array<PaypalTransaction>}  paypalData
+ * @return {Promise<{ transactions }>}
  */
-async function saveToRedis(ctx, owner, paypalData, oldAgreement) {
+async function saveToRedis(ctx, owner, transactions, agreement) {
   const { redis, agreementId, log } = ctx;
-  const { agreement, transactions } = paypalData;
 
   const pipeline = redis.pipeline();
   const updates = [];
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
 
-  log.info({ agreement, transactions }, 'received data from paypal');
-
-  // update current agreement details
-  pipeline.hmset(agreementKey, serialize({
-    agreement: {
-      ...agreement,
-      plan: mergeWithNotNull(get(oldAgreement, ['agreement', 'plan']), agreement.plan),
-    },
-    state: agreement.state,
-  }));
+  log.info({ transactions, dbAgreement: agreement }, 'received data from paypal');
 
   for (const transaction of transactions.values()) {
     const transactionKey = key(AGREEMENT_TRANSACTIONS_DATA, transaction.transaction_id);
@@ -159,7 +145,7 @@ async function saveToRedis(ctx, owner, paypalData, oldAgreement) {
 
   await Promise.all(updates);
 
-  return { agreement, transactions };
+  return { transactions };
 }
 
 /**
@@ -204,7 +190,7 @@ async function transactionSync({ params }) {
   const args = await Promise.all([
     findOwner(ctx),
     sendRequest(ctx),
-    getOldAgreement(ctx),
+    getAgreement(ctx),
   ]);
 
   return saveToRedis(ctx, ...args);
