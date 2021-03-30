@@ -175,8 +175,11 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
   await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
 
+  await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+
   const gdprBtn = await page.$(GDPR_BTN);
   console.info('[gdpr button]', { gdprBtn });
+
   if (gdprBtn) {
     console.info('accept gdpr');
     await Promise.delay(3000);
@@ -229,8 +232,15 @@ exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-retu
     await dispose(hasAccount);
   }
 
-  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
-  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
+  if (await page.$(EMAIL_INPUT)) {
+    console.info('input credentials');
+    await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
+
+    await Promise.all([
+      idle('2'),
+      typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD),
+    ]);
+  }
 
   const gdprBtn = await page.$(GDPR_BTN);
   if (gdprBtn) {
