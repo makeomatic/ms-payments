@@ -71,6 +71,18 @@ function prepareTrialPlanData(basePlan, discountParams) {
   return trialPlan;
 }
 
+async function createAndActivatePlan(planData, paypalConfig) {
+  let newPlan;
+  try {
+    newPlan = await billingPlanCreate(planData, paypalConfig);
+    await billingPlanUpdate(newPlan.id, [{ op: 'replace', path: '/', value: { state: active } }], paypalConfig);
+  } catch (e) {
+    handleError(e);
+  }
+
+  return newPlan;
+}
+
 async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
   const { planId, trialDiscount, trialCycle } = agreementParams;
   const planData = await fetchPlan(redis, planId);
@@ -86,18 +98,10 @@ async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
     };
   }
 
-  let trialPlanId;
   const trialPlanData = prepareTrialPlanData(planData.plan, calculated);
   log.info({ trialPlanData }, 'init discounted plan');
 
-  try {
-    const trialPlan = await billingPlanCreate(trialPlanData, paypalConfig);
-    ({ id: trialPlanId } = trialPlan);
-
-    await billingPlanUpdate(trialPlanId, [{ op: 'replace', path: '/', value: { state: active } }], paypalConfig);
-  } catch (e) {
-    handleError(e);
-  }
+  const { id: trialPlanId } = await createAndActivatePlan(trialPlanData, paypalConfig);
 
   return {
     planId: trialPlanId,
@@ -123,6 +127,18 @@ function prepareAgreementData(agreementBase, params) {
   agreementData.plan.id = planId;
 
   return agreementData;
+}
+
+async function createAgreement(agreementData, paypalConfig) {
+  let newAgreement;
+
+  try {
+    newAgreement = billingAgreementCreate(agreementData, paypalConfig);
+  } catch (e) {
+    handleError(e);
+  }
+
+  return newAgreement;
 }
 
 async function saveAgreement(redis, agreementData, params) {
@@ -164,8 +180,7 @@ async function agreementCreate({ params }) {
     planId, trialDiscount, trialCycle, startDate,
   });
   const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
-  const createdAgreement = await billingAgreementCreate(agreementData, config.paypal)
-    .catch(handleError);
+  const createdAgreement = await createAgreement(agreementData, config.paypal);
 
   const approval = find(createdAgreement.links, { rel: 'approval_url' });
   if (approval === null) {
