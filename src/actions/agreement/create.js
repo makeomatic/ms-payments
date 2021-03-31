@@ -133,7 +133,7 @@ async function createAgreement(agreementData, paypalConfig) {
   let newAgreement;
 
   try {
-    newAgreement = billingAgreementCreate(agreementData, paypalConfig);
+    newAgreement = await billingAgreementCreate(agreementData, paypalConfig);
   } catch (e) {
     handleError(e);
   }
