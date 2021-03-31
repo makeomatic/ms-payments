@@ -115,7 +115,7 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(result.agreement.id, 'free');
     });
 
-    it.only('Should create an agreement', async () => {
+    it('Should create an agreement', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
@@ -124,7 +124,7 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement = await dispatch(createAgreement, data);
     });
 
-    it.only('Should create an agreement with different start_date', async () => {
+    it('Should create an agreement with different start_date', async () => {
       const now = Date.now();
       const startDate = moment().add(3, 'days');
       const data = {
