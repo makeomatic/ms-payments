@@ -177,7 +177,7 @@ async function agreementCreate({ params }) {
   const logger = log.child({ owner });
 
   const billingParams = await prepareBillingParams(redis, logger, config.paypal, {
-    planId, trialDiscount, trialCycle, startDate,
+    planId, trialDiscount, trialCycle,
   });
   const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
   const createdAgreement = await createAgreement(agreementData, config.paypal);
