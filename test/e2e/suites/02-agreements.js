@@ -33,6 +33,7 @@ describe('Agreements suite', function AgreementSuite() {
   const billAgreement = 'payments.agreement.bill';
 
   let billingAgreement;
+  let futureAgreement;
   let planId;
   let payments;
   let dispatch;
@@ -114,13 +115,28 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(result.agreement.id, 'free');
     });
 
-    it('Should create an agreement', async () => {
+    it.only('Should create an agreement', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
       };
 
       billingAgreement = await dispatch(createAgreement, data);
+    });
+
+    it.only('Should create an agreement with different start_date', async () => {
+      const now = Date.now();
+      const startDate = moment().add(3, 'days');
+      const data = {
+        agreement: testAgreementData,
+        owner: 'test@test.ru',
+        startDate,
+      };
+
+      futureAgreement = await dispatch(createAgreement, data);
+      const dateDiff = moment(futureAgreement.agreement.start_date).diff(now, 'days');
+
+      assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
     });
 
     it('Should fail to execute on an unknown token', async () => {
@@ -150,6 +166,29 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an approved agreement', async () => {
       const params = await approveSubscription(billingAgreement.url);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const result = await dispatch(executeAgreement, { token: params.token });
+
+      result.plan.payment_definitions.forEach((definition) => {
+        assert.ok(definition.id);
+        assert.ok(definition.name);
+      });
+
+      billingAgreement.id = result.id;
+      assertExecutionSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'test@test.ru',
+          status: 'active',
+          token: params.token,
+        }),
+      });
+
+      await afterAgreementExecution(payments, dispatch, result, planId);
+    });
+
+    it('Should execute an future approved agreement', async () => {
+      const params = await approveSubscription(futureAgreement.url);
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(executeAgreement, { token: params.token });
 
