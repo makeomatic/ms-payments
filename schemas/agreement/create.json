@@ -44,6 +44,10 @@
     "startDate": {
       "type": "string",
       "format": "date-time"
+    },
+    "setupFee": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{1,2}$"
     }
   }
 }

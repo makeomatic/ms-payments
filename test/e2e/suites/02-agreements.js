@@ -129,7 +129,7 @@ describe('Agreements suite', function AgreementSuite() {
       const startDate = moment().add(3, 'days');
       const data = {
         agreement: testAgreementData,
-        owner: 'test@test.ru',
+        owner: 'user0@test.com',
         startDate,
       };
 
@@ -137,6 +137,29 @@ describe('Agreements suite', function AgreementSuite() {
       const dateDiff = moment(futureAgreement.agreement.start_date).diff(now, 'days');
 
       assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
+    });
+
+    it('Should create an agreement with custom setupFee and discount', async () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '10.00',
+        trialDiscount: 10,
+      };
+
+      const { agreement } = await dispatch(createAgreement, data);
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '9');
+    });
+
+    it('Should create an agreement with custom setupFee', async () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '0.00',
+      };
+
+      futureAgreement = await dispatch(createAgreement, data);
+      assert.strictEqual(futureAgreement.agreement.plan.merchant_preferences.setup_fee.value, '0');
     });
 
     it('Should fail to execute on an unknown token', async () => {
@@ -197,11 +220,11 @@ describe('Agreements suite', function AgreementSuite() {
         assert.ok(definition.name);
       });
 
-      billingAgreement.id = result.id;
+      futureAgreement.id = result.id;
       assertExecutionSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id: result.id,
-          owner: 'test@test.ru',
+          owner: 'user0@test.com',
           status: 'active',
           token: params.token,
         }),
@@ -232,7 +255,7 @@ describe('Agreements suite', function AgreementSuite() {
       getAgreementStub.resolves({
         state: 'Active',
         agreement_details: {
-          failed_payment_count: 1,
+          failed_payment_count: 777,
         },
       });
       const publishSpy = sandbox.spy(payments.amqp, 'publish');

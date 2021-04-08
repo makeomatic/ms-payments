@@ -32,21 +32,27 @@ async function fetchPlan(redis, planId) {
   return plan;
 }
 
-function calculateDiscounts(subscription, trialDiscount, trialCycle) {
-  const regularPayment = subscription.definition.amount;
+function calculateDiscounts(subscription, customSetupFee, trialDiscount, trialCycle) {
+  const regularPayment = { ...subscription.definition.amount };
   const setupFee = { ...regularPayment };
   const normalizedTrialCycle = subscription.name === 'year'
     ? Math.ceil(trialCycle / 12) - 1
     : trialCycle - 1;
 
+  const overridenSetupFee = customSetupFee
+    ? { ...setupFee, value: customSetupFee }
+    : setupFee;
+
   if (trialDiscount !== 0) {
-    setupFee.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
+    regularPayment.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
+    overridenSetupFee.value = Number(overridenSetupFee.value * ((100 - trialDiscount) / 100)).toFixed(2);
   }
 
   return {
     trialCycle: normalizedTrialCycle,
     trialDiscount,
-    setupFee,
+    setupFee: overridenSetupFee,
+    regularPayment,
   };
 }
 
@@ -62,7 +68,7 @@ function prepareTrialPlanData(basePlan, discountParams) {
     ...regularDefinition,
     type: 'TRIAL',
     cycles: discountParams.trialCycle,
-    amount: { ...discountParams.setupFee },
+    amount: { ...discountParams.regularPayment },
   };
 
   trialPlan.name = `${trialPlan.name}-${discountParams.trialDiscount}`;
@@ -84,13 +90,13 @@ async function createAndActivatePlan(planData, paypalConfig) {
 }
 
 async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
-  const { planId, trialDiscount, trialCycle } = agreementParams;
+  const { planId, trialDiscount, trialCycle, setupFee } = agreementParams;
   const planData = await fetchPlan(redis, planId);
 
   const [subscription] = planData.subs;
-  const calculated = calculateDiscounts(subscription, trialDiscount, trialCycle);
+  const calculated = calculateDiscounts(subscription, setupFee, trialDiscount, trialCycle);
 
-  if (calculated.trialCycle === 0) {
+  if (calculated.trialCycle === 0 || calculated.trialDiscount === 0) {
     return {
       planId: planData.plan.id,
       setupFee: calculated.setupFee,
@@ -172,14 +178,18 @@ async function agreementCreate({ params }) {
   const { config, redis, log } = this;
   const {
     owner, agreement, trialDiscount, trialCycle, startDate,
+    setupFee,
   } = params;
   const { plan: { id: planId } } = agreement;
   const logger = log.child({ owner });
 
   const billingParams = await prepareBillingParams(redis, logger, config.paypal, {
-    planId, trialDiscount, trialCycle,
+    planId, trialDiscount, trialCycle, setupFee,
   });
   const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
+  console.debug('===== params', params);
+  console.debug('===== agreement', agreementData);
+
   const createdAgreement = await createAgreement(agreementData, config.paypal);
 
   const approval = find(createdAgreement.links, { rel: 'approval_url' });
