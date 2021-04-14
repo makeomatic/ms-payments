@@ -186,10 +186,8 @@ async function agreementCreate({ params }) {
   const billingParams = await prepareBillingParams(redis, logger, config.paypal, {
     planId, trialDiscount, trialCycle, setupFee,
   });
-  const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
-  console.debug('===== params', params);
-  console.debug('===== agreement', agreementData);
 
+  const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
   const createdAgreement = await createAgreement(agreementData, config.paypal);
 
   const approval = find(createdAgreement.links, { rel: 'approval_url' });
