@@ -91,7 +91,7 @@ async function sendRequest(token, owner, paypal) {
  * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
  * @param  {string} agreementId - Agreement Id.
  */
-async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 0) {
+async function fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt = 0) {
   const agreement = await getAgreement(agreementId, paypal);
   log.debug('fetched agreement %j', agreement);
   const state = String(agreement.state).toLowerCase();
@@ -108,10 +108,10 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 
 
     await Promise.delay(250);
 
-    return fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt + 1);
+    return fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt + 1);
   }
 
-  const error = ExecutionError.agreementStatusForbidden(agreementId, agreement.token, state, owner);
+  const error = ExecutionError.agreementStatusForbidden(agreementId, token, state, owner);
   log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
   throw error;
 }
@@ -215,7 +215,7 @@ async function agreementExecute({ params }) {
 
   let updatedAgreement;
   try {
-    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId);
+    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId, owner, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishFailureHook(amqp, e);
