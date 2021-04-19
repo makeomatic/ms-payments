@@ -115,7 +115,7 @@ describe('Transactions suite', function TransactionsSuite() {
 
       // transaction data
       const [tx] = transactions.items;
-
+      console.debug('==== RECEIVED TRANSACTIONS', transactions.items);
       assert.strictEqual(tx.owner, userId);
       assert.strictEqual(tx.transaction_type, 'Recurring Payment');
       assert.strictEqual(tx.agreement, agreement.id);
