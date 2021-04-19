@@ -7,7 +7,6 @@ const acquireLock = require('../../utils/acquire-lock');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 const TRANSACTION_UPDATED_STATUS = JSON.stringify('Updated');
-const TRANSACTION_CREATED_STATUS = JSON.stringify('Created');
 
 async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), txIds = new Set()) {
   const { page, pages, cursor, items } = await ctx.dispatch('transaction.common', {
@@ -16,12 +15,12 @@ async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), t
       limit: 100,
       type: 'subscription',
       filter: {
-        status: { some: [TRANSACTION_UPDATED_STATUS, TRANSACTION_CREATED_STATUS] },
+        status: { some: [TRANSACTION_UPDATED_STATUS] },
       },
     },
   });
 
-  ctx.log.info({ items }, 'fetched items with %s and %s status', TRANSACTION_UPDATED_STATUS, TRANSACTION_CREATED_STATUS);
+  ctx.log.info({ items }, 'fetched items with %s and %s status', TRANSACTION_UPDATED_STATUS);
 
   for (const item of items.values()) {
     ctx.log.info({ item }, 'processing item');
