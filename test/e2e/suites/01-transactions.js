@@ -93,10 +93,13 @@ describe('Transactions suite', function TransactionsSuite() {
 
       let count = 0;
       /* eslint-disable no-await-in-loop */
+      const { id: agreementId } = agreement;
       while (count === 0) {
         const { transactions } = await dispatch(syncTransaction, { id: agreement.id, start, end });
-        if (transactions.length !== 0) {
-          count = transactions.length;
+        // skip transaction with agreement id. possible sandbox bug
+        count = transactions.filter((t) => t.transaction_id !== agreementId).length;
+        if (count === 0) {
+          payments.log.debug({ transactions }, 'Waiting for valid transactions');
           await Promise.delay(5000);
         }
       }
