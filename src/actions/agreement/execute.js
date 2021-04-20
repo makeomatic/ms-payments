@@ -7,7 +7,7 @@ const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
-const { AGREEMENT_INDEX, AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
+const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
 const { ExecutionError, ExecutionIncompleteError } = require('../../utils/paypal/agreements').error;
@@ -16,11 +16,6 @@ const { RequestError } = require('../../utils/paypal/client').error;
 // internal actions
 const { agreement: { execute, get: getAgreement } } = require('../../utils/paypal');
 
-const freeAgreementPayload = (username) => ({
-  id: 'free',
-  owner: username,
-  status: 'active',
-});
 const paidAgreementPayload = (agreement, token, state, owner) => ({
   owner,
   token,
@@ -47,10 +42,8 @@ const publishFailureHook = (amqp, executionError) => publishHook(
   failureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
-const successPayload = (agreement, token, planId, owner) => ({
-  agreement: planId === FREE_PLAN_ID
-    ? freeAgreementPayload(owner)
-    : paidAgreementPayload(agreement, token, agreement.state, owner),
+const successPayload = (agreement, token, owner) => ({
+  agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
 });
 
 /**
@@ -98,7 +91,7 @@ async function sendRequest(token, owner, paypal) {
  * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
  * @param  {string} agreementId - Agreement Id.
  */
-async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 0) {
+async function fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt = 0) {
   const agreement = await getAgreement(agreementId, paypal);
   log.debug('fetched agreement %j', agreement);
   const state = String(agreement.state).toLowerCase();
@@ -115,10 +108,10 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt = 
 
     await Promise.delay(250);
 
-    return fetchUpdatedAgreement(paypal, log, agreementId, owner, attempt + 1);
+    return fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt + 1);
   }
 
-  const error = ExecutionError.agreementStatusForbidden(agreementId, agreement.token, state, owner);
+  const error = ExecutionError.agreementStatusForbidden(agreementId, token, state, owner);
   log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
   throw error;
 }
@@ -135,7 +128,10 @@ async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
     },
   });
 
-  if (process.env.NODE_ENV === 'test' && transactions.length === 0) {
+  const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
+  const floatSetupFee = parseFloat(setupFee.value);
+
+  if (process.env.NODE_ENV === 'test' && floatSetupFee > 0 && transactions.length === 0) {
     if (attempt > 150) {
       const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
       log.error({ err: error }, error.message);
@@ -219,7 +215,7 @@ async function agreementExecute({ params }) {
 
   let updatedAgreement;
   try {
-    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId);
+    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId, owner, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishFailureHook(amqp, e);
@@ -232,9 +228,8 @@ async function agreementExecute({ params }) {
   // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
-  await publishSuccessHook(amqp, successPayload(agreement, token, planId, owner));
+  await publishSuccessHook(amqp, successPayload(agreement, token, owner));
   await updateRedis(redis, token, agreement, owner, planId);
-
   const agreementWithSyncedTransactions = await syncTransactions(dispatch, this.log, agreement, owner);
 
   return agreementWithSyncedTransactions;

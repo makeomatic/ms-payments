@@ -59,7 +59,7 @@ const dispose = async (...handlers) => {
 };
 
 const idle = async (type = '2') => {
-  await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 10000 });
+  await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 35000 });
 };
 
 const isIgnorableError = (e) => {
@@ -134,6 +134,7 @@ exports.initChrome = async () => {
 
   await page.setRequestInterception(true);
   await page.setViewport({ width: 1960, height: 1280 });
+  page.setDefaultNavigationTimeout(77777);
 
   page.on('request', (interceptedRequest) => {
     console.info(interceptedRequest.url());

@@ -41,11 +41,11 @@ const verifyAgreementState = (id, owner, state) => {
  * @param agreement
  * @returns {bluebird<[]>}
  */
-async function getActualTransactions(service, agreement, start, end) {
-  const { id } = agreement;
+async function getActualTransactions(service, agreementId, owner, start, end) {
   const { transactions } = await service.dispatch('transaction.sync', {
     params: {
-      id,
+      id: agreementId,
+      owner,
       start,
       end,
     },
@@ -121,10 +121,10 @@ function getAgreementDetails(agreement) {
  * @apiSchema {jsonschema=response/agreement/bill.json} apiResponse
  */
 async function agreementBill({ log, params }) {
-  const { agreement: id, username, subscriptionInterval } = params;
+  const { agreement: id, username: owner, subscriptionInterval } = params;
   const { amqp } = this;
 
-  log.debug('billing %s on %s', username, id);
+  log.debug('billing %s on %s', owner, id);
 
   const { paypal: paypalConfig } = this.config;
   const localAgreementData = await getStoredAgreement(this, id);
@@ -135,13 +135,14 @@ async function agreementBill({ log, params }) {
   const now = moment();
   const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = now.add(1, 'day').format('YYYY-MM-DD');
-  await getActualTransactions(this, localAgreementData.agreement, start, end);
+
+  await getActualTransactions(this, id, owner, start, end);
 
   try {
-    verifyAgreementState(id, username, remoteAgreement.state);
+    verifyAgreementState(id, owner, remoteAgreement.state);
   } catch (error) {
     if (error instanceof BillingError) {
-      log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, username);
+      log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, owner);
 
       await publishHook(amqp, HOOK_BILLING_FAILURE, {
         error: error.getHookErrorData(),
@@ -149,7 +150,7 @@ async function agreementBill({ log, params }) {
 
       return 'FAIL';
     }
-    log.warn({ err: error }, 'Failed to sync', username, id);
+    log.warn({ err: error }, 'Failed to sync', owner, id);
     throw error;
   }
 
@@ -159,7 +160,7 @@ async function agreementBill({ log, params }) {
   const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
 
   if (cyclesBilled === 0 && failedPaymentsDiff > 0) {
-    const error = BillingError.hasIncreasedPaymentFailure(id, username, {
+    const error = BillingError.hasIncreasedPaymentFailure(id, owner, {
       local: local.failedPayments,
       remote: remote.failedPayments,
     });
@@ -172,7 +173,7 @@ async function agreementBill({ log, params }) {
     return 'FAIL';
   }
 
-  const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, username);
+  const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, owner);
 
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
