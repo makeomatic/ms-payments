@@ -40,6 +40,14 @@
       "type": "integer",
       "minimum": 1,
       "default": 12
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "setupFee": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{1,2}$"
     }
   }
 }

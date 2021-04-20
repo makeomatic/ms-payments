@@ -33,6 +33,7 @@ describe('Agreements suite', function AgreementSuite() {
   const billAgreement = 'payments.agreement.bill';
 
   let billingAgreement;
+  let futureAgreement;
   let planId;
   let payments;
   let dispatch;
@@ -123,6 +124,44 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement = await dispatch(createAgreement, data);
     });
 
+    it('Should create an agreement with different start_date', async () => {
+      const now = Date.now();
+      const startDate = moment().add(3, 'days');
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        startDate,
+      };
+
+      futureAgreement = await dispatch(createAgreement, data);
+      const dateDiff = moment(futureAgreement.agreement.start_date).diff(now, 'days');
+
+      assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
+    });
+
+    it('Should create an agreement with custom setupFee and discount', async () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '10.00',
+        trialDiscount: 10,
+      };
+
+      const { agreement } = await dispatch(createAgreement, data);
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '9');
+    });
+
+    it('Should create an agreement with custom setupFee', async () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '0.00',
+      };
+
+      futureAgreement = await dispatch(createAgreement, data);
+      assert.strictEqual(futureAgreement.agreement.plan.merchant_preferences.setup_fee.value, '0');
+    });
+
     it('Should fail to execute on an unknown token', async () => {
       await assert.rejects(dispatch(executeAgreement, 'random token'), {
         name: 'HttpStatusError',
@@ -171,6 +210,29 @@ describe('Agreements suite', function AgreementSuite() {
       await afterAgreementExecution(payments, dispatch, result, planId);
     });
 
+    it('Should execute an future approved agreement', async () => {
+      const params = await approveSubscription(futureAgreement.url);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const result = await dispatch(executeAgreement, { token: params.token });
+
+      result.plan.payment_definitions.forEach((definition) => {
+        assert.ok(definition.id);
+        assert.ok(definition.name);
+      });
+
+      futureAgreement.id = result.id;
+      assertExecutionSuccessHookCalled(publishSpy, {
+        agreement: sinon.match({
+          id: result.id,
+          owner: 'user0@test.com',
+          status: 'active',
+          token: params.token,
+        }),
+      });
+
+      await afterAgreementExecution(payments, dispatch, result, planId);
+    });
+
     // sorry for being verbose, will deal with it later
     it('should bill agreement', async () => {
       const { id } = billingAgreement;
@@ -193,7 +255,7 @@ describe('Agreements suite', function AgreementSuite() {
       getAgreementStub.resolves({
         state: 'Active',
         agreement_details: {
-          failed_payment_count: 1,
+          failed_payment_count: 777,
         },
       });
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
