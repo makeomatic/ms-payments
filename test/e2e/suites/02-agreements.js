@@ -139,7 +139,7 @@ describe('Agreements suite', function AgreementSuite() {
       assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
     });
 
-    it('Should create an agreement with custom setupFee and discount', async () => {
+    it('Should create an agreement with custom setupFee and discount, discount ignored', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'user0@test.com',
@@ -148,7 +148,7 @@ describe('Agreements suite', function AgreementSuite() {
       };
 
       const { agreement } = await dispatch(createAgreement, data);
-      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '9');
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '10');
     });
 
     it('Should create an agreement with custom setupFee', async () => {
