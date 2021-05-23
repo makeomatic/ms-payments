@@ -42,8 +42,9 @@ const publishFailureHook = (amqp, executionError) => publishHook(
   failureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
-const successPayload = (agreement, token, owner) => ({
+const successPayload = (agreement, token, owner, transaction) => ({
   agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
+  transaction,
 });
 
 /**
@@ -234,7 +235,9 @@ async function agreementExecute({ params }) {
   await updateRedis(redis, token, agreement, owner, planId);
   const { agreement: agreementWithSyncedTransactions, transactions } = await syncTransactions(dispatch, this.log, agreement, owner);
 
-  await publishSuccessHook(amqp, successPayload(agreement, token, owner));
+  const [transaction] = transactions;
+
+  await publishSuccessHook(amqp, successPayload(agreement, token, owner, transaction));
 
   return agreementWithSyncedTransactions;
 }

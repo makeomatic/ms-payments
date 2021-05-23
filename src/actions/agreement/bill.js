@@ -159,7 +159,7 @@ async function agreementBill({ log, params }) {
   const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
   const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
 
-  if (cyclesBilled === 0 && failedPaymentsDiff > 0) {
+  if (failedPaymentsDiff > 0) {
     const error = BillingError.hasIncreasedPaymentFailure(id, owner, {
       local: local.failedPayments,
       remote: remote.failedPayments,
