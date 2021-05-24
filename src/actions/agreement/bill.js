@@ -136,7 +136,7 @@ async function agreementBill({ log, params }) {
   const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = now.add(1, 'day').format('YYYY-MM-DD');
 
-  await getActualTransactions(this, id, owner, start, end);
+  const transactions = await getActualTransactions(this, id, owner, start, end);
 
   try {
     verifyAgreementState(id, owner, remoteAgreement.state);
@@ -173,10 +173,15 @@ async function agreementBill({ log, params }) {
     return 'FAIL';
   }
 
+  // Find relative transaction. Always appears between next_billing_date - 1 interval and next_billing_date
+  const cycleStart = moment(remoteAgreement.agreement_details.next_billing_date).subtract(1, subscriptionInterval);
+  const transaction = transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart));
+
   const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, owner);
 
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
+    transaction,
     cyclesBilled,
   });
 
