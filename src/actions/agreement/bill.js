@@ -175,7 +175,7 @@ async function agreementBill({ log, params }) {
 
   // Find relative transaction. Always appears between next_billing_date - 1 interval and next_billing_date
   const cycleStart = moment(remoteAgreement.agreement_details.next_billing_date).subtract(1, subscriptionInterval);
-  const transaction = transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart));
+  const transaction = cyclesBilled > 0 ? transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart)) : undefined;
 
   const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, owner);
 
