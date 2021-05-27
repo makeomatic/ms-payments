@@ -189,7 +189,7 @@ async function agreementBill({ log, params }) {
   // cyclesBilled === 0 forces billing to retry request
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
-    transaction,
+    transaction: cyclesBilled > 0 ? transaction : undefined,
     cyclesBilled: transaction ? cyclesBilled : 0,
   });
 
