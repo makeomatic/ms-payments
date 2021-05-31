@@ -116,7 +116,7 @@ async function saveToRedis(ctx, owner, transactions, agreement) {
 
   const pipeline = redis.pipeline();
   const updates = [];
-  const agreementKey = key(AGREEMENT_DATA, agreement.id);
+  const agreementKey = key(AGREEMENT_DATA, agreementId);
 
   log.info({ transactions, dbAgreement: agreement }, 'received data from paypal');
 

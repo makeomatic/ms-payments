@@ -42,8 +42,9 @@ const publishFailureHook = (amqp, executionError) => publishHook(
   failureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
-const successPayload = (agreement, token, owner) => ({
+const successPayload = (agreement, token, owner, transaction) => ({
   agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
+  transaction,
 });
 
 /**
@@ -131,13 +132,16 @@ async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
   const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
   const floatSetupFee = parseFloat(setupFee.value);
 
-  if (process.env.NODE_ENV === 'test' && floatSetupFee > 0 && transactions.length === 0) {
+  // filter out transaction with created status and id === agreement.id
+  const filteredTransactions = transactions.filter((t) => t.transaction_id !== agreement.id);
+
+  if (floatSetupFee > 0 && filteredTransactions.length === 0) {
     if (attempt > 150) {
       const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
       log.error({ err: error }, error.message);
       // ATTENTION! originally we don't throw an error, just log it
       // so we don't send niether failure not success hooks for now
-      return agreement;
+      return { agreement, transactions: filteredTransactions };
     }
 
     await Promise.delay(15000);
@@ -146,7 +150,7 @@ async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
     return syncTransactions(dispatch, log, agreement, owner, attempt + 1);
   }
 
-  return agreement;
+  return { agreement, transactions: filteredTransactions };
 }
 
 async function updateRedis(redis, token, agreement, owner, planId) {
@@ -228,9 +232,12 @@ async function agreementExecute({ params }) {
   // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
-  await publishSuccessHook(amqp, successPayload(agreement, token, owner));
   await updateRedis(redis, token, agreement, owner, planId);
-  const agreementWithSyncedTransactions = await syncTransactions(dispatch, this.log, agreement, owner);
+  const { agreement: agreementWithSyncedTransactions, transactions } = await syncTransactions(dispatch, this.log, agreement, owner);
+
+  const [transaction] = transactions;
+
+  await publishSuccessHook(amqp, successPayload(agreement, token, owner, transaction));
 
   return agreementWithSyncedTransactions;
 }
