@@ -130,13 +130,12 @@ async function agreementBill({ log, params }) {
   const localAgreementData = await getStoredAgreement(this, id);
   const remoteAgreement = await paypal.agreement.get(id, paypalConfig).catch(paypal.handleError);
 
-  await updateAgreement(this, localAgreementData, remoteAgreement);
-
   const now = moment();
   const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
   const end = now.add(1, 'day').format('YYYY-MM-DD');
 
-  await getActualTransactions(this, id, owner, start, end);
+  // initially sync transactions anyway
+  const transactions = await getActualTransactions(this, id, owner, start, end);
 
   try {
     verifyAgreementState(id, owner, remoteAgreement.state);
@@ -144,6 +143,7 @@ async function agreementBill({ log, params }) {
     if (error instanceof BillingError) {
       log.warn({ err: error }, 'Agreement %s was cancelled by user %s', id, owner);
 
+      await updateAgreement(this, localAgreementData, remoteAgreement);
       await publishHook(amqp, HOOK_BILLING_FAILURE, {
         error: error.getHookErrorData(),
       });
@@ -159,13 +159,14 @@ async function agreementBill({ log, params }) {
   const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
   const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
 
-  if (cyclesBilled === 0 && failedPaymentsDiff > 0) {
+  if (failedPaymentsDiff > 0) {
     const error = BillingError.hasIncreasedPaymentFailure(id, owner, {
       local: local.failedPayments,
       remote: remote.failedPayments,
     });
     log.debug({ err: error }, 'Failed payment increase');
 
+    await updateAgreement(this, localAgreementData, remoteAgreement);
     await publishHook(amqp, HOOK_BILLING_FAILURE, {
       error: error.getHookErrorData(),
     });
@@ -175,9 +176,21 @@ async function agreementBill({ log, params }) {
 
   const agreementPayload = paidAgreementPayload(localAgreementData.agreement, remoteAgreement.state, owner);
 
+  // try to find transaction
+  const cycleStart = moment(remoteAgreement.agreement_details.next_billing_date).subtract(1, subscriptionInterval);
+  const transaction = transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart));
+
+  // update agreement only when transaction data is available
+  // otherwise agreement should be treated as unbilled
+  if (transaction) {
+    await updateAgreement(this, localAgreementData, remoteAgreement);
+  }
+
+  // cyclesBilled === 0 forces billing to retry request
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
-    cyclesBilled,
+    transaction: cyclesBilled > 0 ? transaction : undefined,
+    cyclesBilled: transaction ? cyclesBilled : 0,
   });
 
   return 'OK';

@@ -45,7 +45,6 @@ function calculateDiscounts(subscription, customSetupFee, trialDiscount, trialCy
 
   if (trialDiscount !== 0) {
     regularPayment.value = Number(regularPayment.value * ((100 - trialDiscount) / 100)).toFixed(2);
-    overridenSetupFee.value = Number(overridenSetupFee.value * ((100 - trialDiscount) / 100)).toFixed(2);
   }
 
   return {

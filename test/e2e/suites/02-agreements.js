@@ -139,7 +139,7 @@ describe('Agreements suite', function AgreementSuite() {
       assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
     });
 
-    it('Should create an agreement with custom setupFee and discount', async () => {
+    it('Should create an agreement with custom setupFee and discount, discount ignored', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'user0@test.com',
@@ -148,7 +148,7 @@ describe('Agreements suite', function AgreementSuite() {
       };
 
       const { agreement } = await dispatch(createAgreement, data);
-      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '9');
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '10');
     });
 
     it('Should create an agreement with custom setupFee', async () => {
@@ -205,6 +205,7 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'active',
           token: params.token,
         }),
+        transaction: sinon.match.object,
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -237,7 +238,7 @@ describe('Agreements suite', function AgreementSuite() {
     it('should bill agreement', async () => {
       const { id } = billingAgreement;
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
-      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+      const result = await dispatch(billAgreement, { agreement: id, subscriptionInterval: 'month', username: 'test@test.ru' });
       assert.strictEqual(result, 'OK');
       assertBillingSuccessHookCalled(publishSpy, {
         cyclesBilled: sinon.match.in([0, 1]),
@@ -246,6 +247,8 @@ describe('Agreements suite', function AgreementSuite() {
           owner: 'test@test.ru',
           status: 'active',
         }),
+        // should be here but will appear on next billing cycle
+        // transaction: sinon.match.object,
       });
     });
 
@@ -263,7 +266,7 @@ describe('Agreements suite', function AgreementSuite() {
       dispatchStub.withArgs('transaction.sync').resolves({ transactions: [] });
       dispatchStub.callThrough();
 
-      const result = await dispatch(billAgreement, { agreement: id, nextCycle: Date.now(), username: 'test@test.ru' });
+      const result = await dispatch(billAgreement, { agreement: id, subscriptionInterval: 'month', username: 'test@test.ru' });
       assert.strictEqual(result, 'FAIL');
       assertBillingFailureHookCalled(publishSpy, {
         error: sinon.match({
@@ -276,7 +279,7 @@ describe('Agreements suite', function AgreementSuite() {
       });
     });
 
-    it('should bill agreement: send billing success when new cycles billed and failed count increased', async () => {
+    it('should bill agreement: send billing failure when new cycles billed and failed count increased', async () => {
       const { id } = billingAgreement;
       const getAgreementStub = sandbox.stub(paypalUtils.agreement, 'get');
       getAgreementStub.resolves({
@@ -293,14 +296,15 @@ describe('Agreements suite', function AgreementSuite() {
 
       const result = await dispatch(billAgreement, { agreement: id, nextCycle: moment().subtract(1, 'day').valueOf(), username: 'test@test.ru' });
 
-      assert.strictEqual(result, 'OK');
-      assertBillingSuccessHookCalled(publishSpy, {
-        cyclesBilled: 3,
-        agreement: {
-          id,
-          owner: 'test@test.ru',
-          status: 'active',
-        },
+      assert.strictEqual(result, 'FAIL');
+      assertBillingFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: `Agreement billing failed. Reason: Agreement "${id}" has increased failed payment count`,
+          code: 'agreement-payment-failed',
+          params: sinon.match(
+            ({ agreementId, owner }) => (agreementId === id && owner === 'test@test.ru')
+          ),
+        }),
       });
     });
 
