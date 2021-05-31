@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "agreement.finalize-execution",
+  "type": "object",
+  "properties": {
+    "agreementId": {
+      "type": "string"
+    },
+    "owner": {
+      "type": "string"
+    }
+  }
+}

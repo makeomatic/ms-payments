@@ -1,56 +1,23 @@
 const { HttpStatusError } = require('common-errors');
 const { ActionTransport } = require('@microfleet/core');
 const Promise = require('bluebird');
-const moment = require('moment');
-const pick = require('lodash/pick');
-const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
 const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
-const { ExecutionError, ExecutionIncompleteError } = require('../../utils/paypal/agreements').error;
+const { ExecutionError } = require('../../utils/paypal/agreements').error;
 const { RequestError } = require('../../utils/paypal/client').error;
+const { publishFailureHook } = require('../../utils/paypal/billing-hooks');
 
 // internal actions
 const { agreement: { execute, get: getAgreement } } = require('../../utils/paypal');
 
-const paidAgreementPayload = (agreement, token, state, owner) => ({
-  owner,
-  token,
-  id: agreement.id,
-  status: state.toLowerCase(),
-});
-
-const publishHook = (amqp, event, payload) => amqp.publish(
-  'payments.hook.publish',
-  { event, payload },
-  {
-    confirm: true,
-    mandatory: true,
-    deliveryMode: 2,
-    priority: 0,
-  }
-);
-
-const successEvent = 'paypal:agreements:execution:success';
-const failureEvent = 'paypal:agreements:execution:failure';
-const publishSuccessHook = (amqp, payload) => publishHook(amqp, successEvent, payload);
-const publishFailureHook = (amqp, executionError) => publishHook(
-  amqp,
-  failureEvent,
-  { error: pick(executionError, ['message', 'code', 'params']) }
-);
-const successPayload = (agreement, token, owner, transaction) => ({
-  agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
-  transaction,
-});
-
 /**
  * @throws ExecutionError Unknown subscription token
  */
-async function findAgreementData(redis, amqp, token) {
+async function findAgreementData(redis, token) {
   const tokenKey = key('subscription-token', token);
   const [exists, data] = await redis
     .pipeline()
@@ -117,42 +84,6 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, owner, token, att
   throw error;
 }
 
-async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
-  const syncInterval = get(agreement, ['plan', 'payment_definitions', '0', 'frequency'], 'year').toLowerCase();
-  // we pass owner, so transaction.sync won't try to find user by agreement.id, which is OK as a tradeoff for now
-  const { transactions } = await dispatch('transaction.sync', {
-    params: {
-      id: agreement.id,
-      owner,
-      start: moment().subtract(2, syncInterval).format('YYYY-MM-DD'),
-      end: moment().add(1, 'day').format('YYYY-MM-DD'),
-    },
-  });
-
-  const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
-  const floatSetupFee = parseFloat(setupFee.value);
-
-  // filter out transaction with created status and id === agreement.id
-  const filteredTransactions = transactions.filter((t) => t.transaction_id !== agreement.id);
-
-  if (floatSetupFee > 0 && filteredTransactions.length === 0) {
-    if (attempt > 150) {
-      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
-      log.error({ err: error }, error.message);
-      // ATTENTION! originally we don't throw an error, just log it
-      // so we don't send niether failure not success hooks for now
-      return { agreement, transactions: filteredTransactions };
-    }
-
-    await Promise.delay(15000);
-    // is it also incomplete?
-    log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
-    return syncTransactions(dispatch, log, agreement, owner, attempt + 1);
-  }
-
-  return { agreement, transactions: filteredTransactions };
-}
-
 async function updateRedis(redis, token, agreement, owner, planId) {
   const tokenKey = key('subscription-token', token);
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
@@ -188,12 +119,12 @@ async function updateRedis(redis, token, agreement, owner, planId) {
  * @apiSchema {jsonschema=response/agreement/execute.json} apiResponse
  */
 async function agreementExecute({ params }) {
-  const { config, redis, amqp, dispatch } = this;
+  const { config, redis, amqp } = this;
   const { token } = params;
 
   let agreementData;
   try {
-    agreementData = await findAgreementData(redis, amqp, token);
+    agreementData = await findAgreementData(redis, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishFailureHook(amqp, e);
@@ -233,13 +164,20 @@ async function agreementExecute({ params }) {
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
 
   await updateRedis(redis, token, agreement, owner, planId);
-  const { agreement: agreementWithSyncedTransactions, transactions } = await syncTransactions(dispatch, this.log, agreement, owner);
+  const { prefix } = this.config.router.routes;
 
-  const [transaction] = transactions;
+  await this.amqp.publish(
+    `${prefix}.agreement.finalize-execution`,
+    { agreementId: agreement.id, owner },
+    {
+      confirm: true,
+      mandatory: true,
+      deliveryMode: 2,
+      priority: 0,
+    }
+  );
 
-  await publishSuccessHook(amqp, successPayload(agreement, token, owner, transaction));
-
-  return agreementWithSyncedTransactions;
+  return agreement;
 }
 
 agreementExecute.transports = [ActionTransport.amqp];

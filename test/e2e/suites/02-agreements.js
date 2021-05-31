@@ -2,6 +2,7 @@ const Promise = require('bluebird');
 const assert = require('assert');
 const sinon = require('sinon');
 const moment = require('moment');
+const { once, EventEmitter } = require('events');
 
 const conf = require('../../../src/conf');
 const { duration, simpleDispatcher, afterAgreementExecution } = require('../../utils');
@@ -72,6 +73,15 @@ describe('Agreements suite', function AgreementSuite() {
 
   function assertStateSuccessHookCalled(publishSpy, payload) {
     assertHookPublishing(publishSpy, 'paypal:agreements:state:success', payload);
+  }
+
+  function assertExecuteFinalizeCalled(publishSpy, payload) {
+    sinon.assert.calledWithExactly(
+      publishSpy,
+      'payments.agreement.finalize-execution',
+      sinon.match(payload),
+      sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
+    );
   }
 
   before('startService', async () => {
@@ -198,14 +208,10 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       billingAgreement.id = result.id;
-      assertExecutionSuccessHookCalled(publishSpy, {
-        agreement: sinon.match({
-          id: result.id,
-          owner: 'test@test.ru',
-          status: 'active',
-          token: params.token,
-        }),
-        transaction: sinon.match.object,
+
+      assertExecuteFinalizeCalled(publishSpy, {
+        agreementId: result.id,
+        owner: 'test@test.ru',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -213,7 +219,21 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('Should execute an future approved agreement', async () => {
       const params = await approveSubscription(futureAgreement.url);
-      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+      const spyEmitter = new EventEmitter();
+      let publishCalled = false;
+
+      const publishSpy = sandbox.stub(payments.amqp, 'publish')
+        .callsFake((...args) => {
+          return publishSpy
+            .wrappedMethod.call(payments.amqp, ...args)
+            .tap(() => {
+              if (args[0] === 'payments.hook.publish') {
+                publishCalled = true;
+                spyEmitter.emit('hook-call', args);
+              }
+            });
+        });
+
       const result = await dispatch(executeAgreement, { token: params.token });
 
       result.plan.payment_definitions.forEach((definition) => {
@@ -222,6 +242,14 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       futureAgreement.id = result.id;
+
+      assertExecuteFinalizeCalled(publishSpy, {
+        agreementId: result.id,
+        owner: 'user0@test.com',
+      });
+
+      if (!publishCalled) await once(spyEmitter, 'hook-call');
+
       assertExecutionSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id: result.id,
@@ -325,13 +353,9 @@ describe('Agreements suite', function AgreementSuite() {
 
       billingAgreement.id = result.id;
 
-      assertExecutionSuccessHookCalled(publishSpy, {
-        agreement: sinon.match({
-          id: result.id,
-          owner: 'test@test.ru',
-          status: 'active',
-          token: params.token,
-        }),
+      assertExecuteFinalizeCalled(publishSpy, {
+        agreementId: result.id,
+        owner: 'test@test.ru',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -418,13 +442,9 @@ describe('Agreements suite', function AgreementSuite() {
 
       billingAgreement.id = result.id;
 
-      assertExecutionSuccessHookCalled(publishSpy, {
-        agreement: sinon.match({
-          id: result.id,
-          owner: 'test@test.ru',
-          status: 'active',
-          token: params.token,
-        }),
+      assertExecuteFinalizeCalled(publishSpy, {
+        agreementId: result.id,
+        owner: 'test@test.ru',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
