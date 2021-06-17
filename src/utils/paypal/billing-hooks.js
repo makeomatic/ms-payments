@@ -1,7 +1,9 @@
 const { pick } = require('lodash');
 
-const successEvent = 'paypal:agreements:execution:success';
-const failureEvent = 'paypal:agreements:execution:failure';
+const executionSuccessEvent = 'paypal:agreements:execution:success';
+const executionFailureEvent = 'paypal:agreements:execution:failure';
+const finalizationSuccessEvent = 'paypal:agreements:finalization:success';
+const finalizationFailureEvent = 'paypal:agreements:finalization:failure';
 
 const publishHook = (amqp, event, payload) => amqp.publish(
   'payments.hook.publish',
@@ -21,22 +23,33 @@ const paidAgreementPayload = (agreement, token, state, owner) => ({
   status: state.toLowerCase(),
 });
 
-const successPayload = (agreement, token, owner, transaction) => ({
+const successExecutionPayload = (agreement, token, owner, taskId, transaction) => ({
   agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
+  taskId,
   transaction,
 });
 
-const publishFailureHook = (amqp, executionError) => publishHook(
+const publishExecutionFailureHook = (amqp, executionError) => publishHook(
   amqp,
-  failureEvent,
+  executionFailureEvent,
   { error: pick(executionError, ['message', 'code', 'params']) }
 );
 
-const publishSuccessHook = (amqp, payload) => publishHook(amqp, successEvent, payload);
+const publishExecutionSuccessHook = (amqp, payload) => publishHook(amqp, executionSuccessEvent, payload);
+
+const publishFinalizationFailureHook = (amqp, executionError) => publishHook(
+  amqp,
+  finalizationFailureEvent,
+  { error: pick(executionError, ['message', 'code', 'params']) }
+);
+
+const publishFinalizationSuccessHook = (amqp, payload) => publishHook(amqp, finalizationSuccessEvent, payload);
 
 module.exports = {
   publishHook,
-  publishSuccessHook,
-  publishFailureHook,
-  successPayload,
+  publishExecutionSuccessHook,
+  publishExecutionFailureHook,
+  successExecutionPayload,
+  publishFinalizationSuccessHook,
+  publishFinalizationFailureHook,
 };

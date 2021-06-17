@@ -1,4 +1,3 @@
-const CODE_AGREEMENT_STATUS_FORBIDDEN = 'agreement-status-forbidden';
 const CODE_AGREEMENT_PAYMENT_FAILED = 'agreement-payment-failed';
 
 class BillingError extends Error {
@@ -12,13 +11,6 @@ class BillingError extends Error {
       code: this.code,
       params: this.params,
     };
-  }
-
-  static agreementStatusForbidden(agreementId, owner, status) {
-    const error = new BillingError(`Agreement "${agreementId}" has status "${status}"`);
-    error.code = CODE_AGREEMENT_STATUS_FORBIDDEN;
-    error.params = { agreementId, owner, status };
-    return error;
   }
 
   static hasIncreasedPaymentFailure(agreementId, owner, failedCount) {

@@ -32,15 +32,16 @@ async function fetchPlan(redis, planId) {
   return plan;
 }
 
-function calculateDiscounts(subscription, customSetupFee, trialDiscount, trialCycle) {
+function calculateDiscounts(subscription, customSetupFee, skipSetupFee, trialDiscount, trialCycle) {
   const regularPayment = { ...subscription.definition.amount };
   const setupFee = { ...regularPayment };
+  const extractCycle = skipSetupFee ? 0 : 1;
   const normalizedTrialCycle = subscription.name === 'year'
-    ? Math.ceil(trialCycle / 12) - 1
-    : trialCycle - 1;
+    ? Math.ceil(trialCycle / 12) - extractCycle
+    : trialCycle - extractCycle;
 
   const overridenSetupFee = customSetupFee
-    ? { ...setupFee, value: customSetupFee }
+    ? { ...setupFee, value: skipSetupFee ? '0' : customSetupFee }
     : setupFee;
 
   if (trialDiscount !== 0) {
@@ -52,6 +53,7 @@ function calculateDiscounts(subscription, customSetupFee, trialDiscount, trialCy
     trialDiscount,
     setupFee: overridenSetupFee,
     regularPayment,
+    skipSetupFee,
   };
 }
 
@@ -89,16 +91,17 @@ async function createAndActivatePlan(planData, paypalConfig) {
 }
 
 async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
-  const { planId, trialDiscount, trialCycle, setupFee } = agreementParams;
+  const { planId, trialDiscount, trialCycle, setupFee, skipSetupFee } = agreementParams;
   const planData = await fetchPlan(redis, planId);
 
   const [subscription] = planData.subs;
-  const calculated = calculateDiscounts(subscription, setupFee, trialDiscount, trialCycle);
+  const calculated = calculateDiscounts(subscription, setupFee, skipSetupFee, trialDiscount, trialCycle);
 
   if (calculated.trialCycle === 0 || calculated.trialDiscount === 0) {
     return {
       planId: planData.plan.id,
       setupFee: calculated.setupFee,
+      skipSetupFee,
       subscription,
     };
   }
@@ -112,15 +115,22 @@ async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
     planId: trialPlanId,
     setupFee: calculated.setupFee,
     subscription,
+    skipSetupFee,
   };
 }
 
 function prepareAgreementData(agreementBase, params) {
-  const { planId, setupFee, subscription, startDate } = params;
+  const { planId, setupFee, subscription, startDate, skipSetupFee } = params;
+
+  // Possible problem, we should remeber that Paypal requires startDate to be less than now - 24h
+  // https://developer.paypal.com/docs/api/payments.billing-agreements/v1/#billing-agreements
+  const finalStartDate = skipSetupFee === true
+    ? moment(startDate).format(PAYPAL_DATE_FORMAT)
+    : moment(startDate).add(1, subscription.name).format(PAYPAL_DATE_FORMAT);
 
   const agreementData = {
     ...agreementBase,
-    start_date: moment(startDate).add(1, subscription.name).format(PAYPAL_DATE_FORMAT),
+    start_date: finalStartDate,
     override_merchant_preferences: {
       setup_fee: setupFee,
       initial_fail_amount_action: 'CANCEL',
@@ -151,7 +161,7 @@ async function saveAgreement(redis, agreementData, params) {
   const { owner, planId } = params;
   const { plan } = agreementData.agreement;
   const data = {
-    planId, owner, plan,
+    planId, owner, plan, taskId: agreementData.taskId,
   };
 
   // during trial original plan id is returned, however, payment model is different
@@ -177,13 +187,13 @@ async function agreementCreate({ params }) {
   const { config, redis, log } = this;
   const {
     owner, agreement, trialDiscount, trialCycle, startDate,
-    setupFee,
+    setupFee, skipSetupFee, taskId,
   } = params;
   const { plan: { id: planId } } = agreement;
   const logger = log.child({ owner });
 
   const billingParams = await prepareBillingParams(redis, logger, config.paypal, {
-    planId, trialDiscount, trialCycle, setupFee,
+    planId, trialDiscount, trialCycle, setupFee, skipSetupFee,
   });
 
   const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
@@ -199,6 +209,7 @@ async function agreementCreate({ params }) {
     token,
     url: approval.href,
     agreement: createdAgreement,
+    taskId,
   };
   await saveAgreement(redis, createdAgreementData, { owner, planId });
 

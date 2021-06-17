@@ -40,7 +40,7 @@ async function getAgreement({ params: message }) {
   if (owner && output.owner !== owner) {
     throw new Errors.HttpStatusError(403, `no access to ${id}`);
   }
-
+  console.debug('=== agreement.get response', output);
   return output;
 }
 

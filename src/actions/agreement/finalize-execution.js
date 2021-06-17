@@ -1,70 +1,63 @@
-const { get } = require('lodash');
-const moment = require('moment');
-const Promise = require('bluebird');
 const { ActionTransport } = require('@microfleet/core');
 
-const { ExecutionIncompleteError } = require('../../utils/paypal/agreements').error;
-const { publishSuccessHook, successPayload } = require('../../utils/paypal/billing-hooks');
+const paypal = require('../../utils/paypal');
 
-async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
-  const syncInterval = get(agreement, ['plan', 'payment_definitions', '0', 'frequency'], 'year').toLowerCase();
-  // we pass owner, so transaction.sync won't try to find user by agreement.id, which is OK as a tradeoff for now
-  const { transactions } = await dispatch('transaction.sync', {
-    params: {
-      id: agreement.id,
-      owner,
-      start: moment().subtract(2, syncInterval).format('YYYY-MM-DD'),
-      end: moment().add(1, 'day').format('YYYY-MM-DD'),
-    },
-  });
+const { ExecutionIncompleteError, AgreementStatusError } = require('../../utils/paypal/agreements').error;
+const { verifyAgreementState, updateAgreement } = require('../../utils/paypal/agreements');
+const { publishFinalizationFailureHook, publishFinalizationSuccessHook, successExecutionPayload } = require('../../utils/paypal/billing-hooks');
+const { syncInitialTransaction } = require('../../utils/paypal/transactions');
 
-  const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
-  const floatSetupFee = parseFloat(setupFee.value);
+/**
+ * Resync agreement in case of Pending status or missing initial transaction
+ */
+async function finalizeExecution({ params }) {
+  const { dispatch, amqp, config } = this;
+  const { paypal: paypalConfig } = config;
 
-  // filter out transaction with created status and id === agreement.id
-  const filteredTransactions = transactions.filter((t) => t.transaction_id !== agreement.id);
-  const transactionShouldExist = floatSetupFee > 0;
-
-  if (transactionShouldExist && filteredTransactions.length === 0) {
-    if (attempt > 50) {
-      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
-      log.error({ err: error }, error.message);
-      throw error;
-    }
-    log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
-
-    await Promise.delay(10000);
-
-    return syncTransactions(dispatch, log, agreement, owner, attempt + 1);
-  }
-
-  return { transactionShouldExist, filteredTransactions };
-}
-
-async function finalizeTransactions({ params }) {
-  const { dispatch, log, amqp } = this;
   const { agreementId, owner } = params;
 
-  const agreement = await dispatch('agreement.get', {
-    params: {
-      id: agreementId, owner,
-    },
+  const localAgreement = await dispatch('agreement.get', {
+    params: { id: agreementId, owner },
   });
 
-  try {
-    const { filteredTransactions: [transaction] } = await syncTransactions(dispatch, log, agreement.agreement, owner);
-    const payload = successPayload(agreement.agreement, agreement.token, owner, transaction);
+  const remoteAgreement = await paypal.agreement
+    .get(agreementId, paypalConfig)
+    .catch(paypal.handleError);
 
-    await publishSuccessHook(amqp, payload);
+  // Agreement should be Active or Pending
+  try {
+    verifyAgreementState(agreementId, localAgreement.owner, remoteAgreement.state);
   } catch (error) {
-    if (!(error instanceof ExecutionIncompleteError)) {
+    if (error instanceof AgreementStatusError) {
+      await publishFinalizationFailureHook(amqp, error);
+    } else {
       throw error;
     }
+  }
+
+  const { filteredTransactions, transactionShouldExist } = await syncInitialTransaction(
+    dispatch, localAgreement.agreement, localAgreement.owner, localAgreement.taskId
+  );
+  const [transaction] = filteredTransactions;
+
+  // Agreement marked as fully executed only when transaction information is available
+  // or transaction not required
+  const agreementFinalized = !transactionShouldExist || filteredTransactions.length > 0;
+
+  await updateAgreement(this, localAgreement, remoteAgreement, {
+    finalizedAt: agreementFinalized ? Date.now() : undefined,
+  });
+
+  if (agreementFinalized) {
+    const payload = successExecutionPayload(localAgreement.agreement, localAgreement.token, localAgreement.owner, localAgreement.taskId, transaction);
+    await publishFinalizationSuccessHook(amqp, payload);
+  } else {
+    this.log.error(ExecutionIncompleteError.noTransaction(agreementId, owner, localAgreement.taskId));
   }
 
   return 'OK';
 }
 
-finalizeTransactions.transports = [ActionTransport.amqp];
+finalizeExecution.transports = [ActionTransport.amqp];
 
-module.exports = finalizeTransactions;
+module.exports = finalizeExecution;

@@ -10,6 +10,9 @@
     "owner": {
       "$ref": "common#/definitions/owner"
     },
+    "taskId": {
+      "type": "string"
+    },
     "agreement": {
       "allOf": [{
         "$ref": "agreement#"
@@ -48,6 +51,10 @@
     "setupFee": {
       "type": "string",
       "pattern": "^\\d+\\.\\d{1,2}$"
+    },
+    "skipSetupFee": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

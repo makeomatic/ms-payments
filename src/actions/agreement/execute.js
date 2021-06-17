@@ -1,18 +1,22 @@
 const { HttpStatusError } = require('common-errors');
 const { ActionTransport } = require('@microfleet/core');
-const Promise = require('bluebird');
+
+const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
 
 // helpers
 const key = require('../../redis-key');
-const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
+
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
 const { ExecutionError } = require('../../utils/paypal/agreements').error;
+const { fetchUpdatedAgreement } = require('../../utils/paypal/agreements/update');
 const { RequestError } = require('../../utils/paypal/client').error;
-const { publishFailureHook } = require('../../utils/paypal/billing-hooks');
+const {
+  publishExecutionFailureHook, publishExecutionSuccessHook, successExecutionPayload,
+} = require('../../utils/paypal/billing-hooks');
 
 // internal actions
-const { agreement: { execute, get: getAgreement } } = require('../../utils/paypal');
+const { agreement: { execute } } = require('../../utils/paypal');
 
 /**
  * @throws ExecutionError Unknown subscription token
@@ -37,7 +41,7 @@ async function findAgreementData(redis, token) {
  * @throws ExecutionError Paypal request failed for expected reason
  * @throws RequestError   Paypal request failed for any other reason
  */
-async function sendRequest(token, owner, paypal) {
+async function sendExecuteRequest(token, owner, paypal) {
   let result;
   try {
     result = await execute(token, {}, paypal);
@@ -52,39 +56,7 @@ async function sendRequest(token, owner, paypal) {
   return result.id;
 }
 
-/**
- * Fetches updated agreement from paypal.
- * We must make sure that state is 'active'.
- * If it's pending -> retry until it becomes either active or cancelled
- * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
- * @param  {string} agreementId - Agreement Id.
- */
-async function fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt = 0) {
-  const agreement = await getAgreement(agreementId, paypal);
-  log.debug('fetched agreement %j', agreement);
-  const state = String(agreement.state).toLowerCase();
-
-  if (state === 'active') {
-    return agreement;
-  }
-
-  if (state === 'pending') {
-    if (attempt > 20) {
-      log.warn({ agreement }, 'failed to move agreement to active/failed state');
-      return agreement;
-    }
-
-    await Promise.delay(250);
-
-    return fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt + 1);
-  }
-
-  const error = ExecutionError.agreementStatusForbidden(agreementId, token, state, owner);
-  log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
-  throw error;
-}
-
-async function updateRedis(redis, token, agreement, owner, planId) {
+async function saveAgreement(redis, token, agreement, owner, planId, taskId, finalizedAt) {
   const tokenKey = key('subscription-token', token);
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
@@ -95,6 +67,8 @@ async function updateRedis(redis, token, agreement, owner, planId) {
     owner,
     state: agreement.state,
     plan: planId,
+    taskId,
+    finalizedAt,
   };
 
   const pipeline = redis.pipeline([
@@ -127,20 +101,21 @@ async function agreementExecute({ params }) {
     agreementData = await findAgreementData(redis, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
+      await publishExecutionFailureHook(amqp, e);
       throw new HttpStatusError(404, 'Subscription token not found');
     }
     throw e;
   }
 
   this.log = this.log.child({ agreementData });
-  const { owner, planId } = agreementData;
+  const { owner, planId, taskId } = agreementData;
+
   let agreementId;
   try {
-    agreementId = await sendRequest(token, owner, config.paypal);
+    agreementId = await sendExecuteRequest(token, owner, config.paypal);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
+      await publishExecutionFailureHook(amqp, e);
       this.log.error({ err: e }, e.message);
       throw new HttpStatusError(400, e.message);
     }
@@ -153,7 +128,7 @@ async function agreementExecute({ params }) {
     updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId, owner, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
+      await publishExecutionFailureHook(amqp, e);
       throw new HttpStatusError(412, e.message);
     }
     this.log.error({ err: e }, 'Unexpected paypal request error');
@@ -162,20 +137,11 @@ async function agreementExecute({ params }) {
 
   // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
+  await saveAgreement(redis, token, agreement, owner, planId, taskId);
 
-  await updateRedis(redis, token, agreement, owner, planId);
-  const { prefix } = this.config.router.routes;
-
-  await this.amqp.publish(
-    `${prefix}.agreement.finalize-execution`,
-    { agreementId: agreement.id, owner },
-    {
-      confirm: true,
-      mandatory: true,
-      deliveryMode: 2,
-      priority: 0,
-    }
-  );
+  // Notify hook but without transaction
+  const payload = successExecutionPayload(agreement, token, owner, taskId);
+  await publishExecutionSuccessHook(amqp, payload);
 
   return agreement;
 }
