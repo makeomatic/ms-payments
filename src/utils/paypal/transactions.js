@@ -29,7 +29,7 @@ async function syncInitialTransaction(dispatch, agreement, owner) {
   const end = moment().add(1, 'day').format('YYYY-MM-DD');
 
   const transactions = await syncTransactions(dispatch, agreement.id, owner, start, end);
-  console.debug('INITIAL TRANSACTIONS', transactions);
+
   const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
   const floatSetupFee = parseFloat(setupFee.value);
 
