@@ -4,12 +4,12 @@ describe('Execution Incomplete Error', () => {
   const { ExecutionIncompleteError } = require('../../../../../../src/utils/paypal/agreements').error;
 
   it('Should be able to build error with attempts count', () => {
-    const error = ExecutionIncompleteError.noTransactionsAfter('agreement-id', 'test@test.ru', 3);
+    const error = ExecutionIncompleteError.noTransaction('agreement-id', 'test@test.ru', 'task-id');
     assert.strictEqual(
       error.message,
-      'Execution incomplete. Reason: Agreement "agreement-id" has been executed, but there is no sufficient transactions after 3 attempts'
+      'Execution incomplete. Reason: Agreement "agreement-id" has been executed, but there is no sufficient transactions'
     );
-    assert.strictEqual(error.params.attemptsCount, 3);
+    assert.strictEqual(error.params.taskId, 'task-id');
     assert.strictEqual(error.params.agreementId, 'agreement-id');
     assert.strictEqual(error.params.owner, 'test@test.ru');
   });
