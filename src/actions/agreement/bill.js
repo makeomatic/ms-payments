@@ -56,8 +56,8 @@ async function agreementBill({ log, params }) {
   const remoteAgreement = await paypal.agreement.get(id, paypalConfig).catch(paypal.handleError);
 
   const now = moment();
-  const start = now.subtract(2, subscriptionInterval).format('YYYY-MM-DD');
-  const end = now.add(1, 'day').format('YYYY-MM-DD');
+  const start = now.clone().subtract(2, subscriptionInterval).format('YYYY-MM-DD');
+  const end = now.clone().add(1, 'day').format('YYYY-MM-DD');
 
   // initially sync transactions anyway
   const transactions = await syncTransactions(this.dispatch, id, owner, start, end);
