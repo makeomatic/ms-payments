@@ -256,12 +256,17 @@ describe('Agreements suite', function AgreementSuite() {
       this.timeout(duration);
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
 
-      async function waitForAgreementToBecomeActive() {
+      async function waitForAgreementToBecomeActive(attempts) {
         await dispatch(finalizeExecution, { agreementId: billingAgreement.id });
         const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
         // NOTE: transaction count is 2 because of transaction with agreement id and other transaction
         if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
-          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
+          // Takes too long to finalize
+          if (attempts > 100) {
+            payments.log.error('Unable to finalize agreement!');
+            return null;
+          }
+          return Promise.delay(5000).then(() => waitForAgreementToBecomeActive(attempts + 1));
         }
 
         assertFinalizationSuccessHookCalled(publishSpy, {
@@ -282,7 +287,7 @@ describe('Agreements suite', function AgreementSuite() {
         return null;
       }
 
-      return waitForAgreementToBecomeActive();
+      return waitForAgreementToBecomeActive(0);
     });
 
     it('Should execute an future approved agreement', async () => {
@@ -316,13 +321,18 @@ describe('Agreements suite', function AgreementSuite() {
       this.timeout(duration);
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
 
-      async function waitForAgreementToBecomeActive() {
+      async function waitForAgreementToBecomeActive(attempts) {
         await dispatch(finalizeExecution, { agreementId: futureAgreement.id });
 
         const agreement = await dispatch(getAgreement, { id: futureAgreement.id });
 
         if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
-          return Promise.delay(2000).then(waitForAgreementToBecomeActive);
+          // Takes too long to finalize
+          if (attempts > 100) {
+            payments.log.error('Unable to finalize agreement!');
+            return null;
+          }
+          return Promise.delay(2000).then(() => waitForAgreementToBecomeActive(attempts + 1));
         }
 
         assertFinalizationSuccessHookCalled(publishSpy, {
@@ -343,7 +353,7 @@ describe('Agreements suite', function AgreementSuite() {
         return null;
       }
 
-      return waitForAgreementToBecomeActive();
+      return waitForAgreementToBecomeActive(0);
     });
 
     // sorry for being verbose, will deal with it later
