@@ -107,7 +107,7 @@ async function agreementExecute({ params }) {
     throw e;
   }
 
-  this.log = this.log.child({ agreementData });
+  const log = this.log.child({ agreementData });
   const { owner, planId, taskId } = agreementData;
 
   let agreementId;
@@ -116,16 +116,16 @@ async function agreementExecute({ params }) {
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishExecutionFailureHook(amqp, e);
-      this.log.error({ err: e }, e.message);
+      log.error({ err: e }, e.message);
       throw new HttpStatusError(400, e.message);
     }
-    this.log.error({ err: e }, e.message);
+    log.error({ err: e }, e.message);
     throw new HttpStatusError(400, 'Unexpected paypal request error');
   }
 
   let updatedAgreement;
   try {
-    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId, owner, token);
+    updatedAgreement = await fetchUpdatedAgreement(config.paypal, log, agreementId, owner, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
       await publishExecutionFailureHook(amqp, e);
