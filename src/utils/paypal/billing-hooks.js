@@ -23,9 +23,9 @@ const paidAgreementPayload = (agreement, token, state, owner) => ({
   status: state.toLowerCase(),
 });
 
-const successExecutionPayload = (agreement, token, owner, taskId, transaction) => ({
+const successExecutionPayload = (agreement, token, owner, creatorTaskId, transaction) => ({
   agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
-  taskId,
+  creatorTaskId,
   transaction,
 });
 

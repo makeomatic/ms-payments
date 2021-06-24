@@ -24,7 +24,7 @@
     "agreement": {
       "$ref": "response.common.agreement#"
     },
-    "taskId": {
+    "creatorTaskId": {
       "type": "string"
     },
     "finalizedAt": {

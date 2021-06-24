@@ -122,7 +122,7 @@ describe('Agreements suite', function AgreementSuite() {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
-        taskId: 'fake-task-id',
+        creatorTaskId: 'fake-task-id',
       };
 
       billingAgreement = await dispatch(createAgreement, data);
@@ -175,19 +175,19 @@ describe('Agreements suite', function AgreementSuite() {
       );
     });
 
-    it('Should create an agreement with BillingTaskId', async () => {
+    it('Should create an agreement with BillingcreatorTaskId', async () => {
       const now = moment().add(1, 'month');
       const data = {
         agreement: testAgreementData,
         owner: 'user0@test.com',
         trialDiscount: 0,
         startDate: now,
-        taskId: 'some-weird-id',
+        creatorTaskId: 'some-weird-id',
       };
 
       const result = await dispatch(createAgreement, data);
 
-      assert.strictEqual(result.taskId, 'some-weird-id');
+      assert.strictEqual(result.creatorTaskId, 'some-weird-id');
     });
 
     it('Should create an agreement with custom setupFee', async () => {
@@ -195,7 +195,7 @@ describe('Agreements suite', function AgreementSuite() {
         agreement: testAgreementData,
         owner: 'user0@test.com',
         setupFee: '0.00',
-        taskId: 'future-agreement-task-id',
+        creatorTaskId: 'future-agreement-task-id',
       };
 
       futureAgreement = await dispatch(createAgreement, data);
@@ -246,7 +246,7 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'active',
           token: params.token,
         }),
-        taskId: 'fake-task-id',
+        creatorTaskId: 'fake-task-id',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -276,7 +276,7 @@ describe('Agreements suite', function AgreementSuite() {
             status: 'active',
             token: billingAgreement.token,
           }),
-          taskId: 'fake-task-id',
+          creatorTaskId: 'fake-task-id',
         });
 
         agreement.agreement.plan.payment_definitions.forEach((definition) => {
@@ -311,7 +311,7 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'active',
           token: params.token,
         }),
-        taskId: 'future-agreement-task-id',
+        creatorTaskId: 'future-agreement-task-id',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
@@ -342,7 +342,7 @@ describe('Agreements suite', function AgreementSuite() {
             status: 'active',
             token: futureAgreement.token,
           }),
-          taskId: 'future-agreement-task-id',
+          creatorTaskId: 'future-agreement-task-id',
         });
 
         agreement.agreement.plan.payment_definitions.forEach((definition) => {

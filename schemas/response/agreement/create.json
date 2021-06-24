@@ -8,7 +8,7 @@
       "type": "string",
       "minLength": 1
     },
-    "taskId": {
+    "creatorTaskId": {
       "type": "string"
     },
     "url": {

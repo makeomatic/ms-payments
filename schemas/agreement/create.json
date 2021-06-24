@@ -10,7 +10,7 @@
     "owner": {
       "$ref": "common#/definitions/owner"
     },
-    "taskId": {
+    "creatorTaskId": {
       "type": "string"
     },
     "agreement": {

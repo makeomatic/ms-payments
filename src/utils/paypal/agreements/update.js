@@ -10,7 +10,7 @@ const { AgreementStatusError } = require('./error');
  * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
  * @param  {string} agreementId - Agreement Id.
  */
-async function fetchUpdatedAgreement(paypal, log, agreementId, owner, taskId) {
+async function fetchUpdatedAgreement(paypal, log, agreementId, owner, creatorTaskId) {
   const agreement = await getAgreement(agreementId, paypal);
   log.debug('fetched agreement %j', agreement);
   const state = String(agreement.state).toLowerCase();
@@ -24,7 +24,7 @@ async function fetchUpdatedAgreement(paypal, log, agreementId, owner, taskId) {
     return agreement;
   }
 
-  const error = new AgreementStatusError(agreementId, owner, state, taskId);
+  const error = new AgreementStatusError(agreementId, owner, state, creatorTaskId);
   log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
   throw error;
 }

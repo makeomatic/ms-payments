@@ -56,7 +56,7 @@ async function sendExecuteRequest(token, owner, paypal) {
   return result.id;
 }
 
-async function saveAgreement(redis, token, agreement, owner, planId, taskId, finalizedAt) {
+async function saveAgreement(redis, token, agreement, owner, planId, creatorTaskId, finalizedAt) {
   const tokenKey = key('subscription-token', token);
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
@@ -67,7 +67,7 @@ async function saveAgreement(redis, token, agreement, owner, planId, taskId, fin
     owner,
     state: agreement.state,
     plan: planId,
-    taskId,
+    creatorTaskId,
     finalizedAt,
   };
 
@@ -108,7 +108,7 @@ async function agreementExecute({ params }) {
   }
 
   const log = this.log.child({ agreementData });
-  const { owner, planId, taskId } = agreementData;
+  const { owner, planId, creatorTaskId } = agreementData;
 
   let agreementId;
   try {
@@ -137,10 +137,10 @@ async function agreementExecute({ params }) {
 
   // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
-  await saveAgreement(redis, token, agreement, owner, planId, taskId);
+  await saveAgreement(redis, token, agreement, owner, planId, creatorTaskId);
 
   // Notify hook but without transaction
-  const payload = successExecutionPayload(agreement, token, owner, taskId);
+  const payload = successExecutionPayload(agreement, token, owner, creatorTaskId);
   await publishExecutionSuccessHook(amqp, payload);
 
   return agreement;

@@ -36,7 +36,7 @@ async function finalizeExecution({ params }) {
   }
 
   const { filteredTransactions, transactionShouldExist } = await syncInitialTransaction(
-    dispatch, localAgreement.agreement, localAgreement.owner, localAgreement.taskId
+    dispatch, localAgreement.agreement, localAgreement.owner, localAgreement.creatorTaskId
   );
   const [transaction] = filteredTransactions;
 
@@ -49,10 +49,16 @@ async function finalizeExecution({ params }) {
   });
 
   if (agreementFinalized) {
-    const payload = successExecutionPayload(localAgreement.agreement, localAgreement.token, localAgreement.owner, localAgreement.taskId, transaction);
+    const payload = successExecutionPayload(
+      localAgreement.agreement,
+      localAgreement.token,
+      localAgreement.owner,
+      localAgreement.creatorTaskId,
+      transaction
+    );
     await publishFinalizationSuccessHook(amqp, payload);
   } else {
-    this.log.error(ExecutionIncompleteError.noTransaction(agreementId, owner, localAgreement.taskId));
+    this.log.error(ExecutionIncompleteError.noTransaction(agreementId, owner, localAgreement.creatorTaskId));
   }
 
   return 'OK';

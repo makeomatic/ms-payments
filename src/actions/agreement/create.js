@@ -161,7 +161,7 @@ async function saveAgreement(redis, agreementData, params) {
   const { owner, planId } = params;
   const { plan } = agreementData.agreement;
   const data = {
-    planId, owner, plan, taskId: agreementData.taskId,
+    planId, owner, plan, creatorTaskId: agreementData.creatorTaskId,
   };
 
   // during trial original plan id is returned, however, payment model is different
@@ -187,7 +187,7 @@ async function agreementCreate({ params }) {
   const { config, redis, log } = this;
   const {
     owner, agreement, trialDiscount, trialCycle, startDate,
-    setupFee, skipSetupFee, taskId,
+    setupFee, skipSetupFee, creatorTaskId,
   } = params;
   const { plan: { id: planId } } = agreement;
   const logger = log.child({ owner });
@@ -209,7 +209,7 @@ async function agreementCreate({ params }) {
     token,
     url: approval.href,
     agreement: createdAgreement,
-    taskId,
+    creatorTaskId,
   };
   await saveAgreement(redis, createdAgreementData, { owner, planId });
 
