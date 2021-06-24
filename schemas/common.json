@@ -8,12 +8,6 @@
       "title": "Payment owner",
       "description": "Identification of owner"
     },
-    "chargeId": {
-      "type": "string",
-      "format": "uuid",
-      "title": "Charge id",
-      "description": "Identification of charge"
-    },
     "currency": {
       "type": "object",
       "description": "Generic currency object",
