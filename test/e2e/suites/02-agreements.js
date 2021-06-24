@@ -262,7 +262,7 @@ describe('Agreements suite', function AgreementSuite() {
         // NOTE: transaction count is 2 because of transaction with agreement id and other transaction
         if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
           // Takes too long to finalize
-          if (attempts > 100) {
+          if (attempts > 50) {
             payments.log.error('Unable to finalize agreement!');
             return null;
           }
@@ -328,11 +328,11 @@ describe('Agreements suite', function AgreementSuite() {
 
         if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
           // Takes too long to finalize
-          if (attempts > 100) {
+          if (attempts > 50) {
             payments.log.error('Unable to finalize agreement!');
             return null;
           }
-          return Promise.delay(2000).then(() => waitForAgreementToBecomeActive(attempts + 1));
+          return Promise.delay(5000).then(() => waitForAgreementToBecomeActive(attempts + 1));
         }
 
         assertFinalizationSuccessHookCalled(publishSpy, {
