@@ -8,6 +8,7 @@ const { duration, simpleDispatcher, afterAgreementExecution } = require('../../u
 const { initChrome, closeChrome, approveSubscription } = require('../../helpers/chrome');
 
 const paypalUtils = require('../../../src/utils/paypal');
+const { PAYPAL_DATE_FORMAT } = require('../../../src/constants');
 
 describe('Agreements suite', function AgreementSuite() {
   const sandbox = sinon.createSandbox();
@@ -29,7 +30,7 @@ describe('Agreements suite', function AgreementSuite() {
   const stateAgreement = 'payments.agreement.state';
   const listAgreement = 'payments.agreement.list';
   const forUserAgreement = 'payments.agreement.forUser';
-  const syncAgreements = 'payments.agreement.sync';
+  const finalizeExecution = 'payments.agreement.finalize-execution';
   const billAgreement = 'payments.agreement.bill';
 
   let billingAgreement;
@@ -50,8 +51,6 @@ describe('Agreements suite', function AgreementSuite() {
       }),
       sinon.match({ confirm: true, deliveryMode: 2, mandatory: true, priority: 0 })
     );
-    const hookPublishCalls = publishSpy.getCalls().filter((call) => call.firstArg === 'payments.hook.publish');
-    assert.strictEqual(hookPublishCalls.length, 1);
   }
 
   function assertExecutionSuccessHookCalled(publishSpy, payload) {
@@ -60,6 +59,10 @@ describe('Agreements suite', function AgreementSuite() {
 
   function assertExecutionFailureHookCalled(publishSpy, payload) {
     assertHookPublishing(publishSpy, 'paypal:agreements:execution:failure', payload);
+  }
+
+  function assertFinalizationSuccessHookCalled(publishSpy, payload) {
+    assertHookPublishing(publishSpy, 'paypal:agreements:finalization:success', payload);
   }
 
   function assertBillingSuccessHookCalled(publishSpy, payload) {
@@ -119,6 +122,7 @@ describe('Agreements suite', function AgreementSuite() {
       const data = {
         agreement: testAgreementData,
         owner: 'test@test.ru',
+        creatorTaskId: 'fake-task-id',
       };
 
       billingAgreement = await dispatch(createAgreement, data);
@@ -151,11 +155,47 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '10');
     });
 
+    it('Should create an agreement without setup fee and use passed startDate without changes', async () => {
+      const now = moment().add(1, 'month');
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '24.99',
+        trialDiscount: 0,
+        startDate: now,
+        skipSetupFee: true,
+      };
+
+      const { agreement } = await dispatch(createAgreement, data);
+
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '0');
+      assert.strictEqual(
+        moment(agreement.start_date).format(PAYPAL_DATE_FORMAT),
+        now.format(PAYPAL_DATE_FORMAT)
+      );
+    });
+
+    it('Should create an agreement with BillingcreatorTaskId', async () => {
+      const now = moment().add(1, 'month');
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        trialDiscount: 0,
+        startDate: now,
+        creatorTaskId: 'some-weird-id',
+      };
+
+      const result = await dispatch(createAgreement, data);
+
+      assert.strictEqual(result.creatorTaskId, 'some-weird-id');
+    });
+
     it('Should create an agreement with custom setupFee', async () => {
       const data = {
         agreement: testAgreementData,
         owner: 'user0@test.com',
         setupFee: '0.00',
+        creatorTaskId: 'future-agreement-task-id',
       };
 
       futureAgreement = await dispatch(createAgreement, data);
@@ -198,6 +238,7 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       billingAgreement.id = result.id;
+
       assertExecutionSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id: result.id,
@@ -205,15 +246,55 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'active',
           token: params.token,
         }),
-        transaction: sinon.match.object,
+        creatorTaskId: 'fake-task-id',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
     });
 
+    it('Should pull updates for an agreement', async () => {
+      this.timeout(duration);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+
+      async function waitForAgreementToBecomeActive(attempts) {
+        await dispatch(finalizeExecution, { agreementId: billingAgreement.id });
+        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
+        // NOTE: transaction count is 2 because of transaction with agreement id and other transaction
+        if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
+          // Takes too long to finalize
+          if (attempts > 50) {
+            payments.log.error('Unable to finalize agreement!');
+            return null;
+          }
+          return Promise.delay(5000).then(() => waitForAgreementToBecomeActive(attempts + 1));
+        }
+
+        assertFinalizationSuccessHookCalled(publishSpy, {
+          agreement: sinon.match({
+            id: billingAgreement.id,
+            owner: 'test@test.ru',
+            status: 'active',
+            token: billingAgreement.token,
+          }),
+          creatorTaskId: 'fake-task-id',
+        });
+
+        agreement.agreement.plan.payment_definitions.forEach((definition) => {
+          assert.ok(definition.id);
+          assert.ok(definition.name);
+        });
+
+        return null;
+      }
+
+      return waitForAgreementToBecomeActive(0);
+    });
+
     it('Should execute an future approved agreement', async () => {
       const params = await approveSubscription(futureAgreement.url);
+
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
+
       const result = await dispatch(executeAgreement, { token: params.token });
 
       result.plan.payment_definitions.forEach((definition) => {
@@ -222,6 +303,7 @@ describe('Agreements suite', function AgreementSuite() {
       });
 
       futureAgreement.id = result.id;
+
       assertExecutionSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id: result.id,
@@ -229,9 +311,49 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'active',
           token: params.token,
         }),
+        creatorTaskId: 'future-agreement-task-id',
       });
 
       await afterAgreementExecution(payments, dispatch, result, planId);
+    });
+
+    it('Should pull updates for an agreement without setup fee', async () => {
+      this.timeout(duration);
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+
+      async function waitForAgreementToBecomeActive(attempts) {
+        await dispatch(finalizeExecution, { agreementId: futureAgreement.id });
+
+        const agreement = await dispatch(getAgreement, { id: futureAgreement.id });
+
+        if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
+          // Takes too long to finalize
+          if (attempts > 50) {
+            payments.log.error('Unable to finalize agreement!');
+            return null;
+          }
+          return Promise.delay(5000).then(() => waitForAgreementToBecomeActive(attempts + 1));
+        }
+
+        assertFinalizationSuccessHookCalled(publishSpy, {
+          agreement: sinon.match({
+            id: futureAgreement.id,
+            owner: 'user0@test.com',
+            status: 'active',
+            token: futureAgreement.token,
+          }),
+          creatorTaskId: 'future-agreement-task-id',
+        });
+
+        agreement.agreement.plan.payment_definitions.forEach((definition) => {
+          assert.ok(definition.id);
+          assert.ok(definition.name);
+        });
+
+        return null;
+      }
+
+      return waitForAgreementToBecomeActive(0);
     });
 
     // sorry for being verbose, will deal with it later
@@ -247,8 +369,6 @@ describe('Agreements suite', function AgreementSuite() {
           owner: 'test@test.ru',
           status: 'active',
         }),
-        // should be here but will appear on next billing cycle
-        // transaction: sinon.match.object,
       });
     });
 
@@ -347,29 +467,6 @@ describe('Agreements suite', function AgreementSuite() {
       });
     });
 
-    it('Should pull updates for an agreement', async () => {
-      this.timeout(duration);
-
-      async function waitForAgreementToBecomeActive() {
-        await dispatch(syncAgreements, {});
-
-        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
-
-        if (agreement.state.toLowerCase() === 'pending') {
-          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
-        }
-
-        agreement.agreement.plan.payment_definitions.forEach((definition) => {
-          assert.ok(definition.id);
-          assert.ok(definition.name);
-        });
-
-        return null;
-      }
-
-      return waitForAgreementToBecomeActive();
-    });
-
     // this test is perf
     it('Should cancel agreement', async () => {
       const { id } = billingAgreement;
@@ -393,7 +490,7 @@ describe('Agreements suite', function AgreementSuite() {
       assert.strictEqual(result, 'FAIL');
       assertBillingFailureHookCalled(publishSpy, {
         error: sinon.match({
-          message: `Agreement billing failed. Reason: Agreement "${id}" has status "cancelled"`,
+          message: `Agreement "${id}" has status "cancelled"`,
           code: 'agreement-status-forbidden',
           params: sinon.match({ status: 'cancelled', agreementId: id, owner: 'test@test.ru' }),
         }),
@@ -413,43 +510,11 @@ describe('Agreements suite', function AgreementSuite() {
       billingAgreement = await dispatch(createAgreement, data);
 
       const params = await approveSubscription(billingAgreement.url);
-      const publishSpy = sandbox.spy(payments.amqp, 'publish');
       const result = await dispatch(executeAgreement, { token: params.token });
 
       billingAgreement.id = result.id;
 
-      assertExecutionSuccessHookCalled(publishSpy, {
-        agreement: sinon.match({
-          id: result.id,
-          owner: 'test@test.ru',
-          status: 'active',
-          token: params.token,
-        }),
-      });
-
       await afterAgreementExecution(payments, dispatch, result, planId);
-    });
-
-    it('Should pull updates for an agreement for a case when statuses for Paypal and Redis are different', async () => {
-      this.timeout(duration);
-
-      async function waitForAgreementToBecomeActive() {
-        await dispatch(syncAgreements, {});
-
-        const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
-        if (agreement.state.toLowerCase() === 'pending') {
-          return Promise.delay(5000).then(waitForAgreementToBecomeActive);
-        }
-
-        agreement.agreement.plan.payment_definitions.forEach((definition) => {
-          assert.ok(definition.id);
-          assert.ok(definition.name);
-        });
-
-        return null;
-      }
-
-      return waitForAgreementToBecomeActive(); // the billing agreement in Redis and Paypal is ACTIVE
     });
 
     it('should deactivate agreement on Paypal only', async () => {

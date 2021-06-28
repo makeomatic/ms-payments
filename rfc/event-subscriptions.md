@@ -14,6 +14,8 @@ The service should start with the following events support:
 * `paypal:agreements:billing:failure`
 * `paypal:agreements:execution:success`
 * `paypal:agreements:execution:failure`
+* `paypal:agreements:finalization:success`
+* `paypal:agreements:finalization:failure`
 * `paypal:transasctions:create`
 
 ### Subscriber
@@ -144,6 +146,8 @@ exports.subscriptions = {
   events: {
     'paypal:agreements:execution:success': [],
     'paypal:agreements:execution:failure': [],
+    'paypal:agreements:finalization:success': [],
+    'paypal:agreements:finalization:failure': [],
     'paypal:agreements:billing:success': {
       endpoint: 'ms-billing.paypal.agreements.billing.success',
       publishing: {

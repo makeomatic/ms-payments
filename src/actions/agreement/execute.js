@@ -1,56 +1,27 @@
 const { HttpStatusError } = require('common-errors');
 const { ActionTransport } = require('@microfleet/core');
-const Promise = require('bluebird');
-const moment = require('moment');
-const pick = require('lodash/pick');
-const get = require('get-value');
+
+const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
 
 // helpers
 const key = require('../../redis-key');
-const { AGREEMENT_INDEX, AGREEMENT_DATA } = require('../../constants');
+
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
-const { ExecutionError, ExecutionIncompleteError } = require('../../utils/paypal/agreements').error;
+const { ExecutionError } = require('../../utils/paypal/agreements').error;
+const { fetchUpdatedAgreement } = require('../../utils/paypal/agreements/update');
 const { RequestError } = require('../../utils/paypal/client').error;
+const {
+  publishExecutionFailureHook, publishExecutionSuccessHook, successExecutionPayload,
+} = require('../../utils/paypal/billing-hooks');
 
 // internal actions
-const { agreement: { execute, get: getAgreement } } = require('../../utils/paypal');
-
-const paidAgreementPayload = (agreement, token, state, owner) => ({
-  owner,
-  token,
-  id: agreement.id,
-  status: state.toLowerCase(),
-});
-
-const publishHook = (amqp, event, payload) => amqp.publish(
-  'payments.hook.publish',
-  { event, payload },
-  {
-    confirm: true,
-    mandatory: true,
-    deliveryMode: 2,
-    priority: 0,
-  }
-);
-
-const successEvent = 'paypal:agreements:execution:success';
-const failureEvent = 'paypal:agreements:execution:failure';
-const publishSuccessHook = (amqp, payload) => publishHook(amqp, successEvent, payload);
-const publishFailureHook = (amqp, executionError) => publishHook(
-  amqp,
-  failureEvent,
-  { error: pick(executionError, ['message', 'code', 'params']) }
-);
-const successPayload = (agreement, token, owner, transaction) => ({
-  agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
-  transaction,
-});
+const { agreement: { execute } } = require('../../utils/paypal');
 
 /**
  * @throws ExecutionError Unknown subscription token
  */
-async function findAgreementData(redis, amqp, token) {
+async function findAgreementData(redis, token) {
   const tokenKey = key('subscription-token', token);
   const [exists, data] = await redis
     .pipeline()
@@ -70,7 +41,7 @@ async function findAgreementData(redis, amqp, token) {
  * @throws ExecutionError Paypal request failed for expected reason
  * @throws RequestError   Paypal request failed for any other reason
  */
-async function sendRequest(token, owner, paypal) {
+async function sendExecuteRequest(token, owner, paypal) {
   let result;
   try {
     result = await execute(token, {}, paypal);
@@ -85,75 +56,7 @@ async function sendRequest(token, owner, paypal) {
   return result.id;
 }
 
-/**
- * Fetches updated agreement from paypal.
- * We must make sure that state is 'active'.
- * If it's pending -> retry until it becomes either active or cancelled
- * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
- * @param  {string} agreementId - Agreement Id.
- */
-async function fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt = 0) {
-  const agreement = await getAgreement(agreementId, paypal);
-  log.debug('fetched agreement %j', agreement);
-  const state = String(agreement.state).toLowerCase();
-
-  if (state === 'active') {
-    return agreement;
-  }
-
-  if (state === 'pending') {
-    if (attempt > 20) {
-      log.warn({ agreement }, 'failed to move agreement to active/failed state');
-      return agreement;
-    }
-
-    await Promise.delay(250);
-
-    return fetchUpdatedAgreement(paypal, log, agreementId, owner, token, attempt + 1);
-  }
-
-  const error = ExecutionError.agreementStatusForbidden(agreementId, token, state, owner);
-  log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
-  throw error;
-}
-
-async function syncTransactions(dispatch, log, agreement, owner, attempt = 0) {
-  const syncInterval = get(agreement, ['plan', 'payment_definitions', '0', 'frequency'], 'year').toLowerCase();
-  // we pass owner, so transaction.sync won't try to find user by agreement.id, which is OK as a tradeoff for now
-  const { transactions } = await dispatch('transaction.sync', {
-    params: {
-      id: agreement.id,
-      owner,
-      start: moment().subtract(2, syncInterval).format('YYYY-MM-DD'),
-      end: moment().add(1, 'day').format('YYYY-MM-DD'),
-    },
-  });
-
-  const { setup_fee: setupFee } = agreement.plan.merchant_preferences;
-  const floatSetupFee = parseFloat(setupFee.value);
-
-  // filter out transaction with created status and id === agreement.id
-  const filteredTransactions = transactions.filter((t) => t.transaction_id !== agreement.id);
-
-  if (floatSetupFee > 0 && filteredTransactions.length === 0) {
-    if (attempt > 150) {
-      const error = ExecutionIncompleteError.noTransactionsAfter(agreement.id, owner, attempt);
-      log.error({ err: error }, error.message);
-      // ATTENTION! originally we don't throw an error, just log it
-      // so we don't send niether failure not success hooks for now
-      return { agreement, transactions: filteredTransactions };
-    }
-
-    await Promise.delay(15000);
-    // is it also incomplete?
-    log.warn({ attempt, agreement }, 'no transactions fetched for agreement');
-    return syncTransactions(dispatch, log, agreement, owner, attempt + 1);
-  }
-
-  return { agreement, transactions: filteredTransactions };
-}
-
-async function updateRedis(redis, token, agreement, owner, planId) {
+async function saveAgreement(redis, token, agreement, owner, planId, creatorTaskId, finalizedAt) {
   const tokenKey = key('subscription-token', token);
   const agreementKey = key(AGREEMENT_DATA, agreement.id);
   const userAgreementIndex = key(AGREEMENT_INDEX, owner);
@@ -164,6 +67,8 @@ async function updateRedis(redis, token, agreement, owner, planId) {
     owner,
     state: agreement.state,
     plan: planId,
+    creatorTaskId,
+    finalizedAt,
   };
 
   const pipeline = redis.pipeline([
@@ -188,41 +93,42 @@ async function updateRedis(redis, token, agreement, owner, planId) {
  * @apiSchema {jsonschema=response/agreement/execute.json} apiResponse
  */
 async function agreementExecute({ params }) {
-  const { config, redis, amqp, dispatch } = this;
+  const { config, redis, amqp } = this;
   const { token } = params;
 
   let agreementData;
   try {
-    agreementData = await findAgreementData(redis, amqp, token);
+    agreementData = await findAgreementData(redis, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
+      await publishExecutionFailureHook(amqp, e);
       throw new HttpStatusError(404, 'Subscription token not found');
     }
     throw e;
   }
 
-  this.log = this.log.child({ agreementData });
-  const { owner, planId } = agreementData;
+  const log = this.log.child({ agreementData });
+  const { owner, planId, creatorTaskId } = agreementData;
+
   let agreementId;
   try {
-    agreementId = await sendRequest(token, owner, config.paypal);
+    agreementId = await sendExecuteRequest(token, owner, config.paypal);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
-      this.log.error({ err: e }, e.message);
+      await publishExecutionFailureHook(amqp, e);
+      log.error({ err: e }, e.message);
       throw new HttpStatusError(400, e.message);
     }
-    this.log.error({ err: e }, e.message);
+    log.error({ err: e }, e.message);
     throw new HttpStatusError(400, 'Unexpected paypal request error');
   }
 
   let updatedAgreement;
   try {
-    updatedAgreement = await fetchUpdatedAgreement(config.paypal, this.log, agreementId, owner, token);
+    updatedAgreement = await fetchUpdatedAgreement(config.paypal, log, agreementId, owner, token);
   } catch (e) {
     if (e instanceof ExecutionError) {
-      await publishFailureHook(amqp, e);
+      await publishExecutionFailureHook(amqp, e);
       throw new HttpStatusError(412, e.message);
     }
     this.log.error({ err: e }, 'Unexpected paypal request error');
@@ -231,15 +137,13 @@ async function agreementExecute({ params }) {
 
   // Paypal provides limited plan info and we should merge it with extra data
   const agreement = { ...updatedAgreement, plan: mergeWithNotNull(agreementData.plan, updatedAgreement.plan) };
+  await saveAgreement(redis, token, agreement, owner, planId, creatorTaskId);
 
-  await updateRedis(redis, token, agreement, owner, planId);
-  const { agreement: agreementWithSyncedTransactions, transactions } = await syncTransactions(dispatch, this.log, agreement, owner);
+  // Notify hook but without transaction
+  const payload = successExecutionPayload(agreement, token, owner, creatorTaskId);
+  await publishExecutionSuccessHook(amqp, payload);
 
-  const [transaction] = transactions;
-
-  await publishSuccessHook(amqp, successPayload(agreement, token, owner, transaction));
-
-  return agreementWithSyncedTransactions;
+  return agreement;
 }
 
 agreementExecute.transports = [ActionTransport.amqp];

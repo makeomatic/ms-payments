@@ -1,6 +1,5 @@
 const CODE_UNKNOWN_SUBSCRIPTION_TOKEN = 'unknown-subscription-token';
 const CODE_INVALID_SUBSCRIPTION_TOKEN = 'invalid-subscription-token';
-const CODE_AGREEMENT_STATUS_FORBIDDEN = 'agreement-status-forbidden';
 
 /**
  * Expected kind of execution error
@@ -21,13 +20,6 @@ class ExecutionError extends Error {
     const error = new ExecutionError(`Paypal considers token "${token}" as invalid`);
     error.code = CODE_INVALID_SUBSCRIPTION_TOKEN;
     error.params = { token, owner };
-    return error;
-  }
-
-  static agreementStatusForbidden(agreementId, token, status, owner) {
-    const error = new ExecutionError(`Paypal agreement "${agreementId}" has status: "${status}", not "active"`);
-    error.code = CODE_AGREEMENT_STATUS_FORBIDDEN;
-    error.params = { agreementId, token, status, owner };
     return error;
   }
 }

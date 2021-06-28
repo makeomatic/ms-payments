@@ -23,6 +23,12 @@
     },
     "agreement": {
       "$ref": "response.common.agreement#"
+    },
+    "creatorTaskId": {
+      "type": "string"
+    },
+    "finalizedAt": {
+      "type": "number"
     }
   }
 }
