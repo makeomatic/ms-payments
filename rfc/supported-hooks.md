@@ -6,6 +6,7 @@ The current format of the supported hooks.
 ### Agreements execution
 For now, you may never receive a hook if:
 * An unexpected error has happen
+* Hooks `paypal:agreements:execution` and `paypal:agreements:finalization` use same data structure
 
 #### Success
 
@@ -22,6 +23,24 @@ For now, you may never receive a hook if:
   }
 }
 ```
+
+```json
+{
+  "meta": { "type": "paypal:agreements:finalization:success" },
+  "data": {
+    "agreement": {
+      "id": "I-21LTDJU14P4U",
+      "owner": "test@test.com",
+      "status": "active",
+      "token": "BA-5G371300PF745064S"  
+    }
+    "transaction": {
+      // Paypal Transaction
+    }
+  }
+}
+```
+
 
 #### Failure
 
@@ -43,6 +62,25 @@ For now, you may never receive a hook if:
   }
 }
 ```
+
+```json
+{
+  "meta": { "type": "paypal:agreements:finalization:failure" },
+  "data": {
+    "error": {
+      "message": "Agreement execution failed. Reason: Paypal agreement \"I-VG69HM654BKF\" has status: \"cancelled\", not \"active\"",
+      "code": "agreement-status-forbidden",
+      "params": {
+        "agreementId": "I-VG69HM654BKF",
+        "status": "cancelled",
+        "owner": "test@test.ru",
+        "token": "BA-5G371300PF745064S"  
+      }
+    }
+  }
+}
+```
+
 
 ##### Unknown subscription token
 Agreement data not found in ms-payments database

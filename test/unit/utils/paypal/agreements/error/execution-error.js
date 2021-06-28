@@ -17,14 +17,4 @@ describe('Agreement Execution Error', () => {
     strictEqual(error.params.token, 'token-id');
     strictEqual(error.params.owner, 'test@test.ru');
   });
-
-  it('Should be able to build agreement status forbidden error', () => {
-    const error = ExecutionError.agreementStatusForbidden('agreement-id', 'token-id', 'cancelled', 'test@test.ru');
-    strictEqual(error.code, 'agreement-status-forbidden');
-    strictEqual(error.message, 'Agreement execution failed. Reason: Paypal agreement "agreement-id" has status: "cancelled", not "active"');
-    strictEqual(error.params.status, 'cancelled');
-    strictEqual(error.params.agreementId, 'agreement-id');
-    strictEqual(error.params.owner, 'test@test.ru');
-    strictEqual(error.params.token, 'token-id');
-  });
 });

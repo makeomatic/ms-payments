@@ -6,10 +6,11 @@ const get = require('get-value');
 
 // helpers
 const key = require('../../redis-key');
-const { agreement: operations } = require('../../utils/paypal');
+const { handleError, agreement: operations } = require('../../utils/paypal');
 const { serialize } = require('../../utils/redis');
 const { AGREEMENT_DATA, FREE_PLAN_ID } = require('../../constants');
 const { hmget } = require('../../list-utils');
+const { updateAgreement } = require('../../utils/paypal/agreements');
 
 const AGREEMENT_KEYS = ['agreement', 'owner'];
 const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
@@ -95,6 +96,11 @@ async function agreementState({ params: message }) {
   const state = ACTION_TO_STATE[action];
 
   await Promise.all([
+    async () => {
+      const { paypal: paypalConfig } = this.config;
+      const remoteAgreement = await operations.get(agreementId, paypalConfig).catch(handleError);
+      await updateAgreement(this, parsed, remoteAgreement);
+    },
     this.dispatch('transaction.sync', {
       params: {
         id: agreementId,
