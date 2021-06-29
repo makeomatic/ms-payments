@@ -26,7 +26,7 @@ async function finalizeExecution({ params }) {
 
   // Agreement should be Active or Pending
   try {
-    verifyAgreementState(agreementId, localAgreement.owner, remoteAgreement.state);
+    verifyAgreementState(agreementId, localAgreement.owner, remoteAgreement.state, localAgreement.creatorTaskId);
   } catch (error) {
     if (error instanceof AgreementStatusError) {
       await publishFinalizationFailureHook(amqp, error);
