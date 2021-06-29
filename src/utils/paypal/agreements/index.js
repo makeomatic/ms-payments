@@ -12,9 +12,9 @@ const agreementParser = hmget(AGREEMENT_KEYS, JSON.parse, JSON);
 
 const kBannedStates = ['cancelled', 'suspended'];
 
-const verifyAgreementState = (id, owner, state) => {
+const verifyAgreementState = (id, owner, state, creatorTaskId) => {
   if (!state || kBannedStates.includes(state.toLowerCase())) {
-    throw new error.AgreementStatusError(id, owner, state.toLowerCase());
+    throw new error.AgreementStatusError(id, owner, state.toLowerCase(), creatorTaskId);
   }
 };
 
