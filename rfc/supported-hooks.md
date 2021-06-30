@@ -33,7 +33,10 @@ For now, you may never receive a hook if:
       "owner": "test@test.com",
       "status": "active",
       "token": "BA-5G371300PF745064S"  
-    }
+    },
+    "creatorTaskId": 'uuid',
+    "transactionRequired": true/false,
+    "agreementFinalized": true,
     "transaction": {
       // Paypal Transaction
     }
@@ -67,16 +70,15 @@ For now, you may never receive a hook if:
 {
   "meta": { "type": "paypal:agreements:finalization:failure" },
   "data": {
-    "error": {
-      "message": "Agreement execution failed. Reason: Paypal agreement \"I-VG69HM654BKF\" has status: \"cancelled\", not \"active\"",
-      "code": "agreement-status-forbidden",
-      "params": {
-        "agreementId": "I-VG69HM654BKF",
-        "status": "cancelled",
-        "owner": "test@test.ru",
-        "token": "BA-5G371300PF745064S"  
-      }
-    }
+    "agreement": {
+      "id": "I-21LTDJU14P4U",
+      "owner": "test@test.com",
+      "status": "active",
+      "token": "BA-5G371300PF745064S"  
+    },
+    "creatorTaskId": 'uuid',
+    "transactionRequired": true/false,
+    "agreementFinalized": false,
   }
 }
 ```
