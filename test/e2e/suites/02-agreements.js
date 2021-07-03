@@ -257,10 +257,11 @@ describe('Agreements suite', function AgreementSuite() {
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
 
       async function waitForAgreementToBecomeActive(attempts) {
-        await dispatch(finalizeExecution, { agreementId: billingAgreement.id });
+        const finalizationResult = await dispatch(finalizeExecution, { agreementId: billingAgreement.id });
         const agreement = await dispatch(getAgreement, { id: billingAgreement.id });
+
         // NOTE: transaction count is 2 because of transaction with agreement id and other transaction
-        if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
+        if (finalizationResult.agreement.status.toLowerCase() === 'pending' || !finalizationResult.agreementFinalized) {
           // Takes too long to finalize
           if (attempts > 50) {
             payments.log.error('Unable to finalize agreement!');
@@ -276,7 +277,10 @@ describe('Agreements suite', function AgreementSuite() {
             status: 'active',
             token: billingAgreement.token,
           }),
+          agreementFinalized: true,
           creatorTaskId: 'fake-task-id',
+          transactionRequired: true,
+          transaction: sinon.match.object,
         });
 
         agreement.agreement.plan.payment_definitions.forEach((definition) => {
@@ -322,11 +326,10 @@ describe('Agreements suite', function AgreementSuite() {
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
 
       async function waitForAgreementToBecomeActive(attempts) {
-        await dispatch(finalizeExecution, { agreementId: futureAgreement.id });
-
+        const finalizationResult = await dispatch(finalizeExecution, { agreementId: futureAgreement.id });
         const agreement = await dispatch(getAgreement, { id: futureAgreement.id });
 
-        if (agreement.state.toLowerCase() === 'pending' || !agreement.finalizedAt) {
+        if (finalizationResult.agreement.status.toLowerCase() === 'pending' || !finalizationResult.agreementFinalized) {
           // Takes too long to finalize
           if (attempts > 50) {
             payments.log.error('Unable to finalize agreement!');
@@ -343,6 +346,8 @@ describe('Agreements suite', function AgreementSuite() {
             token: futureAgreement.token,
           }),
           creatorTaskId: 'future-agreement-task-id',
+          agreementFinalized: true,
+          transactionRequired: false,
         });
 
         agreement.agreement.plan.payment_definitions.forEach((definition) => {
@@ -530,6 +535,7 @@ describe('Agreements suite', function AgreementSuite() {
       const { id } = billingAgreement;
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
       await dispatch(stateAgreement, { agreement: id, owner: 'test@test.ru', state: 'cancel' });
+      const agreement = await dispatch(getAgreement, { id });
       assertStateSuccessHookCalled(publishSpy, {
         agreement: sinon.match({
           id,
@@ -537,6 +543,8 @@ describe('Agreements suite', function AgreementSuite() {
           status: 'cancelled',
         }),
       });
+
+      console.debug('=== UPDATED', agreement);
     });
 
     it('Should list all agreements', () => {
