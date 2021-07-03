@@ -23,10 +23,12 @@ const paidAgreementPayload = (agreement, token, state, owner) => ({
   status: state.toLowerCase(),
 });
 
-const successExecutionPayload = (agreement, token, owner, creatorTaskId, transaction) => ({
+const successExecutionPayload = (agreement, token, owner, creatorTaskId, transactionRequired, transaction, agreementFinalized) => ({
   agreement: paidAgreementPayload(agreement, token, agreement.state, owner),
   creatorTaskId,
+  transactionRequired,
   transaction,
+  agreementFinalized,
 });
 
 const publishExecutionFailureHook = (amqp, executionError) => publishHook(
