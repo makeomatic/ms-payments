@@ -10,6 +10,9 @@
     "owner": {
       "$ref": "common#/definitions/owner"
     },
+    "creatorTaskId": {
+      "type": "string"
+    },
     "agreement": {
       "allOf": [{
         "$ref": "agreement#"
@@ -40,6 +43,18 @@
       "type": "integer",
       "minimum": 1,
       "default": 12
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "setupFee": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{1,2}$"
+    },
+    "skipSetupFee": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

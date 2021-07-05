@@ -7,6 +7,7 @@ const acquireLock = require('../../utils/acquire-lock');
 
 const concurrentRequests = new HttpStatusError(429, 'multiple concurrent requests');
 const TRANSACTION_UPDATED_STATUS = JSON.stringify('Updated');
+
 async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), txIds = new Set()) {
   const { page, pages, cursor, items } = await ctx.dispatch('transaction.common', {
     params: {
@@ -19,7 +20,7 @@ async function getUpdatedTransactions(ctx, offset = 0, agreements = new Set(), t
     },
   });
 
-  ctx.log.info({ items }, 'fetched items with %s status', TRANSACTION_UPDATED_STATUS);
+  ctx.log.info({ items }, 'fetched items with %s and %s status', TRANSACTION_UPDATED_STATUS);
 
   for (const item of items.values()) {
     ctx.log.info({ item }, 'processing item');
@@ -42,7 +43,7 @@ async function performSync(ctx, { log }) {
     return 0;
   }
 
-  log.info({ txIds: Array.from(txIds), agreements: Array.from(agreements) }, 'found Updated tx ids in agreements');
+  log.info({ txIds: Array.from(txIds), agreements: Array.from(agreements) }, 'found Updated/Created tx ids in agreements');
 
   const start = moment().subtract(2, 'years').startOf('year').format('YYYY-MM-DD');
   const end = moment().endOf('year').format('YYYY-MM-DD');

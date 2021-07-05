@@ -11,6 +11,7 @@
       "$ref": "common#/definitions/owner"
     },
     "id": {
+      "description": "Agreement ID",
       "type": "string",
       "minLength": 1
     },

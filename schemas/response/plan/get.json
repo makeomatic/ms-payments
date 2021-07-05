@@ -49,6 +49,9 @@
     },
     "year": {
       "$ref": "data-types#/definitions/nullable-string"
+    },
+    "day": {
+      "$ref": "data-types#/definitions/nullable-string"
     }
   }
 }

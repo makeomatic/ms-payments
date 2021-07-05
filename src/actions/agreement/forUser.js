@@ -47,7 +47,11 @@ function forUser({ params: message }) {
           throw new Errors.HttpStatusError(404, `agreement ${id} not found`);
         }
 
-        return deserialize(data);
+        // for consistent return structure :(
+        return {
+          ...deserialize(data),
+          id,
+        };
       });
   }
 

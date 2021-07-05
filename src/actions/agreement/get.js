@@ -44,6 +44,6 @@ async function getAgreement({ params: message }) {
   return output;
 }
 
-getAgreement.transports = [ActionTransport.amqp];
+getAgreement.transports = [ActionTransport.amqp, ActionTransport.internal];
 
 module.exports = getAgreement;

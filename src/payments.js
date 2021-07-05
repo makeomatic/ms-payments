@@ -10,7 +10,7 @@ const conf = require('./conf');
 // internal actions
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync');
-const syncAgreements = require('./actions/agreement/sync');
+const { EventBus } = require('./utils/event-bus');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
 const Stripe = require('./utils/stripe');
@@ -34,6 +34,7 @@ class Payments extends Microfleet {
 
     this.on('plugin:connect:amqp', (amqp) => {
       this.mailer = new Mailer(amqp, this.config.mailer);
+      this.eventBus = EventBus.fromParams(amqp, this.config.subscriptions, this.log);
     });
 
     // add migration connector
@@ -111,13 +112,14 @@ class Payments extends Microfleet {
         this.log.error({ err }, 'failed to sync sale transactions');
       });
 
-    syncAgreements.call(this, {})
-      .then(() => {
-        return this.log.info('completed sync of agreements');
-      })
-      .catch((err) => {
-        this.log.error({ err }, 'failed to sync recurring transactions');
-      });
+    // NOTE: Disable synchro, this process is performed by billing.
+    // syncAgreements.call(this, {})
+    //   .then(() => {
+    //     return this.log.info('completed sync of agreements');
+    //   })
+    //   .catch((err) => {
+    //     this.log.error({ err }, 'failed to sync recurring transactions');
+    //   });
 
     return null;
   }

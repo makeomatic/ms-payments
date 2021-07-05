@@ -47,6 +47,8 @@ exports.testPlanData = {
       value: 10,
     },
   },
+  // @todo remove as it is a userland-specific field
+  level: 30,
 };
 
 exports.freePlanData = {
@@ -82,6 +84,7 @@ exports.freePlanData = {
       value: 0.5,
     },
   },
+  // @todo remove as it is a userland-specific field
   level: 0,
 };
 
