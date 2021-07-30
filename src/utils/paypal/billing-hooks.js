@@ -39,10 +39,10 @@ const publishExecutionFailureHook = (amqp, executionError) => publishHook(
 
 const publishExecutionSuccessHook = (amqp, payload) => publishHook(amqp, executionSuccessEvent, payload);
 
-const publishFinalizationFailureHook = (amqp, executionError) => publishHook(
+const publishFinalizationFailureHook = (amqp, payload) => publishHook(
   amqp,
   finalizationFailureEvent,
-  { error: pick(executionError, ['message', 'code', 'params']) }
+  payload
 );
 
 const publishFinalizationSuccessHook = (amqp, payload) => publishHook(amqp, finalizationSuccessEvent, payload);

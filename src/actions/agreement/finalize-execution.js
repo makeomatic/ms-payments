@@ -47,6 +47,8 @@ async function finalizeExecution({ params }) {
     agreementFinalized
   );
 
+  this.log.debug('agreement finalize result', { payload, filteredTransactions, transactionShouldExist });
+
   if (agreementFinalized) {
     await publishFinalizationSuccessHook(amqp, payload);
   } else {
