@@ -1,3 +1,29 @@
+# [8.6.0](https://github.com/makeomatic/ms-payments/compare/v8.5.2...v8.6.0) (2021-08-09)
+
+
+### Bug Fixes
+
+* change finalization notification logic ([#150](https://github.com/makeomatic/ms-payments/issues/150)) ([4e3a4dc](https://github.com/makeomatic/ms-payments/commit/4e3a4dceb3deaec16cbe39ab2c658d0f47be8a2b))
+* correct finalization failure hook ([818bccd](https://github.com/makeomatic/ms-payments/commit/818bccd539c01c4e7e0986146ce20e705c2f52d5))
+* misc decoupled fixes ([#136](https://github.com/makeomatic/ms-payments/issues/136)) ([34c231b](https://github.com/makeomatic/ms-payments/commit/34c231b280b37f3ff8dc9cddd988354d8a3a15bd))
+* pass taskID ([e6a2089](https://github.com/makeomatic/ms-payments/commit/e6a2089c965d1c8aa6c0521b1efa078966d97943))
+* plan.get should return title field ([a00c39e](https://github.com/makeomatic/ms-payments/commit/a00c39e0a8927843669f63df3f2e743da3ff763b))
+* remove required owner ([a273a17](https://github.com/makeomatic/ms-payments/commit/a273a17e821f8a2b7c496c3f411986784d9a5740))
+* restore sync transaction on bill ([#138](https://github.com/makeomatic/ms-payments/issues/138)) ([2e0650d](https://github.com/makeomatic/ms-payments/commit/2e0650d6d7d11053e4773fdeae2a6a01491b826b))
+
+
+### Features
+
+* add daily plan support ([255cd57](https://github.com/makeomatic/ms-payments/commit/255cd5762157cfdb26491ee6bdecf07bfb65ffbf))
+* agreement.create custom start date support ([#139](https://github.com/makeomatic/ms-payments/issues/139)) ([2deb1b4](https://github.com/makeomatic/ms-payments/commit/2deb1b4557a86bade8a8fd38228c3dfac3c90086))
+* async transaction sync on execute ([#147](https://github.com/makeomatic/ms-payments/issues/147)) ([b164eee](https://github.com/makeomatic/ms-payments/commit/b164eee7702b122dfb63a3d92bed40479ccc7218))
+* decouple agreement execution ([#133](https://github.com/makeomatic/ms-payments/issues/133)) ([c9f23f7](https://github.com/makeomatic/ms-payments/commit/c9f23f77110a925562ad0815f9082c646f56239d))
+* decouple agreements.bill and users ([#128](https://github.com/makeomatic/ms-payments/issues/128)) ([7b5c543](https://github.com/makeomatic/ms-payments/commit/7b5c5437112335e2348c5afd8bd8ef2e8289fc5f))
+* decouple state change w/o failure hooks ([#135](https://github.com/makeomatic/ms-payments/issues/135)) ([2906c54](https://github.com/makeomatic/ms-payments/commit/2906c54bdd1b25806b1e263798a7af182b8f1ef9))
+* event subscriptions ([#131](https://github.com/makeomatic/ms-payments/issues/131)) ([34f674b](https://github.com/makeomatic/ms-payments/commit/34f674bb1d8148c22b3adbf6046100f7fdd824b5))
+* setupFee discount + misc ([#145](https://github.com/makeomatic/ms-payments/issues/145)) ([a193918](https://github.com/makeomatic/ms-payments/commit/a193918044e5710fbf3122d3e9e37ad6665d6b72))
+* update agreement.bill logic ([#137](https://github.com/makeomatic/ms-payments/issues/137)) ([e7c2fee](https://github.com/makeomatic/ms-payments/commit/e7c2feeb865b9e56e5fe567a897dc849886ec66d))
+
 ## [8.5.2](https://github.com/makeomatic/ms-payments/compare/v8.5.1...v8.5.2) (2021-02-05)
 
 ## [8.5.1](https://github.com/makeomatic/ms-payments/compare/v8.5.0...v8.5.1) (2020-09-25)
