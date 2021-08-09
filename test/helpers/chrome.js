@@ -12,6 +12,8 @@ const RETRY_LINK = '#retryLink';
 const HAS_ACCOUNT_LINK = '.baslLoginButtonContainer .btn';
 const LOGIN_BUTTON = '#btnLogin';
 
+const GDPR_BTN = '#acceptAllButton';
+
 // instance variables
 let page;
 let chrome;
@@ -57,7 +59,7 @@ const dispose = async (...handlers) => {
 };
 
 const idle = async (type = '2') => {
-  await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 10000 });
+  await page.waitForNavigation({ waitUntil: `networkidle${type}`, timeout: 35000 });
 };
 
 const isIgnorableError = (e) => {
@@ -132,6 +134,7 @@ exports.initChrome = async () => {
 
   await page.setRequestInterception(true);
   await page.setViewport({ width: 1960, height: 1280 });
+  page.setDefaultNavigationTimeout(77777);
 
   page.on('request', (interceptedRequest) => {
     console.info(interceptedRequest.url());
@@ -172,6 +175,18 @@ exports.approveSubscription = saveCrashReport(async (saleUrl) => {
 
   await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
   await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
+
+  await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+
+  const gdprBtn = await page.$(GDPR_BTN);
+  console.info('[gdpr button]', { gdprBtn });
+
+  if (gdprBtn) {
+    console.info('accept gdpr');
+    await Promise.delay(3000);
+    await page.click(GDPR_BTN, { delay: 100 });
+    await dispose(gdprBtn);
+  }
 
   try {
     console.info('[after login] --> ', page.url());
@@ -218,8 +233,23 @@ exports.approveSale = saveCrashReport(async (saleUrl, regexp = /paypal-sale-retu
     await dispose(hasAccount);
   }
 
-  await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
-  await typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD);
+  if (await page.$(EMAIL_INPUT)) {
+    console.info('input credentials');
+    await typeAndSubmit(EMAIL_INPUT, process.env.PAYPAL_SANDBOX_USERNAME);
+
+    await Promise.all([
+      idle('2'),
+      typeAndSubmit(PWD_INPUT, process.env.PAYPAL_SANDBOX_PASSWORD),
+    ]);
+  }
+
+  const gdprBtn = await page.$(GDPR_BTN);
+  if (gdprBtn) {
+    console.info('accept gdpr');
+    await Promise.delay(3000);
+    await page.click(GDPR_BTN, { delay: 100 });
+    await dispose(gdprBtn);
+  }
 
   try {
     console.info('[after login] --> ', page.url());

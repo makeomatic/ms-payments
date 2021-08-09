@@ -3,10 +3,13 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "owner",
+    "agreement",
     "state"
   ],
   "properties": {
+    "agreement": {
+      "type": "string"
+    },
     "owner": {
       "$ref": "common#/definitions/owner"
     },

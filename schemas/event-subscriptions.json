@@ -1,0 +1,51 @@
+{
+  "$id": "payment-event-subscription",
+  "title": "[common] Payment hook",
+  "description": "Zero to many payment hook target configuration objects",
+  "oneOf": [
+    {
+      "description": "Short form for single target",
+      "$ref": "payment-event-subscription#/definitions/target"
+    },
+    {
+      "description": "Collection of targets",
+      "type": "array",
+      "items": {
+        "$ref": "payment-event-subscription#/definitions/target"
+      }
+    }
+  ],
+  "definitions": {
+    "target": {
+      "type": "object",
+      "description": "Payment event target configuration object",
+      "required": ["endpoint"],
+      "properties": {
+        "endpoint": {
+          "type": "string",
+          "description": "Target endpoint (amqp - internal transport action identifier)"
+        },
+        "publishing": {
+          "type": "object",
+          "description": "Publishing options",
+          "properties": {
+            "retry": {
+              "type": "object",
+              "description": "Publishing retry config",
+              "properties": {
+                "enabled": {
+                  "type": "boolean",
+                  "default": "true"
+                },
+                "options": {
+                  "type": "object",
+                  "description": "See bluebird-retry options: https://www.npmjs.com/package/bluebird-retry"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

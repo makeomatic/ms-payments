@@ -1,14 +1,11 @@
 const Promise = require('bluebird');
 const moment = require('moment');
 const { ActionTransport } = require('@microfleet/core');
-const { AGR_TX_FIELD } = require('../../constants');
 
 // constants
 const FETCH_USERS_LIMIT = 20;
 const AGREEMENT_PENDING_STATUS = JSON.stringify('pending');
 const AGREEMENT_PENDING_STATUS_CAPITAL = JSON.stringify('Pending');
-const AGREEMENT_ACTIVE_STATUS = JSON.stringify('active');
-const AGREEMENT_ACTIVE_STATUS_CAPITAL = JSON.stringify('Active');
 const SUBSCRIPTION_TYPE = JSON.stringify('capp');
 
 // 1. get users recursively
@@ -134,15 +131,6 @@ async function agreementSync({ params = {} }) {
     getPendingAgreements(ctx, {
       state: {
         some: [AGREEMENT_PENDING_STATUS, AGREEMENT_PENDING_STATUS_CAPITAL],
-      },
-    }),
-    // agreements that are active, but have no associated transactions at all
-    getPendingAgreements(ctx, {
-      state: {
-        some: [AGREEMENT_ACTIVE_STATUS, AGREEMENT_ACTIVE_STATUS_CAPITAL],
-      },
-      [AGR_TX_FIELD]: {
-        isempty: 1,
       },
     }),
   ]);
