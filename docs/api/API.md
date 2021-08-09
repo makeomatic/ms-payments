@@ -1,5 +1,5 @@
 <a name="top"></a>
-# Service ms-payments v8.5.2
+# Service ms-payments v8.6.0
 
 Core of the microservice for handling payments
 
@@ -30,6 +30,9 @@ Core of the microservice for handling payments
 - [Charge.Stripe](#Charge.Stripe)
 	- [Stripe - Create charge](#Stripe---Create-charge)
 	- [Stripe - Webhook handler](#Stripe---Webhook-handler)
+	
+- [Hook](#Hook)
+	- [Publish hook](#Publish-hook)
 	
 - [Plan](#Plan)
 	- [Change plan state](#Change-plan-state)
@@ -85,6 +88,7 @@ AMQP,INTERNAL agreement.bill
 
 <a name="agreement.bill--"/>`{object}`<br>
 Additional properties allowed: `true`<br>
+Constraints: `required`: `["agreement","username"]`<br>
 Properties:
 
  - **agreement**
@@ -119,9 +123,11 @@ AMQP <prefix>.agreement.state
 
 <a name="agreement.state--"/>`{object}`<br>
 Additional properties allowed: `false`<br>
-Constraints: `required`: `["owner","state"]`<br>
+Constraints: `required`: `["agreement","state"]`<br>
 Properties:
 
+ - **agreement**
+    <a name="agreement.state--/properties/agreement"/>`{string}`<br>
  - **owner**
     [Payment owner(common#/definitions/owner)](#common--/definitions/owner)
  - **state**
@@ -135,7 +141,7 @@ Properties:
 ### Response schema:
 
 <a name="response.agreement.state--"/>`{string}`<br>
-Constraints: `enum`: `["suspend","reactivate","cancel"]`<br>
+Constraints: `enum`: `["suspended","active","cancelled"]`<br>
 
 
 
@@ -159,6 +165,8 @@ Properties:
 
  - **owner**
     [Payment owner(common#/definitions/owner)](#common--/definitions/owner)
+ - **creatorTaskId**
+    <a name="agreement.create--/properties/creatorTaskId"/>`{string}`<br>
  - **agreement**
     *Could be allOf:*
     
@@ -186,6 +194,14 @@ Properties:
     <a name="agreement.create--/properties/trialCycle"/>`{integer}`<br>
     Constraints: `minimum`: `1`<br>
     Default: `12`
+ - **startDate**
+    <a name="agreement.create--/properties/startDate"/>`{string}`<br>
+    Constraints: `format`: `"date-time"`<br>
+ - **setupFee**
+    <a name="agreement.create--/properties/setupFee"/>`{string}`<br>
+    Constraints: `pattern`: `"^\\d+\\.\\d{1,2}$"`<br>
+ - **skipSetupFee**
+    <a name="agreement.create--/properties/skipSetupFee"/>`{boolean}`<br>
 
 
 ### Response schema:
@@ -200,11 +216,15 @@ Properties:
  - **token**
     <a name="response.agreement.create--/properties/token"/>`{string}`<br>
     Constraints: `minLength`: `1`<br>
+ - **creatorTaskId**
+    <a name="response.agreement.create--/properties/creatorTaskId"/>`{string}`<br>
  - **url**
     <a name="response.agreement.create--/properties/url"/>`{string}`<br>
     Constraints: `minLength`: `1`<br>
  - **agreement**
     [[response.common] Agreement object(response.common.agreement#)](#response.common.agreement--)
+ - **id**
+    <a name="response.agreement.create--/properties/id"/>`{string}`<br>
 
 
 
@@ -333,6 +353,10 @@ Properties:
     [Payment plan id(common#/definitions/planId)](#common--/definitions/planId)
  - **agreement**
     [[response.common] Agreement object(response.common.agreement#)](#response.common.agreement--)
+ - **creatorTaskId**
+    <a name="response.agreement.get--/properties/creatorTaskId"/>`{string}`<br>
+ - **finalizedAt**
+    <a name="response.agreement.get--/properties/finalizedAt"/>`{number}`<br>
 
 
 
@@ -383,6 +407,10 @@ Properties:
     [Payment plan id(common#/definitions/planId)](#common--/definitions/planId)
  - **agreement**
     [[response.common] Agreement object(response.common.agreement#)](#response.common.agreement--)
+ - **creatorTaskId**
+    <a name="response.agreement.forUser--/properties/creatorTaskId"/>`{string}`<br>
+ - **finalizedAt**
+    <a name="response.agreement.forUser--/properties/finalizedAt"/>`{number}`<br>
 
 
 
@@ -1102,6 +1130,51 @@ Properties:
 
 
 **[⬆ Back to Top](#top)**
+# <a name='Hook'></a> Hook
+## <a name='Publish-hook'></a> Publish hook
+<p>Publishes hook</p>
+
+Source: [src/actions/hook/publish.js](src/actions/hook/publish.js).
+```
+AMQP,INTERNAL hook.publish
+```
+
+
+### Request schema
+
+<a name="hook.publish--"/>`{object}`<br>
+Additional properties allowed: `false`<br>
+Constraints: `required`: `["event","payload"]`<br>
+Properties:
+
+ - **event**
+    <a name="hook.publish--/properties/event"/>`{string}`<br>
+    
+    Event title
+    
+ - **payload**
+    <a name="hook.publish--/properties/payload"/>
+    
+    Event payload
+    
+ - **options**
+    <a name="hook.publish--/properties/options"/>
+    
+    not implemented
+    
+
+
+### Response schema:
+
+<a name="response.hook.publish--"/>
+
+Published results count?
+
+
+
+
+
+**[⬆ Back to Top](#top)**
 # <a name='Plan'></a> Plan
 ## <a name='Change-plan-state'></a> Change plan state
 <p>Changes plan state</p>
@@ -1212,6 +1285,8 @@ Properties:
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
  - **year**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
+ - **day**
+    [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
 
 
 
@@ -1293,6 +1368,8 @@ Properties:
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
  - **year**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
+ - **day**
+    [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
 
 
 
@@ -1368,6 +1445,8 @@ Properties:
  - **month**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
  - **year**
+    [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
+ - **day**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
 
 
@@ -1532,6 +1611,8 @@ Properties:
  - **month**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
  - **year**
+    [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
+ - **day**
     [(data-types#/definitions/nullable-string)](#data-types--/definitions/nullable-string)
 
 
@@ -2126,6 +2207,9 @@ Properties:
  - **id**
     <a name="transaction.sync--/properties/id"/>`{string}`<br>
     Constraints: `minLength`: `1`<br>
+    
+    Agreement ID
+    
  - **start**
     <a name="transaction.sync--/properties/start"/>`{string}`<br>
     Constraints: `format`: `"date"`<br>
