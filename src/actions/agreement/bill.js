@@ -33,6 +33,7 @@ function getAgreementDetails(agreement) {
   return {
     failedPayments: parseInt(agreementDetails.failed_payment_count, 10) || 0,
     cyclesCompleted: parseInt(agreementDetails.cycles_completed, 10) || 0,
+    nextBillingDate: moment(agreementDetails.nextBillingDate),
   };
 }
 
@@ -82,6 +83,7 @@ async function agreementBill({ log, params }) {
   const local = getAgreementDetails(localAgreementData.agreement);
   const remote = getAgreementDetails(remoteAgreement);
   const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
+  const cycleChanged = remote.cyclesCompleted !== local.cyclesCompleted && remote.nextBillingDate.isAfter(local.nextBillingDate);
 
   if (failedPaymentsDiff > 0) {
     const error = BillingError.hasIncreasedPaymentFailure(id, owner, {
@@ -113,8 +115,8 @@ async function agreementBill({ log, params }) {
   // cyclesBilled === 0 forces billing to retry request
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
-    transaction,
-    cyclesBilled: transaction ? 1 : 0,
+    transaction: cycleChanged ? transaction : undefined,
+    cyclesBilled: cycleChanged ? 1 : 0,
   });
 
   return 'OK';
