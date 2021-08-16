@@ -33,7 +33,7 @@ function getAgreementDetails(agreement) {
   return {
     failedPayments: parseInt(agreementDetails.failed_payment_count, 10) || 0,
     cyclesCompleted: parseInt(agreementDetails.cycles_completed, 10) || 0,
-    nextBillingDate: moment(agreementDetails.nextBillingDate),
+    nextBillingDate: moment(agreementDetails.next_billing_date),
   };
 }
 
