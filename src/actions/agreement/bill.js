@@ -106,17 +106,19 @@ async function agreementBill({ log, params }) {
   const cycleStart = moment(remoteAgreement.agreement_details.next_billing_date).subtract(1, subscriptionInterval);
   const transaction = transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart));
 
+  const billingComplete = cycleChanged && transaction;
+
   // update agreement only when transaction data is available
   // otherwise agreement should be treated as unbilled
-  if (transactions.length > 0) {
+  if (billingComplete) {
     await updateAgreement(this, localAgreementData, remoteAgreement);
   }
 
   // cyclesBilled === 0 forces billing to retry request
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
-    transaction: cycleChanged ? transaction : undefined,
-    cyclesBilled: cycleChanged ? 1 : 0,
+    transaction: billingComplete ? transaction : undefined,
+    cyclesBilled: billingComplete ? 1 : 0,
   });
 
   return 'OK';
