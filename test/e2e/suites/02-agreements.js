@@ -175,6 +175,26 @@ describe('Agreements suite', function AgreementSuite() {
       );
     });
 
+    it('Should create an agreement with setup fee and use passed startDate without changes', async () => {
+      const now = moment().add(2, 'days');
+      const data = {
+        agreement: testAgreementData,
+        owner: 'user0@test.com',
+        setupFee: '24.99',
+        trialDiscount: 0,
+        startDate: now,
+        forceStartDate: true,
+      };
+
+      const { agreement } = await dispatch(createAgreement, data);
+
+      assert.strictEqual(agreement.plan.merchant_preferences.setup_fee.value, '24.99');
+      assert.strictEqual(
+        moment(agreement.start_date).format(PAYPAL_DATE_FORMAT),
+        now.format(PAYPAL_DATE_FORMAT)
+      );
+    });
+
     it('Should create an agreement with BillingcreatorTaskId', async () => {
       const now = moment().add(1, 'month');
       const data = {

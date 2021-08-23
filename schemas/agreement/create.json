@@ -55,6 +55,11 @@
     "skipSetupFee": {
       "type": "boolean",
       "default": false
+    },
+    "forceStartDate": {
+      "type": "boolean",
+      "default": false,
+      "description": "True to set agreement start date as passed without any changes"
     }
   }
 }
