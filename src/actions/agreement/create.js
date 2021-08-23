@@ -127,7 +127,7 @@ function prepareAgreementData(agreementBase, params) {
   const finalStartDate = skipSetupFee === true || forceStartDate === true
     ? moment(startDate).format(PAYPAL_DATE_FORMAT)
     : moment(startDate).add(1, subscription.name).format(PAYPAL_DATE_FORMAT);
-  console.debug(params);
+
   const agreementData = {
     ...agreementBase,
     start_date: finalStartDate,
