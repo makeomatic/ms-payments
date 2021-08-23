@@ -1,5 +1,5 @@
 <a name="top"></a>
-# Service ms-payments v8.6.0
+# Service ms-payments v8.6.1
 
 Core of the microservice for handling payments
 
@@ -202,6 +202,11 @@ Properties:
     Constraints: `pattern`: `"^\\d+\\.\\d{1,2}$"`<br>
  - **skipSetupFee**
     <a name="agreement.create--/properties/skipSetupFee"/>`{boolean}`<br>
+ - **forceStartDate**
+    <a name="agreement.create--/properties/forceStartDate"/>`{boolean}`<br>
+    
+    True to set agreement start date as passed without any changes
+    
 
 
 ### Response schema:
