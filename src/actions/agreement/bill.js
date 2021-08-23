@@ -33,6 +33,7 @@ function getAgreementDetails(agreement) {
   return {
     failedPayments: parseInt(agreementDetails.failed_payment_count, 10) || 0,
     cyclesCompleted: parseInt(agreementDetails.cycles_completed, 10) || 0,
+    nextBillingDate: moment(agreementDetails.next_billing_date),
   };
 }
 
@@ -82,7 +83,7 @@ async function agreementBill({ log, params }) {
   const local = getAgreementDetails(localAgreementData.agreement);
   const remote = getAgreementDetails(remoteAgreement);
   const failedPaymentsDiff = remote.failedPayments - local.failedPayments;
-  const cyclesBilled = remote.cyclesCompleted - local.cyclesCompleted;
+  const cycleChanged = remote.cyclesCompleted !== local.cyclesCompleted && remote.nextBillingDate.isAfter(local.nextBillingDate);
 
   if (failedPaymentsDiff > 0) {
     const error = BillingError.hasIncreasedPaymentFailure(id, owner, {
@@ -105,17 +106,19 @@ async function agreementBill({ log, params }) {
   const cycleStart = moment(remoteAgreement.agreement_details.next_billing_date).subtract(1, subscriptionInterval);
   const transaction = transactions.find((t) => moment(t.time_stamp).isAfter(cycleStart));
 
+  const billingComplete = cycleChanged && transaction;
+
   // update agreement only when transaction data is available
   // otherwise agreement should be treated as unbilled
-  if (transaction) {
+  if (billingComplete) {
     await updateAgreement(this, localAgreementData, remoteAgreement);
   }
 
   // cyclesBilled === 0 forces billing to retry request
   await publishHook(amqp, HOOK_BILLING_SUCCESS, {
     agreement: agreementPayload,
-    transaction: cyclesBilled > 0 ? transaction : undefined,
-    cyclesBilled: transaction ? cyclesBilled : 0,
+    transaction: billingComplete ? transaction : undefined,
+    cyclesBilled: billingComplete ? 1 : 0,
   });
 
   return 'OK';

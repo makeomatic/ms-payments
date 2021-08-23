@@ -120,11 +120,11 @@ async function prepareBillingParams(redis, log, paypalConfig, agreementParams) {
 }
 
 function prepareAgreementData(agreementBase, params) {
-  const { planId, setupFee, subscription, startDate, skipSetupFee } = params;
+  const { planId, setupFee, subscription, startDate, skipSetupFee, forceStartDate } = params;
 
   // Possible problem, we should remeber that Paypal requires startDate to be less than now - 24h
   // https://developer.paypal.com/docs/api/payments.billing-agreements/v1/#billing-agreements
-  const finalStartDate = skipSetupFee === true
+  const finalStartDate = skipSetupFee === true || forceStartDate === true
     ? moment(startDate).format(PAYPAL_DATE_FORMAT)
     : moment(startDate).add(1, subscription.name).format(PAYPAL_DATE_FORMAT);
 
@@ -187,7 +187,7 @@ async function agreementCreate({ params }) {
   const { config, redis, log } = this;
   const {
     owner, agreement, trialDiscount, trialCycle, startDate,
-    setupFee, skipSetupFee, creatorTaskId,
+    setupFee, skipSetupFee, creatorTaskId, forceStartDate,
   } = params;
   const { plan: { id: planId } } = agreement;
   const logger = log.child({ owner });
@@ -196,7 +196,8 @@ async function agreementCreate({ params }) {
     planId, trialDiscount, trialCycle, setupFee, skipSetupFee,
   });
 
-  const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate });
+  const agreementData = prepareAgreementData(agreement, { ...billingParams, startDate, forceStartDate });
+
   const createdAgreement = await createAgreement(agreementData, config.paypal);
 
   const approval = find(createdAgreement.links, { rel: 'approval_url' });
