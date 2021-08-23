@@ -1,3 +1,10 @@
+## [8.6.1](https://github.com/makeomatic/ms-payments/compare/v8.6.0...v8.6.1) (2021-08-23)
+
+
+### Bug Fixes
+
+* cyclecount from trial to generic ([#154](https://github.com/makeomatic/ms-payments/issues/154)) ([a2bd888](https://github.com/makeomatic/ms-payments/commit/a2bd88884fdbb0012bbd892040d1072739aba590))
+
 # [8.6.0](https://github.com/makeomatic/ms-payments/compare/v8.5.2...v8.6.0) (2021-08-09)
 
 
