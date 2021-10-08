@@ -1,3 +1,10 @@
+## [8.6.2](https://github.com/makeomatic/ms-payments/compare/v8.6.1...v8.6.2) (2021-10-08)
+
+
+### Bug Fixes
+
+* execute handle cancelled agreement ([#156](https://github.com/makeomatic/ms-payments/issues/156)) ([6561c6a](https://github.com/makeomatic/ms-payments/commit/6561c6af063a0f7ef94d229bc6670eb9ac863682))
+
 ## [8.6.1](https://github.com/makeomatic/ms-payments/compare/v8.6.0...v8.6.1) (2021-08-23)
 
 
