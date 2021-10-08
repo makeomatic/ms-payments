@@ -8,15 +8,15 @@ const key = require('../../redis-key');
 
 const { serialize, deserialize, handlePipeline } = require('../../utils/redis');
 const { mergeWithNotNull } = require('../../utils/plans');
-const { ExecutionError } = require('../../utils/paypal/agreements').error;
-const { fetchUpdatedAgreement } = require('../../utils/paypal/agreements/update');
+const { ExecutionError, AgreementStatusError } = require('../../utils/paypal/agreements').error;
 const { RequestError } = require('../../utils/paypal/client').error;
 const {
   publishExecutionFailureHook, publishExecutionSuccessHook, successExecutionPayload,
 } = require('../../utils/paypal/billing-hooks');
 
-// internal actions
-const { agreement: { execute } } = require('../../utils/paypal');
+const paypalApi = require('../../utils/paypal');
+
+const { agreement: { execute } } = paypalApi;
 
 /**
  * @throws ExecutionError Unknown subscription token
@@ -35,6 +35,34 @@ async function findAgreementData(redis, token) {
   }
 
   return deserialize(data);
+}
+
+/**
+ * Fetches updated agreement from paypal.
+ * We must make sure that state is 'active'.
+ * If it's pending -> retry until it becomes either active or cancelled
+ * States: // Active, Cancelled, Completed, Created, Pending, Reactivated, or Suspended
+ * @param  {string} agreementId - Agreement Id.
+ */
+async function fetchUpdatedAgreement(paypalCfg, log, agreementId, owner, token, creatorTaskId) {
+  const agreement = await paypalApi.agreement.get(agreementId, paypalCfg);
+
+  log.debug('fetched agreement %j', agreement);
+
+  const state = String(agreement.state).toLowerCase();
+
+  if (state === 'active') {
+    return agreement;
+  }
+
+  if (state === 'pending') {
+    log.warn({ agreement }, 'failed to move agreement to active/failed state');
+    return agreement;
+  }
+
+  const error = new AgreementStatusError(agreementId, owner, state, creatorTaskId, token);
+  log.error({ err: error, agreement }, 'Client tried to execute failed agreement: %j');
+  throw error;
 }
 
 /**
@@ -125,9 +153,10 @@ async function agreementExecute({ params }) {
 
   let updatedAgreement;
   try {
-    updatedAgreement = await fetchUpdatedAgreement(config.paypal, log, agreementId, owner, token);
+    updatedAgreement = await fetchUpdatedAgreement(config.paypal, log, agreementId, owner, token, creatorTaskId);
   } catch (e) {
-    if (e instanceof ExecutionError) {
+    if (e instanceof ExecutionError || e instanceof AgreementStatusError) {
+      e.params.token = token;
       await publishExecutionFailureHook(amqp, e);
       throw new HttpStatusError(412, e.message);
     }

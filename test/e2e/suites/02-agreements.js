@@ -13,6 +13,11 @@ const { PAYPAL_DATE_FORMAT } = require('../../../src/constants');
 describe('Agreements suite', function AgreementSuite() {
   const sandbox = sinon.createSandbox();
   const Payments = require('../../../src');
+
+  const getAgreementStub = () => {
+    return sandbox.stub(paypalUtils.agreement, 'get');
+  };
+
   const {
     agreement: { cancel: billingAgreementCancel },
     handleError,
@@ -247,6 +252,43 @@ describe('Agreements suite', function AgreementSuite() {
       });
     });
 
+    it('Should call hook when executed agreement cancelled', async () => {
+      const data = {
+        agreement: testAgreementData,
+        owner: 'test@test-best.ru',
+        creatorTaskId: 'fake-task-id-to-find',
+      };
+
+      const ppGetStub = getAgreementStub().callsFake(async (agreementId, paypal) => {
+        const result = await ppGetStub.wrappedMethod(agreementId, paypal);
+        return {
+          ...result,
+          state: 'cancelled',
+        };
+      });
+
+      const publishSpy = sandbox.spy(payments.amqp, 'publish');
+
+      const agreement = await dispatch(createAgreement, data);
+      const params = await approveSubscription(agreement.url);
+
+      await assert.rejects(dispatch(executeAgreement, { token: agreement.token }), /Agreement ".*" has status "cancelled"/);
+
+      assertExecutionFailureHookCalled(publishSpy, {
+        error: sinon.match({
+          message: sinon.match(/Agreement ".*" has status "cancelled"/),
+          code: 'agreement-status-forbidden',
+          params: sinon.match({
+            token: params.token,
+            owner: 'test@test-best.ru',
+            agreementId: sinon.match(/I-/),
+            status: 'cancelled',
+            creatorTaskId: 'fake-task-id-to-find',
+          }),
+        }),
+      });
+    });
+
     it('Should execute an approved agreement', async () => {
       const params = await approveSubscription(billingAgreement.url);
       const publishSpy = sandbox.spy(payments.amqp, 'publish');
@@ -399,8 +441,8 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('should bill agreement: send billing failed when no new cycles and failed count increased', async () => {
       const { id } = billingAgreement;
-      const getAgreementStub = sandbox.stub(paypalUtils.agreement, 'get');
-      getAgreementStub.resolves({
+      const ppGetAgreementStub = getAgreementStub();
+      ppGetAgreementStub.resolves({
         state: 'Active',
         agreement_details: {
           failed_payment_count: 777,
@@ -426,8 +468,8 @@ describe('Agreements suite', function AgreementSuite() {
 
     it('should bill agreement: send billing failure when new cycles billed and failed count increased', async () => {
       const { id } = billingAgreement;
-      const getAgreementStub = sandbox.stub(paypalUtils.agreement, 'get');
-      getAgreementStub.resolves({
+      const ppGetAgreementStub = getAgreementStub();
+      ppGetAgreementStub.resolves({
         state: 'Active',
         agreement_details: {
           failed_payment_count: 1,
