@@ -204,7 +204,6 @@ Charge.STATUS_FAILED = 1;
 Charge.STATUS_CANCELED = 2;
 Charge.STATUS_COMPLETED = 3;
 
-Charge.CHARGE_SOURCE_STRIPE = 'stripe';
 Charge.CHARGE_SOURCE_PAYPAL = 'paypal';
 
 module.exports = Charge;

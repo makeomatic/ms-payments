@@ -13,7 +13,6 @@ const syncSaleTransactions = require('./actions/sale/sync');
 const { EventBus } = require('./utils/event-bus');
 const Balance = require('./utils/balance');
 const Charge = require('./utils/charge');
-const Stripe = require('./utils/stripe');
 const Paypal = require('./utils/paypal-payment');
 
 /**
@@ -45,18 +44,6 @@ class Payments extends Microfleet {
     }
 
     this.addConnector(ConnectorsTypes.application, async () => {
-      if (this.config.stripe.enabled === true) {
-        this.stripe = new Stripe(this.config.stripe, this.redis);
-
-        if (this.config.stripe.webhook.enabled === true) {
-          if (process.env.NODE_ENV === 'test') {
-            await this.stripe.dropHooks();
-          }
-
-          await this.stripe.setupWebhook();
-        }
-      }
-
       this.balance = new Balance(this.redis);
       this.charge = new Charge(this.redis);
       this.paypal = new Paypal({ urls: this.config.urls, ...this.config.charge.paypal }, this.redis);
