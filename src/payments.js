@@ -11,9 +11,6 @@ const conf = require('./conf');
 const createPlan = require('./actions/plan/create');
 const syncSaleTransactions = require('./actions/sale/sync');
 const { EventBus } = require('./utils/event-bus');
-const Balance = require('./utils/balance');
-const Charge = require('./utils/charge');
-const Paypal = require('./utils/paypal-payment');
 
 /**
  * Class representing payments handling
@@ -42,12 +39,6 @@ class Payments extends Microfleet {
         this.migrate('redis', `${__dirname}/migrations`)
       ));
     }
-
-    this.addConnector(ConnectorsTypes.application, async () => {
-      this.balance = new Balance(this.redis);
-      this.charge = new Charge(this.redis);
-      this.paypal = new Paypal({ urls: this.config.urls, ...this.config.charge.paypal }, this.redis);
-    });
 
     // init plans and sync transactions during startup of production
     // service
