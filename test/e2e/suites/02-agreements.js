@@ -145,7 +145,7 @@ describe('Agreements suite', function AgreementSuite() {
       futureAgreement = await dispatch(createAgreement, data);
       const dateDiff = moment(futureAgreement.agreement.start_date).diff(now, 'days');
 
-      assert.ok(dateDiff >= 31, 'agreement should start in next 31~33 days');
+      assert.ok(dateDiff >= 30, 'agreement should start in next 30~33 days');
     });
 
     it('Should create an agreement with custom setupFee and discount, discount ignored', async () => {
